@@ -1,0 +1,15 @@
+/*
+ * svpwm.h
+ *
+ *  Created on: Mar 30, 2025
+ *      Author: Miloush
+ */
+
+#ifndef INC_SVPWM_H_
+#define INC_SVPWM_H_
+
+#include "main.h"
+
+void svpwm_set(float Valpha, float Vbeta);
+
+#endif /* INC_SVPWM_H_ */
