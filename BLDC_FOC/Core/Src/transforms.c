@@ -8,12 +8,26 @@
 #include "transforms.h"
 #include <math.h>
 
-void clarke_transform(float Ia, float Ib, float *Valpha, float *Vbeta) {
-    *Valpha = Ia;
-    *Vbeta = (Ia + 2 * Ib) / sqrtf(3.0f);
+void ClarkeTransform(float ia, float ib, float *ialpha, float *ibeta)
+{
+    *ialpha = ia;
+    *ibeta  = (ia + 2.0f * ib) * 0.57735026919f;  // 1/sqrt(3) ≈ 0.577
 }
 
-void park_transform(float Valpha, float Vbeta, float theta, float *Vd, float *Vq) {
-    *Vd = Valpha * cosf(theta) + Vbeta * sinf(theta);
-    *Vq = -Valpha * sinf(theta) + Vbeta * cosf(theta);
+void ParkTransform(float ialpha, float ibeta, float theta, float *id, float *iq)
+{
+    float sin_theta = sinf(theta);
+    float cos_theta = cosf(theta);
+
+    *id =  ialpha * cos_theta + ibeta * sin_theta;
+    *iq = -ialpha * sin_theta + ibeta * cos_theta;
+}
+
+void InvParkTransform(float vd, float vq, float theta, float *valpha, float *vbeta)
+{
+    float sin_theta = sinf(theta);
+    float cos_theta = cosf(theta);
+
+    *valpha = vd * cos_theta - vq * sin_theta;
+    *vbeta  = vd * sin_theta + vq * cos_theta;
 }

@@ -14,7 +14,7 @@
 
 extern TIM_HandleTypeDef htim1;
 
-void svpwm_set(float Valpha, float Vbeta) {
+void SVPWM_Update(float Valpha, float Vbeta) {
     float Uref = sqrtf(Valpha * Valpha + Vbeta * Vbeta);
     float angle = atan2f(Vbeta, Valpha);
 

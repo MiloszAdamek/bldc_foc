@@ -61,14 +61,30 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define RCC_OSC32_OUT_Pin GPIO_PIN_14
-#define RCC_OSC32_OUT_GPIO_Port GPIOC
-#define RCC_OSC32_OUTC15_Pin GPIO_PIN_15
-#define RCC_OSC32_OUTC15_GPIO_Port GPIOC
 #define RCC_OSC_IN_Pin GPIO_PIN_0
 #define RCC_OSC_IN_GPIO_Port GPIOF
 #define RCC_OSC_OUT_Pin GPIO_PIN_1
 #define RCC_OSC_OUT_GPIO_Port GPIOF
+#define CURR_AMPL_U_Pin GPIO_PIN_1
+#define CURR_AMPL_U_GPIO_Port GPIOA
+#define CURR_AMPL_W_Pin GPIO_PIN_0
+#define CURR_AMPL_W_GPIO_Port GPIOB
+#define CURR_AMPL_V_Pin GPIO_PIN_1
+#define CURR_AMPL_V_GPIO_Port GPIOB
+#define PWM_EN_FAULT_Pin GPIO_PIN_12
+#define PWM_EN_FAULT_GPIO_Port GPIOB
+#define PWM_EN_U_Pin GPIO_PIN_13
+#define PWM_EN_U_GPIO_Port GPIOB
+#define PWM_EN_V_Pin GPIO_PIN_14
+#define PWM_EN_V_GPIO_Port GPIOB
+#define PWM_EN_W_Pin GPIO_PIN_15
+#define PWM_EN_W_GPIO_Port GPIOB
+#define PWM_UH_Pin GPIO_PIN_8
+#define PWM_UH_GPIO_Port GPIOA
+#define PWM_VH_Pin GPIO_PIN_9
+#define PWM_VH_GPIO_Port GPIOA
+#define PWM_WH_Pin GPIO_PIN_10
+#define PWM_WH_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

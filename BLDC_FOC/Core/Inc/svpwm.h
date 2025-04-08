@@ -10,6 +10,6 @@
 
 #include "main.h"
 
-void svpwm_set(float Valpha, float Vbeta);
+void SVPWM_Update(float Valpha, float Vbeta);
 
 #endif /* INC_SVPWM_H_ */
