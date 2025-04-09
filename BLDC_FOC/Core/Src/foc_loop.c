@@ -8,55 +8,82 @@
 #include "foc_loop.h"
 #include "transforms.h"
 #include "svpwm.h"
+#include "current_sense.h"
 
-// PI kontrolery dla Id i Iq
 static PI_Controller pi_id = { .kp = 2.0f, .ki = 200.0f, .limit = 5.0f, .integral = 0.0f };
 static PI_Controller pi_iq = { .kp = 2.0f, .ki = 200.0f, .limit = 5.0f, .integral = 0.0f };
 
 static float pi_control(PI_Controller *pi, float error)
 {
-    pi->integral += error * pi->ki * 0.00005f; // sample time ~50us (20kHz)
+    pi->integral += error * pi->ki * 0.00005f; // Ts = 50 us
 
-    // anty-windup
     if (pi->integral > pi->limit) pi->integral = pi->limit;
     else if (pi->integral < -pi->limit) pi->integral = -pi->limit;
 
     float output = pi->kp * error + pi->integral;
+
     if (output > pi->limit) output = pi->limit;
     else if (output < -pi->limit) output = -pi->limit;
 
     return output;
 }
 
-void FOC_Init(void)
+void FOC_Init(ADC_HandleTypeDef *hadc)
 {
     pi_id.integral = 0.0f;
     pi_iq.integral = 0.0f;
+
+    CurrentSense_Init(hadc);
 }
 
-void FOC_Update(float ia, float ib, float theta)
+void FOC_Update(const abc_current_t *currents, float theta_el, const dq_ref_t *i_ref)
 {
     float ialpha, ibeta;
     float id, iq;
     float vd, vq;
     float valpha, vbeta;
 
-    // 1. Clarke
-    ClarkeTransform(ia, ib, &ialpha, &ibeta);
+    // Clarke
+    ClarkeTransform(currents->a, currents->b, &ialpha, &ibeta);
 
-    // 2. Park
-    ParkTransform(ialpha, ibeta, theta, &id, &iq);
+    // Park
+    ParkTransform(ialpha, ibeta, theta_el, &id, &iq);
 
-    // 3. PI dla prądu (id_ref = 0, iq_ref = np. 1.0A)
-    float id_ref = 0.0f;
-    float iq_ref = 1.0f;
-    vd = pi_control(&pi_id, id_ref - id);
-    vq = pi_control(&pi_iq, iq_ref - iq);
+    // PI kontrola
+    vd = pi_control(&pi_id, i_ref->d - id);
+    vq = pi_control(&pi_iq, i_ref->q - iq);
 
-    // 4. Inverse Park
-    InvParkTransform(vd, vq, theta, &valpha, &vbeta);
+    // Inverse Park
+    InvParkTransform(vd, vq, theta_el, &valpha, &vbeta);
 
-    // 5. SVPWM
+    // SVPWM
     SVPWM_Update(valpha, vbeta);
 }
+
+// FOC Loop
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    if (hadc->Instance == ADC1)
+    {
+        // 1. Pomiar prądów
+        CurrentSense_Meassurement(hadc);
+
+        // 2. Pobranie zmierzonych wartości
+        abc_current_t currents;
+        CurrentSense_Read(&currents);
+
+//        // 3. Kąt elektryczny (np. testowo 0)
+//        float theta_el = 0.0f; // TODO: podłącz enkoder
+//
+//        // 4. Referencje
+//        dq_ref_t current_ref = {
+//            .d = 0.0f,
+//            .q = 1.0f  // 1A dla testu
+//        };
+//
+//        // 5. FOC
+//        FOC_Update(&currents, theta_el, &current_ref);
+    }
+}
+
 

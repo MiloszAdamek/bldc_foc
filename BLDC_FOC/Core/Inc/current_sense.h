@@ -22,16 +22,16 @@ typedef struct {
     uint16_t c;
 } abc_raw_t;
 
-static void CurrentSense_CalibrateOffset(void);
-
-// Inicjalizacja modułu pomiaru prądów
+// Inicjalizacja pomiaru prądów
 void CurrentSense_Init(ADC_HandleTypeDef *hadc);
+
+// Realizacja pomiaru
+void CurrentSense_Meassurement(ADC_HandleTypeDef* hadc);
 
 // Zwraca zmierzone prądy fazowe
 void CurrentSense_Read(abc_current_t *currents);
 
 // Zwraca surowe wartości ADC
 void CurrentSense_GetRaw(abc_raw_t *raw);
-
 
 #endif /* INC_CURRENT_SENSE_H_ */

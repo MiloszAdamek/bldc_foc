@@ -23,7 +23,6 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "svpwm.h"
-#include "adc_processing.h"
 #include "math.h"
 #include "encoder.h"
 #include "current_sense.h"
@@ -93,15 +92,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-//	int __io_putchar(int ch)
-//	{
-//	    if (ch == '\n') {
-//	        uint8_t ch2 = '\r';
-//	        HAL_UART_Transmit(&huart2, &ch2, 1, HAL_MAX_DELAY);
-//	    }
-//	    HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
-//	    return 1;
-//	}
 
 	SimpleDrive_Init(2.0f);  // 2 Hz sinusoida
 
@@ -135,7 +125,8 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 
-  CurrentSense_Init(&hadc1);
+//  CurrentSense_Init(&hadc1);
+  FOC_Init(&hadc1);
   /* USER CODE END 2 */
 
   /* Initialize leds */
