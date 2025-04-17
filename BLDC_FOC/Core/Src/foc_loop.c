@@ -9,6 +9,7 @@
 #include "transforms.h"
 #include "svpwm.h"
 #include "current_sense.h"
+#include "as5048a.h"
 
 static PI_Controller pi_id = { .kp = 2.0f, .ki = 200.0f, .limit = 5.0f, .integral = 0.0f };
 static PI_Controller pi_iq = { .kp = 2.0f, .ki = 200.0f, .limit = 5.0f, .integral = 0.0f };
@@ -72,7 +73,12 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
         abc_current_t currents;
         CurrentSense_Read(&currents);
 
+        AS5048_ReadResult raw_angle;
+
+        AS5048_Get_Raw_Position(&raw_angle);
+
 //        // 3. Kąt elektryczny (np. testowo 0)
+
 //        float theta_el = 0.0f; // TODO: podłącz enkoder
 //
 //        // 4. Referencje

@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include "svpwm.h"
 #include "math.h"
-#include "encoder.h"
+#include "as5048a.h"
 #include "current_sense.h"
 #include "simple_drive.h"
 /* USER CODE END Includes */
@@ -65,6 +65,10 @@ float dt = 1.0f / SAMPLING_HZ;
 abc_current_t currents;
 abc_raw_t raw_currents;
 uint32_t lastPrint = 0;
+AS5048_ReadResult raw_angle;
+
+uint8_t tx[2] = {0xAA, 0x55};
+uint8_t rx[2] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,7 +125,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 
 //  CurrentSense_Init(&hadc1);
-  FOC_Init(&hadc1);
+//  FOC_Init(&hadc1);
   /* USER CODE END 2 */
 
   /* Initialize leds */
@@ -167,23 +171,39 @@ int main(void)
 //	  float angle = Encoder_GetAngle();
 //	  printf("Angle: %.2f\r\n", angle);
 
-	SimpleDrive_Run(&htim1);
 
-	// co 100 ms wypisz prądy
-	if (HAL_GetTick() - lastPrint >= 1000)
-	{
-	  CurrentSense_Read(&currents);
+	  HAL_GPIO_WritePin(IOEXP_CS_GPIO_Port, IOEXP_CS_Pin, GPIO_PIN_RESET);
+	  uint8_t tx[2] = {0xFF, 0xFF};
+	  uint8_t rx[2];
+	  HAL_SPI_TransmitReceive(&hspi3, tx, rx, 2, HAL_MAX_DELAY);
+	  printf("Received: 0x%02X 0x%02X\r\n", rx[0], rx[1]);
+	  HAL_GPIO_WritePin(IOEXP_CS_GPIO_Port, IOEXP_CS_Pin, GPIO_PIN_SET);
+	  HAL_Delay(50);
 
-	  CurrentSense_GetRaw(&raw_currents);
+//	AS5048_ReadResult angle;
+//	AS5048_Get_Raw_Position(&angle);
+//	printf("Angle: %u\r\n", angle.position);
+//	HAL_Delay(500);
 
-	  printf("Ia: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-			 currents.a, currents.b, currents.c);
-
-	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-			 raw_currents.a, raw_currents.b, raw_currents.c);
-
-	  lastPrint = HAL_GetTick();
-	}
+//	SimpleDrive_Run(&htim1);
+//
+//	// co 100 ms wypisz prądy
+//	if (HAL_GetTick() - lastPrint >= 1000)
+//	{
+//	  CurrentSense_Read(&currents);
+//
+//	  CurrentSense_GetRaw(&raw_currents);
+//
+//	  printf("Ia: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
+//			 currents.a, currents.b, currents.c);
+//
+//	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
+//			 raw_currents.a, raw_currents.b, raw_currents.c);
+//
+////	  AS5048_Get_Raw_Position(&raw_angle);
+//
+//	  lastPrint = HAL_GetTick();
+//	}
 
     /* USER CODE END WHILE */
 
@@ -238,10 +258,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
-{
-    Encoder_ProcessCapture(htim);
-}
 
 /* USER CODE END 4 */
 

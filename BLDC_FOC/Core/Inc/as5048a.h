@@ -69,7 +69,7 @@ AS5048_Status AS5048_Reg_Write(uint16_t regAddr, uint16_t value, uint16_t *confi
  */
 AS5048_ErrorFlags AS5048_Get_Error_Details(void);
 
-AS5048_ReadResult AS5048_Get_Raw_Position(void);
+void AS5048_Get_Raw_Position(AS5048_ReadResult *raw_angle);
 
 /**
  * @brief Add parity bit value into command to send

@@ -118,18 +118,17 @@ AS5048_ErrorFlags AS5048_Get_Error_Details(void) {
     return err;
 }
 
-AS5048_ReadResult AS5048_Get_Raw_Position(void) {
-    AS5048_ReadResult result = { .status = AS5048_OK, .position = 0 };
+void AS5048_Get_Raw_Position(AS5048_ReadResult *raw_angle) {
+
+	raw_angle -> position = 0;
 
     uint16_t raw = 0;
     AS5048_Status status = AS5048_Reg_Read(AS_ANGLE, &raw);
 
-    result.status = status;
+    raw_angle -> status = status;
     if (status == AS5048_OK) {
-        result.position = raw;
+    	raw_angle -> position = raw;
     } else if (status == AS5048_ERR_FLAG) {
-        result.errorFlags = AS5048_Get_Error_Details();
+    	raw_angle -> errorFlags = AS5048_Get_Error_Details();
     }
-
-    return result;
 }
