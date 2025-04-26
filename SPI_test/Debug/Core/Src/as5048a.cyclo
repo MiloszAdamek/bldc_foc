@@ -1,8 +1,0 @@
-../Core/Src/as5048a.c:11:10:AS5048_Add_Parity	3
-../Core/Src/as5048a.c:29:15:AS5048_Reg_Read	4
-../Core/Src/as5048a.c:82:15:AS5048_Reg_Write	5
-../Core/Src/as5048a.c:124:6:AS5048_Has_Error	1
-../Core/Src/as5048a.c:128:19:AS5048_Get_Error_Details	5
-../Core/Src/as5048a.c:152:6:AS5048_Get_Raw_Position	5
-../Core/Src/as5048a.c:177:7:AS5048_Get_Angle_Deg	2
-../Core/Src/as5048a.c:188:6:AS5048_Diagnose	4
