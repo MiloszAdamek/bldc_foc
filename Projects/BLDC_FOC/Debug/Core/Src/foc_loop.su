@@ -1,0 +1,4 @@
+../Core/Src/foc_loop.c:17:14:pi_control	24	static
+../Core/Src/foc_loop.c:32:6:FOC_Init	16	static
+../Core/Src/foc_loop.c:40:6:FOC_Update	56	static
+../Core/Src/foc_loop.c:65:6:HAL_ADCEx_InjectedConvCpltCallback	40	static

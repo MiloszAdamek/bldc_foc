@@ -1,0 +1,5 @@
+../Core/Src/current_sense.c:41:13:CurrentSense_CalibrateOffset	32	static
+../Core/Src/current_sense.c:64:6:CurrentSense_Init	16	static
+../Core/Src/current_sense.c:82:6:CurrentSense_Meassurement	40	static
+../Core/Src/current_sense.c:112:6:CurrentSense_Read	16	static
+../Core/Src/current_sense.c:119:6:CurrentSense_GetRaw	16	static
