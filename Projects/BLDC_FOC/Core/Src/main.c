@@ -29,9 +29,11 @@
 #include <stdio.h>
 #include "svpwm.h"
 #include "math.h"
-#include "as5048a.h"
 #include "current_sense.h"
 #include "simple_drive.h"
+#include "foc_loop.h"
+#include "as5048a.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,9 +43,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define FREQ_HZ    50.0f      // Częstotliwość sygnału
-#define SAMPLING_HZ 10000.0f  // Częstotliwość pętli głównej (lub aktualizacji)
-#define TWO_PI     6.28318530718f
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,22 +53,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-COM_InitTypeDef BspCOMInit;
-
 /* USER CODE BEGIN PV */
-uint16_t adc_raw[3]; // A, B, (C optional)
-float Valpha, Vbeta;
-
-float t = 0.0f;
-float dt = 1.0f / SAMPLING_HZ;
-
 abc_current_t currents;
 abc_raw_t raw_currents;
 uint32_t lastPrint = 0;
-AS5048_ReadResult raw_angle;
+//AS5048_ReadResult raw_angle;
 
-uint8_t tx[2] = {0xAA, 0x55};
-uint8_t rx[2] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -79,7 +69,16 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+int __io_putchar(int ch)
+{
+    if (ch == '\n') {
+        uint8_t ch2 = '\r';
+        HAL_UART_Transmit(&huart2, &ch2, 1, HAL_MAX_DELAY);
+    }
 
+    HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
+    return 1;
+}
 /* USER CODE END 0 */
 
 /**
@@ -91,8 +90,6 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-	SimpleDrive_Init(2.0f);  // 2 Hz sinusoida
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -101,7 +98,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  SimpleDrive_Init(2.0f);  // 2 Hz sinusoida
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -115,95 +112,53 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_USART2_UART_Init();
-  MX_TIM2_Init();
   MX_ADC1_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-//  HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc_raw, 3);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 
-//  CurrentSense_Init(&hadc1);
-//  FOC_Init(&hadc1);
+  FOC_Init(&hadc1);
   /* USER CODE END 2 */
-
-  /* Initialize leds */
-  BSP_LED_Init(LED_GREEN);
-
-  /* Initialize USER push-button, will be used to trigger an interrupt each time it's pressed.*/
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
-
-  /* Initialize COM1 port (115200, 8 bits (7-bit data + 1 stop bit), no parity */
-  BspCOMInit.BaudRate   = 115200;
-  BspCOMInit.WordLength = COM_WORDLENGTH_8B;
-  BspCOMInit.StopBits   = COM_STOPBITS_1;
-  BspCOMInit.Parity     = COM_PARITY_NONE;
-  BspCOMInit.HwFlowCtl  = COM_HWCONTROL_NONE;
-  if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
-  {
-    Error_Handler();
-  }
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  // Symulacja poimiarów napięc fazowych
-//	  float Va = 24.0f * sinf(TWO_PI * FREQ_HZ * t);
-//	  float Vb = 24.0f * sinf(TWO_PI * FREQ_HZ * t - 2.094f); // -120 stopni
-//
-//	  // Clarke transformacja
-//	  Valpha = Va;
-//	  Vbeta  = (Va + 2.0f * Vb) / 1.73205080757f;
-//
-//	  // Debug
-//	  printf("Valpha: %7.3f | Vbeta: %7.3f\r\n", Valpha, Vbeta);
-//
-//	  // SVPWM update
-//	  SVPWM_Update(Valpha, Vbeta);
-//
-//	  // Czas i opóźnienie
-//	  t += dt;
-//	  HAL_Delay(1);
-//
 
-//	  float angle = Encoder_GetAngle();
-//	  printf("Angle: %.2f\r\n", angle);
+	SimpleDrive_Run(&htim1);
+
+	// co 100 ms wypisz prądy i kąt
+	if (HAL_GetTick() - lastPrint >= 1000)
+	{
+	  printf("\n\n\n==============================");
+	  printf("\n       START WHILE\n");
+	  printf("==============================\n");
+
+	  CurrentSense_Read(&currents);
+	  CurrentSense_GetRaw(&raw_currents);
+
+	  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
+			 currents.a, currents.b, currents.c);
+
+	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
+			 raw_currents.a, raw_currents.b, raw_currents.c);
 
 
-	  HAL_GPIO_WritePin(IOEXP_CS_GPIO_Port, IOEXP_CS_Pin, GPIO_PIN_RESET);
-	  uint8_t tx[2] = {0xFF, 0xFF};
-	  uint8_t rx[2];
-	  HAL_SPI_TransmitReceive(&hspi3, tx, rx, 2, HAL_MAX_DELAY);
-	  printf("Received: 0x%02X 0x%02X\r\n", rx[0], rx[1]);
-	  HAL_GPIO_WritePin(IOEXP_CS_GPIO_Port, IOEXP_CS_Pin, GPIO_PIN_SET);
-	  HAL_Delay(50);
+	  const float angle = AS5048_Get_Angle_Deg();
+	  if (angle >= 0) {
+		  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
+	  } else {
+		  printf("[ANGLE] Błąd odczytu kąta\n");
+	  }
 
-//	AS5048_ReadResult angle;
-//	AS5048_Get_Raw_Position(&angle);
-//	printf("Angle: %u\r\n", angle.position);
-//	HAL_Delay(500);
+	  lastPrint = HAL_GetTick();
 
-//	SimpleDrive_Run(&htim1);
-//
-//	// co 100 ms wypisz prądy
-//	if (HAL_GetTick() - lastPrint >= 1000)
-//	{
-//	  CurrentSense_Read(&currents);
-//
-//	  CurrentSense_GetRaw(&raw_currents);
-//
-//	  printf("Ia: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-//			 currents.a, currents.b, currents.c);
-//
-//	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-//			 raw_currents.a, raw_currents.b, raw_currents.c);
-//
-////	  AS5048_Get_Raw_Position(&raw_angle);
-//
-//	  lastPrint = HAL_GetTick();
-//	}
+	  printf("\n==============================");
+	  printf("\n        STOP WHILE\n");
+	  printf("==============================\n");
+	}
 
     /* USER CODE END WHILE */
 
@@ -258,6 +213,10 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+
+}
 
 /* USER CODE END 4 */
 

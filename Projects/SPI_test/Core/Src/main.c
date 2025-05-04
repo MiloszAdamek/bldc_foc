@@ -99,8 +99,8 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI1_Init();
   MX_USART2_UART_Init();
+  MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
   DWT_Init();
   /* USER CODE END 2 */
@@ -129,7 +129,7 @@ int main(void)
 		printf("[ANGLE] Błąd odczytu kąta\n");
 	}
 
-	AS5048_Diagnose();
+//	AS5048_Diagnose();
 
 	printf("==============================");
 	printf("\n        STOP WHILE\n");

@@ -34,9 +34,7 @@ Core/Src/simple_drive.o: ../Core/Src/simple_drive.c \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
- ../Core/Inc/main.h ../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.h \
- ../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo_errno.h \
- ../Core/Inc/stm32g4xx_nucleo_conf.h
+ ../Core/Inc/main.h
 ../Core/Inc/simple_drive.h:
 ../Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g4xx.h:
 ../Drivers/CMSIS/Device/ST/STM32G4xx/Include/stm32g431xx.h:
@@ -73,6 +71,3 @@ Core/Src/simple_drive.o: ../Core/Src/simple_drive.c \
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h:
 ../Core/Inc/main.h:
-../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.h:
-../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo_errno.h:
-../Core/Inc/stm32g4xx_nucleo_conf.h:

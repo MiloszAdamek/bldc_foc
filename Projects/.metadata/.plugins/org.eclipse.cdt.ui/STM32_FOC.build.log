@@ -1,0 +1,10 @@
+14:36:58 **** Incremental Build of configuration Debug for project STM32_FOC ****
+make -j16 all 
+arm-none-eabi-size  STM32_FOC.elf 
+   text	   data	    bss	    dec	    hex	filename
+  59464	    468	   2404	  62336	   f380	STM32_FOC.elf
+Finished building: default.size.stdout
+ 
+
+14:36:58 Build Finished. 0 errors, 0 warnings. (took 195ms)
+

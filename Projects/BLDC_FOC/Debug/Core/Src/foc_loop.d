@@ -34,10 +34,7 @@ Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/foc_loop.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
  ../Core/Inc/current_sense.h ../Core/Inc/transforms.h ../Core/Inc/svpwm.h \
- ../Core/Inc/main.h ../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.h \
- ../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo_errno.h \
- ../Core/Inc/stm32g4xx_nucleo_conf.h ../Core/Inc/current_sense.h \
- ../Core/Inc/as5048a.h ../Core/Inc/spi.h
+ ../Core/Inc/main.h ../Core/Inc/current_sense.h
 ../Core/Inc/foc_loop.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
 ../Core/Inc/stm32g4xx_hal_conf.h:
@@ -77,9 +74,4 @@ Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/foc_loop.h \
 ../Core/Inc/transforms.h:
 ../Core/Inc/svpwm.h:
 ../Core/Inc/main.h:
-../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo.h:
-../Drivers/BSP/STM32G4xx_Nucleo/stm32g4xx_nucleo_errno.h:
-../Core/Inc/stm32g4xx_nucleo_conf.h:
 ../Core/Inc/current_sense.h:
-../Core/Inc/as5048a.h:
-../Core/Inc/spi.h:

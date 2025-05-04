@@ -11,6 +11,7 @@
 #include "main.h"
 #include "spi.h"
 #include <stdbool.h>
+#include "delay_us.h"
 
 // Control and Error Registers
 #define AS_NOP 				0x0000
@@ -23,6 +24,11 @@
 #define AS_DIAG_AGC			0x3FFD
 #define AS_MAGNITUDE		0x3FFE
 #define AS_ANGLE			0x3FFF
+
+#define AS5048_SPI_HANDLE   (&hspi3)
+
+#define AS_US_DELAY			4
+
 
 // Status funkcji
 typedef enum {
@@ -84,5 +90,13 @@ uint16_t AS5048_Add_Parity(uint16_t cmd);
  * @return Bool 1 -> ERROR
  */
 bool AS5048_Has_Error(uint16_t response);
+
+/**
+ * @brief Convert raw angle to degrees
+ * @return float, -1.0f when raw.status != AS5048_OK
+ */
+float AS5048_Get_Angle_Deg(void);
+
+void AS5048_Diagnose(void);
 
 #endif /* INC_AS5048A_H_ */

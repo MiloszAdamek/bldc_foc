@@ -1,0 +1,20 @@
+14:39:36 **** Build of configuration Debug for project BLDC_FOC ****
+make -j16 all 
+arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: BLDC_FOC.elf
+ 
+arm-none-eabi-size  BLDC_FOC.elf 
+arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
+   text	   data	    bss	    dec	    hex	filename
+  61552	    500	   2404	  64456	   fbc8	BLDC_FOC.elf
+Finished building: default.size.stdout
+ 
+Finished building: BLDC_FOC.list
+ 
+14:39:40 **** Incremental Build of configuration Debug for project BLDC_FOC ****
+make -j16 all 
+arm-none-eabi-size  BLDC_FOC.elf 
+   text	   data	    bss	    dec	    hex	filename
+  61552	    500	   2404	  64456	   fbc8	BLDC_FOC.elf
+Finished building: default.size.stdout
+ 

@@ -28,8 +28,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32g4xx_hal.h"
-#include "stm32g4xx_nucleo.h"
-#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -77,14 +75,14 @@ void Error_Handler(void);
 #define PWM_EN_V_GPIO_Port GPIOB
 #define PWM_EN_W_Pin GPIO_PIN_15
 #define PWM_EN_W_GPIO_Port GPIOB
-#define IOEXP_CS_Pin GPIO_PIN_9
-#define IOEXP_CS_GPIO_Port GPIOC
 #define PWM_UH_Pin GPIO_PIN_8
 #define PWM_UH_GPIO_Port GPIOA
 #define PWM_VH_Pin GPIO_PIN_9
 #define PWM_VH_GPIO_Port GPIOA
 #define PWM_WH_Pin GPIO_PIN_10
 #define PWM_WH_GPIO_Port GPIOA
+#define SPI3_CS_Pin GPIO_PIN_2
+#define SPI3_CS_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

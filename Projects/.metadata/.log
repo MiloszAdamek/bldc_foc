@@ -1,0 +1,77 @@
+!SESSION 2025-05-04 14:20:17.939 -----------------------------------------------
+eclipse.buildId=Version 1.17.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_GB
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -data E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-05-04 14:20:22.462
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-05-04 14:20:22.463
+!MESSAGE Log4j2 initialized with config file E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-05-04 14:20:24.809
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.ui.workbench 4 2 2025-05-04 14:21:13.565
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.ui.workbench".
+!STACK 0
+com.teamdev.jxbrowser.navigation.TimeoutException: Failed to complete the navigation within 45 seconds.
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadAndWait(NavigationImpl.java:232)
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadUrlAndWait(NavigationImpl.java:104)
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadUrlAndWait(NavigationImpl.java:91)
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadUrlAndWait(NavigationImpl.java:83)
+	at com.teamdev.jxbrowser.browser.internal.BrowserImpl.initializeMainFrame(BrowserImpl.java:401)
+	at com.teamdev.jxbrowser.profile.internal.ProfileImpl.newBrowser(ProfileImpl.java:150)
+	at com.st.microxplorer.plugins.userauth.WebApp.<init>(WebApp.java:173)
+	at com.st.microxplorer.plugins.userauth.WebApp.getInstance(WebApp.java:759)
+	at com.st.microxplorer.plugins.userauth.UserAuth.getBrowserView(UserAuth.java:488)
+	at com.st.microxplorer.plugins.userauth.UserAuth.checkInfile(UserAuth.java:251)
+	at com.st.microxplorer.plugins.userauth.UserAuth.activatePlugin(UserAuth.java:169)
+	at com.st.stm32cube.common.mx.userauth.UserAuthAdapter.<init>(UserAuthAdapter.java:29)
+	at com.st.stm32cube.common.mx.userauth.UserAuthProvider.getUserAuthAdapter(UserAuthProvider.java:16)
+	at com.st.stm32cube.common.ecosystemintegration.ui.core.MCUEcoSystemIntegrationUiHelper.getUserAuth(MCUEcoSystemIntegrationUiHelper.java:100)
+	at com.st.stm32cube.ide.mcu.userauth.UserAuthStartup.earlyStartup(UserAuthStartup.java:32)
+	at org.eclipse.ui.internal.EarlyStartupRunnable.runEarlyStartup(EarlyStartupRunnable.java:79)
+	at org.eclipse.ui.internal.EarlyStartupRunnable.run(EarlyStartupRunnable.java:55)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:47)
+	at org.eclipse.ui.internal.Workbench$39.run(Workbench.java:2762)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+
+!ENTRY org.eclipse.ui 4 0 2025-05-04 14:21:13.567
+!MESSAGE Unable to execute early startup code for the org.eclipse.ui.IStartup extension contributed by the 'com.st.stm32cube.ide.mcu.ide' plug-in.
+!STACK 0
+com.teamdev.jxbrowser.navigation.TimeoutException: Failed to complete the navigation within 45 seconds.
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadAndWait(NavigationImpl.java:232)
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadUrlAndWait(NavigationImpl.java:104)
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadUrlAndWait(NavigationImpl.java:91)
+	at com.teamdev.jxbrowser.navigation.internal.NavigationImpl.loadUrlAndWait(NavigationImpl.java:83)
+	at com.teamdev.jxbrowser.browser.internal.BrowserImpl.initializeMainFrame(BrowserImpl.java:401)
+	at com.teamdev.jxbrowser.profile.internal.ProfileImpl.newBrowser(ProfileImpl.java:150)
+	at com.st.microxplorer.plugins.userauth.WebApp.<init>(WebApp.java:173)
+	at com.st.microxplorer.plugins.userauth.WebApp.getInstance(WebApp.java:759)
+	at com.st.microxplorer.plugins.userauth.UserAuth.getBrowserView(UserAuth.java:488)
+	at com.st.microxplorer.plugins.userauth.UserAuth.checkInfile(UserAuth.java:251)
+	at com.st.microxplorer.plugins.userauth.UserAuth.activatePlugin(UserAuth.java:169)
+	at com.st.stm32cube.common.mx.userauth.UserAuthAdapter.<init>(UserAuthAdapter.java:29)
+	at com.st.stm32cube.common.mx.userauth.UserAuthProvider.getUserAuthAdapter(UserAuthProvider.java:16)
+	at com.st.stm32cube.common.ecosystemintegration.ui.core.MCUEcoSystemIntegrationUiHelper.getUserAuth(MCUEcoSystemIntegrationUiHelper.java:100)
+	at com.st.stm32cube.ide.mcu.userauth.UserAuthStartup.earlyStartup(UserAuthStartup.java:32)
+	at org.eclipse.ui.internal.EarlyStartupRunnable.runEarlyStartup(EarlyStartupRunnable.java:79)
+	at org.eclipse.ui.internal.EarlyStartupRunnable.run(EarlyStartupRunnable.java:55)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:47)
+	at org.eclipse.ui.internal.Workbench$39.run(Workbench.java:2762)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-05-04 14:21:15.920
+!MESSAGE Indexed 'FOC_STM32' (19 sources, 111 headers) in 2.72 sec: 9,757 declarations; 37,120 references; 3 unresolved inclusions; 46 syntax errors; 171 unresolved names (0.36%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-05-04 14:22:34.813
+!MESSAGE Indexed 'STM32_FOC' (40 sources, 138 headers) in 2.28 sec: 16,037 declarations; 95,187 references; 3 unresolved inclusions; 46 syntax errors; 171 unresolved names (0.15%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-05-04 14:24:16.686
+!MESSAGE Indexed 'BLDC_FOC' (35 sources, 134 headers) in 1.26 sec: 15,606 declarations; 89,351 references; 3 unresolved inclusions; 46 syntax errors; 171 unresolved names (0.16%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-05-04 14:39:32.269
+!MESSAGE Indexed 'BLDC_FOC' (40 sources, 138 headers) in 2.07 sec: 16,032 declarations; 95,122 references; 3 unresolved inclusions; 46 syntax errors; 171 unresolved names (0.15%)

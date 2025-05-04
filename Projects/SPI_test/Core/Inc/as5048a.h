@@ -25,9 +25,9 @@
 #define AS_MAGNITUDE		0x3FFE
 #define AS_ANGLE			0x3FFF
 
-#define AS5048_CS_LOW()    		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET)
-#define AS5048_CS_HIGH()   		HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET)
-#define AS5048_SPI_HANDLE    	(&hspi1)
+#define AS5048_SPI_HANDLE   (&hspi3)
+
+#define AS_US_DELAY			4
 
 
 // Status funkcji

@@ -60,8 +60,8 @@ all: main-build
 main-build: SPI_test.elf secondary-outputs
 
 # Tool invocations
-SPI_test.elf SPI_test.map: $(OBJS) $(USER_OBJS) C:\Users\Miloush\STM32CubeIDE\workspace_1.17.0\SPI_test\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "SPI_test.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Miloush\STM32CubeIDE\workspace_1.17.0\SPI_test\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SPI_test.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+SPI_test.elf SPI_test.map: $(OBJS) $(USER_OBJS) E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\SPI_test\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "SPI_test.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\SPI_test\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SPI_test.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

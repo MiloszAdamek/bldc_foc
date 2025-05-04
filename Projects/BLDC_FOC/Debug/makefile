@@ -10,7 +10,6 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include Drivers/STM32G4xx_HAL_Driver/Src/subdir.mk
--include Drivers/BSP/STM32G4xx_Nucleo/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
@@ -61,8 +60,8 @@ all: main-build
 main-build: BLDC_FOC.elf secondary-outputs
 
 # Tool invocations
-BLDC_FOC.elf BLDC_FOC.map: $(OBJS) $(USER_OBJS) E:\AGH\AiR\Praca_inzynierska\bldc_foc\BLDC_FOC\STM32G431RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+BLDC_FOC.elf BLDC_FOC.map: $(OBJS) $(USER_OBJS) E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
