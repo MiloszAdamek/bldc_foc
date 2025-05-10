@@ -67,7 +67,8 @@ void SVPWM_Update(float Valpha, float Vbeta) {
             Ta = Tb = Tc = T / 2;
             break;
     }
-	printf("Ta: %7.3f | Tb: %7.3f | Tc: %7.3f\r\n", Ta, Tb, Tc);
+
+//	printf("Ta: %7.3f | Tb: %7.3f | Tc: %7.3f\r\n", Ta, Tb, Tc);
 
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)Ta);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, (uint16_t)Tb);

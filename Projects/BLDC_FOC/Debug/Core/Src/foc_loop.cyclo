@@ -1,4 +1,9 @@
-../Core/Src/foc_loop.c:16:14:pi_control	5
-../Core/Src/foc_loop.c:31:6:FOC_Init	1
-../Core/Src/foc_loop.c:39:6:FOC_Update	1
-../Core/Src/foc_loop.c:64:6:HAL_ADCEx_InjectedConvCpltCallback	2
+../Core/Inc/transforms.h:19:20:ClarkeTransform	1
+../Core/Inc/transforms.h:45:20:ParkTransformTrig	1
+../Core/Inc/transforms.h:51:20:InvParkTransformTrig	1
+../Core/Src/foc_loop.c:28:21:pi_control	5
+../Core/Src/foc_loop.c:43:6:FOC_Init	2
+../Core/Src/foc_loop.c:62:6:FOC_Update	1
+../Core/Src/foc_loop.c:108:6:HAL_ADCEx_InjectedConvCpltCallback	2
+../Core/Src/foc_loop.c:119:6:HAL_TIM_OC_DelayElapsedCallback	3
+../Core/Src/foc_loop.c:128:6:HAL_TIM_PeriodElapsedCallback	4

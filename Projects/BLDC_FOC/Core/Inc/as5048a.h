@@ -29,6 +29,9 @@
 
 #define AS_US_DELAY			4
 
+#define AS5048_RESOLUTION   16384.0f
+#define TWO_PI              6.28318530718f
+
 
 // Status funkcji
 typedef enum {
@@ -98,5 +101,21 @@ bool AS5048_Has_Error(uint16_t response);
 float AS5048_Get_Angle_Deg(void);
 
 void AS5048_Diagnose(void);
+
+static inline float GetElectricalAngle(uint16_t raw_position, uint8_t pole_pairs)
+{
+    float theta_mech = ((float)raw_position / AS5048_RESOLUTION) * TWO_PI;
+    float theta_el = theta_mech * pole_pairs;
+
+    // Normalizacja do 0–2π
+    if (theta_el > TWO_PI)
+        theta_el -= TWO_PI;
+    else if (theta_el < 0.0f)
+        theta_el += TWO_PI;
+
+    return theta_el;
+}
+
+void AS5048_Init();
 
 #endif /* INC_AS5048A_H_ */

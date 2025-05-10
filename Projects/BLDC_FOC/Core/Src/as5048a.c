@@ -31,8 +31,12 @@ static uint16_t AS5048_AddParity(uint16_t cmd) {
     return cmd;
 }
 
+void AS5048_Init(){
+	DWT_Init();
+}
+
 AS5048_Status AS5048_Reg_Read(uint16_t regAddr, uint16_t *dst) {
-    printf("\n[READ] Rejestr: 0x%04X\n", regAddr);
+//    printf("\n[READ] Rejestr: 0x%04X\n", regAddr);
 
     uint16_t cmd = 0x4000 | (regAddr & 0x3FFF);
     cmd = AS5048_AddParity(cmd);
@@ -40,45 +44,45 @@ AS5048_Status AS5048_Reg_Read(uint16_t regAddr, uint16_t *dst) {
     uint8_t txBuf[2] = {cmd >> 8, cmd & 0xFF};
     uint8_t rxBuf[2] = {0};
 
-    printf("[SPI] TX (read cmd): %02X %02X\n", txBuf[0], txBuf[1]);
+//    printf("[SPI] TX (read cmd): %02X %02X\n", txBuf[0], txBuf[1]);
 
     AS5048_CS_LOW();
     delay_us(AS_US_DELAY/2);
     if (HAL_SPI_TransmitReceive(AS5048_SPI_HANDLE, txBuf, rxBuf, 2, HAL_MAX_DELAY) != HAL_OK) {
         AS5048_CS_HIGH();
-        printf("[SPI] Błąd transmisji komendy\n");
+//        printf("[SPI] Błąd transmisji komendy\n");
         return AS5048_ERR_SPI;
     }
     AS5048_CS_HIGH();
     delay_us(AS_US_DELAY);
 
-    printf("[SPI] RX (read dummy): %02X %02X\n", rxBuf[0], rxBuf[1]);
+//    printf("[SPI] RX (read dummy): %02X %02X\n", rxBuf[0], rxBuf[1]);
 
     uint8_t txBuf2[2] = {0x00, 0x00};
     uint8_t rxBuf2[2] = {0};
 
-    printf("[SPI] TX (NOP): %02X %02X\n", txBuf2[0], txBuf2[1]);
+//    printf("[SPI] TX (NOP): %02X %02X\n", txBuf2[0], txBuf2[1]);
 
     AS5048_CS_LOW();
     delay_us(AS_US_DELAY/2);
     if (HAL_SPI_TransmitReceive(AS5048_SPI_HANDLE, txBuf2, rxBuf2, 2, HAL_MAX_DELAY) != HAL_OK) {
         AS5048_CS_HIGH();
-        printf("[SPI] Błąd transmisji NOP\n");
+//        printf("[SPI] Błąd transmisji NOP\n");
         return AS5048_ERR_SPI;
     }
     AS5048_CS_HIGH();
 
-    printf("[SPI] RX (data): %02X %02X\n", rxBuf2[0], rxBuf2[1]);
+//    printf("[SPI] RX (data): %02X %02X\n", rxBuf2[0], rxBuf2[1]);
 
     uint16_t response = (rxBuf2[0] << 8) | rxBuf2[1];
 
     if (regAddr != 0x0001 && AS5048_Has_Error(response)) {
-        printf("[ERROR] Bit błędu ustawiony w odpowiedzi: 0x%04X\n", response);
+//        printf("[ERROR] Bit błędu ustawiony w odpowiedzi: 0x%04X\n", response);
         return AS5048_ERR_FLAG;
     }
 
     *dst = response & 0x3FFF;
-    printf("[READ] Dane: 0x%04X (%u)\n", *dst, *dst);
+//    printf("[READ] Dane: 0x%04X (%u)\n", *dst, *dst);
     return AS5048_OK;
 }
 
@@ -125,7 +129,7 @@ bool AS5048_Has_Error(uint16_t response) {
 }
 
 AS5048_ErrorFlags AS5048_Get_Error_Details(void) {
-    printf("[ERROR] Rozpoczynam odczyt rejestru błędów (0x0001)\n");
+//    printf("[ERROR] Rozpoczynam odczyt rejestru błędów (0x0001)\n");
 
     AS5048_ErrorFlags err = {0};
     uint16_t response = 0;
@@ -136,10 +140,10 @@ AS5048_ErrorFlags AS5048_Get_Error_Details(void) {
     err.offsetFinished  = reg & (1 << 1);
     err.cordicOverflow  = reg & (1 << 2);
 
-    printf("[ERROR] Rejestr błędów: 0x%04X\n", reg);
-    printf("        → Watchdog: %s\n", err.watchdogError ? "TAK" : "nie");
-    printf("        → Offset finished: %s\n", err.offsetFinished ? "TAK" : "nie");
-    printf("        → CORDIC overflow: %s\n", err.cordicOverflow ? "TAK" : "nie");
+//    printf("[ERROR] Rejestr błędów: 0x%04X\n", reg);
+//    printf("        → Watchdog: %s\n", err.watchdogError ? "TAK" : "nie");
+//    printf("        → Offset finished: %s\n", err.offsetFinished ? "TAK" : "nie");
+//    printf("        → CORDIC overflow: %s\n", err.cordicOverflow ? "TAK" : "nie");
 
     // CLEAR ERROR FLAG mechanizm z dokumentacji: kolejny odczyt kasuje flagę
     uint16_t dummy;
@@ -167,7 +171,7 @@ void AS5048_Get_Raw_Position(AS5048_ReadResult *raw_angle) {
     } else if (status == AS5048_ERR_FLAG) {
         raw_angle->errorFlags = AS5048_Get_Error_Details();
     } else {
-        printf("[ERROR] Błąd SPI podczas odczytu kąta\n");
+//        printf("[ERROR] Błąd SPI podczas odczytu kąta\n");
     }
 }
 
@@ -179,9 +183,19 @@ float AS5048_Get_Angle_Deg(void) {
         return -1.0f;
     }
 
-    float angle = ((float)raw.position * 360.0f) / 16384.0f;
+    float angle = ((float)raw.position * 360.0f) / AS5048_RESOLUTION;
     return angle;
 }
+
+
+
+
+
+
+
+
+
+
 
 
 //void AS5048_Diagnose(void) {

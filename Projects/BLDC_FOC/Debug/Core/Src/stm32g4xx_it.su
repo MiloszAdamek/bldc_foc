@@ -10,3 +10,4 @@
 ../Core/Src/stm32g4xx_it.c:205:6:ADC1_2_IRQHandler	8	static
 ../Core/Src/stm32g4xx_it.c:219:6:TIM1_BRK_TIM15_IRQHandler	8	static
 ../Core/Src/stm32g4xx_it.c:233:6:TIM1_UP_TIM16_IRQHandler	8	static
+../Core/Src/stm32g4xx_it.c:247:6:TIM1_CC_IRQHandler	8	static

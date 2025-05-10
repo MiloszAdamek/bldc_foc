@@ -6,14 +6,26 @@
  */
 
 #include "foc_loop.h"
-#include "transforms.h"
-#include "svpwm.h"
-#include "current_sense.h"
 
 static PI_Controller pi_id = { .kp = 2.0f, .ki = 200.0f, .limit = 5.0f, .integral = 0.0f };
 static PI_Controller pi_iq = { .kp = 2.0f, .ki = 200.0f, .limit = 5.0f, .integral = 0.0f };
+static abc_current_t currents;
+static dq_ref_t current_ref;
 
-static float pi_control(PI_Controller *pi, float error)
+volatile AS5048_ReadResult raw = {0};
+volatile float theta_el = 0.0f;
+
+// FLAGS
+volatile bool currents_ready = false;
+volatile bool encoder_ready = false;
+volatile bool encoder_trigger = false;
+
+// DEBUG
+volatile float debug_angle_deg = 0.0f;
+volatile float debug_ia = 0.0f, debug_ib = 0.0f, debug_ic = 0.0f;
+volatile uint16_t raw_copy = 0;
+
+static inline float pi_control(PI_Controller *pi, float error)
 {
     pi->integral += error * pi->ki * 0.00005f; // Ts = 50 us
 
@@ -28,62 +40,120 @@ static float pi_control(PI_Controller *pi, float error)
     return output;
 }
 
-void FOC_Init(ADC_HandleTypeDef *hadc)
+void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim)
 {
     pi_id.integral = 0.0f;
     pi_iq.integral = 0.0f;
 
+    if (htim->Instance == TIM1){
+        HAL_TIM_PWM_Start(htim, TIM_CHANNEL_1);
+        HAL_TIM_PWM_Start(htim, TIM_CHANNEL_2);
+        HAL_TIM_PWM_Start(htim, TIM_CHANNEL_3);
+
+        HAL_TIM_Base_Start_IT(htim);           		// Start timera z przerwaniem
+        HAL_TIM_OC_Start_IT(htim, TIM_CHANNEL_4); 	// Start CH4 jako output compare z przerwaniem
+    }
+
+    AS5048_Init();
     CurrentSense_Init(hadc);
+
 }
 
-void FOC_Update(const abc_current_t *currents, float theta_el, const dq_ref_t *i_ref)
+void FOC_Update(abc_current_t *currents, float sin_theta, float cos_theta, const dq_ref_t *i_ref)
 {
     float ialpha, ibeta;
     float id, iq;
     float vd, vq;
     float valpha, vbeta;
 
-    // Clarke
+    // 1. Clarke transformacja – abc → αβ
     ClarkeTransform(currents->a, currents->b, &ialpha, &ibeta);
 
-    // Park
-    ParkTransform(ialpha, ibeta, theta_el, &id, &iq);
+    // 2. Park transformacja – αβ → dq
+    ParkTransformTrig(ialpha, ibeta, sin_theta, cos_theta, &id, &iq);
 
-    // PI kontrola
+    // 3. PI regulatory
     vd = pi_control(&pi_id, i_ref->d - id);
     vq = pi_control(&pi_iq, i_ref->q - iq);
 
-    // Inverse Park
-    InvParkTransform(vd, vq, theta_el, &valpha, &vbeta);
+    // 4. Inverse Park – dq → αβ
+    InvParkTransformTrig(vd, vq, sin_theta, cos_theta, &valpha, &vbeta);
 
-    // SVPWM
-    SVPWM_Update(valpha, vbeta);
+    // 5. SVPWM
+    SVPWM_Update(valpha, valpha);
 }
 
-// FOC Loop
+// Pomiar prądu
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        // 1. Pomiar prądów
         CurrentSense_Meassurement(hadc);
-
-        // 2. Pobranie zmierzonych wartości
-        abc_current_t currents;
         CurrentSense_Read(&currents);
-
-//        // 3. Kąt elektryczny (np. testowo 0)
-//        float theta_el = 0.0f; // TODO: podłącz enkoder
-//
-//        // 4. Referencje
-//        dq_ref_t current_ref = {
-//            .d = 0.0f,
-//            .q = 1.0f  // 1A dla testu
-//        };
-//
-//        // 5. FOC
-//        FOC_Update(&currents, theta_el, &current_ref);
+        currents_ready = true;
     }
 }
+
+// Odczyt enkodera
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM1 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
+    {
+        encoder_trigger = true;
+    }
+}
+
+// FOC loop
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+
+    if (htim->Instance == TIM1)
+    {
+
+        if (currents_ready && encoder_ready)
+        {
+
+            float sin_theta = sinf(theta_el);
+            float cos_theta = cosf(theta_el);
+
+            FOC_Update(&currents, sin_theta, cos_theta, &current_ref);
+
+            // DEBUG SECTION
+
+            debug_angle_deg = ((float)raw_copy * 360.0f) / 16384.0f;
+            debug_ia = currents.a;
+            debug_ib = currents.b;
+            debug_ic = currents.c;
+
+            // END DEBUG SECTION
+
+            currents_ready = false;
+            encoder_ready = false;
+        }
+    }
+}
+
+// FOC Loop
+//void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+//{
+//    if (hadc->Instance == ADC1)
+//    {
+//        // 1. Pomiar prądów i pobranie zmierzonych wartości
+//        CurrentSense_Meassurement(hadc);
+//        CurrentSense_Read(&currents);
+//
+//        // 3. Odczyt kąta z enkodera
+//        AS5048_Get_Raw_Position(&raw);
+//        theta_el = GetElectricalAngle(raw.position, MOTOR_POLE_PAIRS);
+//
+//        float sin_theta = sinf(theta_el);
+//        float cos_theta = cosf(theta_el);
+//
+//        // 4. FOC aktualizacja
+//        FOC_Update(&currents, sin_theta, cos_theta, &current_ref);
+//    }
+//}
+
+
 
 
