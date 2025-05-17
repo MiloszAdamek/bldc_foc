@@ -1,0 +1,10 @@
+12:18:11 **** Incremental Build of configuration Debug for project ihm03_example ****
+make -j16 all 
+arm-none-eabi-size  ihm03_example.elf 
+   text	   data	    bss	    dec	    hex	filename
+  37436	   1272	   7160	  45868	   b32c	ihm03_example.elf
+Finished building: default.size.stdout
+ 
+
+12:18:12 Build Finished. 0 errors, 0 warnings. (took 292ms)
+

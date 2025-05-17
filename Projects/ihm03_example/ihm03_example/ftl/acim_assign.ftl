@@ -1,0 +1,1 @@
+<#assign PWM_SwitchOff = "R3_2_SwitchOffPWM">

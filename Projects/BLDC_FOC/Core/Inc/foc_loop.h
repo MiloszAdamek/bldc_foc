@@ -9,7 +9,7 @@
 #define INC_FOC_LOOP_H_
 
 #define TWO_PI 				6.28318530718f
-#define MOTOR_POLE_PAIRS	6
+#define MOTOR_POLE_PAIRS	7
 
 #include "stm32g4xx_hal.h"
 #include "transforms.h"
@@ -31,24 +31,33 @@ typedef struct {
     float q;
 } dq_ref_t;
 
+extern volatile dq_ref_t current_ref;
 extern volatile float theta_el;
 extern volatile AS5048_ReadResult raw;
+extern volatile float encoder_offset;
+extern volatile int encoder_direction;
 
 // Debug global variables
 extern volatile float debug_angle_deg;
+extern volatile float debug_theta_el;
 extern volatile float debug_ia;
 extern volatile float debug_ib;
 extern volatile float debug_ic;
 extern volatile uint16_t raw_copy;
 
+
 // Flags
 extern volatile bool currents_ready;
 extern volatile bool encoder_ready;
 extern volatile bool encoder_trigger;
+extern volatile bool encoder_calibrated;
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim);
 
 // Główna pętla FOC
-void FOC_Update(abc_current_t *currents, float sin_theta, float cos_theta, const dq_ref_t *i_ref);
+void FOC_Update(abc_current_t *currents, float sin_theta, float cos_theta, volatile dq_ref_t *i_ref);
+
+// Kalibracja enkodera
+void FOC_CalibrateEncoder(void);
 
 #endif /* INC_FOC_LOOP_H_ */

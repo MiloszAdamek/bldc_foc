@@ -1,0 +1,4 @@
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mcp.c:54:9:RI_SetRegCommandParser	72	static
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mcp.c:157:9:RI_GetRegCommandParser	56	static
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mcp.c:223:6:MCP_ReceivedPacket	32	static
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mcp.c:403:9:MCP_RegisterCallBack	0	static

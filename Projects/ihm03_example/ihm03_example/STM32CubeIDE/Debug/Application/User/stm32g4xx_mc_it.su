@@ -1,0 +1,3 @@
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32g4xx_mc_it.c:71:6:ADC1_2_IRQHandler	0	static
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32g4xx_mc_it.c:103:6:TIM1_UP_TIM16_IRQHandler	0	static
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32g4xx_mc_it.c:117:6:TIM1_BRK_TIM15_IRQHandler	8	static

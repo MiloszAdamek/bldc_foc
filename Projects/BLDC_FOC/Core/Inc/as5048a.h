@@ -12,6 +12,7 @@
 #include "spi.h"
 #include <stdbool.h>
 #include "delay_us.h"
+#include "math.h"
 
 // Control and Error Registers
 #define AS_NOP 				0x0000
@@ -104,16 +105,14 @@ void AS5048_Diagnose(void);
 
 static inline float GetElectricalAngle(uint16_t raw_position, uint8_t pole_pairs)
 {
-    float theta_mech = ((float)raw_position / AS5048_RESOLUTION) * TWO_PI;
-    float theta_el = theta_mech * pole_pairs;
+    float mech_angle = ((float)raw_position / 16384.0f) * 2.0f * M_PI;
+    float elec_angle = mech_angle * pole_pairs;
 
-    // Normalizacja do 0–2π
-    if (theta_el > TWO_PI)
-        theta_el -= TWO_PI;
-    else if (theta_el < 0.0f)
-        theta_el += TWO_PI;
+    elec_angle = fmodf(elec_angle, 2.0f * M_PI);
+    if (elec_angle < 0.0f)
+        elec_angle += 2.0f * M_PI;
 
-    return theta_el;
+    return elec_angle;
 }
 
 void AS5048_Init();

@@ -26,7 +26,7 @@ typedef struct {
 void CurrentSense_Init(ADC_HandleTypeDef *hadc);
 
 // Realizacja pomiaru
-void CurrentSense_Meassurement(ADC_HandleTypeDef* hadc);
+void CurrentSense_Measurement(ADC_HandleTypeDef* hadc);
 
 // Zwraca zmierzone prądy fazowe
 void CurrentSense_Read(abc_current_t *currents);

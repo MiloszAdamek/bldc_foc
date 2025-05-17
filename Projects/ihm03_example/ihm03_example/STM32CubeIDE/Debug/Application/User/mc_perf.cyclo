@@ -1,0 +1,8 @@
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:23:6:MC_Perf_Measure_Init	2
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:64:6:MC_Perf_Clear	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:94:6:MC_BG_Perf_Measure_Start	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:118:6:MC_Perf_Measure_Stop	5
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:180:6:MC_BG_Perf_Measure_Stop	5
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:241:9:MC_Perf_GetCPU_Load	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:275:9:MC_Perf_GetMaxCPU_Load	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_perf.c:304:9:MC_Perf_GetMinCPU_Load	3

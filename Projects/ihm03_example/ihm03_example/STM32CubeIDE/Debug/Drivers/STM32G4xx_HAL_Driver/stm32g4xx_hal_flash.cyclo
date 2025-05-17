@@ -1,0 +1,12 @@
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:173:19:HAL_FLASH_Program	17
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:255:19:HAL_FLASH_Program_IT	13
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:467:13:HAL_FLASH_EndOfOperationCallback	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:485:13:HAL_FLASH_OperationErrorCallback	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:327:6:HAL_FLASH_IRQHandler	12
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:518:19:HAL_FLASH_Unlock	2
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:542:19:HAL_FLASH_Lock	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:562:19:HAL_FLASH_OB_Unlock	2
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:586:19:HAL_FLASH_OB_Lock	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:606:19:HAL_FLASH_OB_Launch	5
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:654:10:HAL_FLASH_GetError	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_flash.c:678:19:FLASH_WaitForLastOperation	5

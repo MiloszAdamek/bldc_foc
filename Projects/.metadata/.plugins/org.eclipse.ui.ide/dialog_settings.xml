@@ -3,4 +3,24 @@
 	<section name="ExternalProjectImportWizard">
 		<item key="WizardProjectsImportPage.STORE_NESTED_PROJECTS" value="true"/>
 	</section>
+	<section name="SmartImportWizard">
+		<item key="SmartImportRootWizardPage.STORE_HIDE_ALREADY_OPEN" value="false"/>
+		<item key="SmartImportRootWizardPage.STORE_CLOSE_IMPORTED" value="false"/>
+		<item key="SmartImportRootWizardPage.STORE_NESTED_PROJECTS" value="true"/>
+		<item key="SmartImportRootWizardPage.STORE_CONFIGURE_NATURES" value="true"/>
+		<list key="org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage.knownSources">
+			<item value="E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC"/>
+			<item value="C:\Users\Miloush\Desktop\bldc_foc-3140a2e43a172b19a50723ef87278b5c8d5977c6.zip"/>
+			<item value="E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\STM32_FOC"/>
+			<item value="E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\FOC_STM32"/>
+		</list>
+	</section>
+	<section name="ChooseWorkspaceDialogSettings">
+		<item key="DIALOG_X_ORIGIN" value="663"/>
+		<item key="DIALOG_Y_ORIGIN" value="337"/>
+	</section>
+	<section name="WORKBENCH_SETTINGS">
+		<list key="ENABLED_TRANSFERS">
+		</list>
+	</section>
 </section>

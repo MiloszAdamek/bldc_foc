@@ -79,7 +79,7 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc)
 	}
 }
 
-void CurrentSense_Meassurement(ADC_HandleTypeDef* hadc){
+void CurrentSense_Measurement(ADC_HandleTypeDef* hadc){
 
     if (hadc->Instance == ADC1 && is_calibrated)
     {

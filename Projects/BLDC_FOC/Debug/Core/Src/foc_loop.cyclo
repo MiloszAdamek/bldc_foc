@@ -1,9 +1,11 @@
 ../Core/Inc/transforms.h:19:20:ClarkeTransform	1
 ../Core/Inc/transforms.h:45:20:ParkTransformTrig	1
 ../Core/Inc/transforms.h:51:20:InvParkTransformTrig	1
-../Core/Src/foc_loop.c:28:21:pi_control	5
-../Core/Src/foc_loop.c:43:6:FOC_Init	2
-../Core/Src/foc_loop.c:62:6:FOC_Update	1
-../Core/Src/foc_loop.c:108:6:HAL_ADCEx_InjectedConvCpltCallback	2
-../Core/Src/foc_loop.c:119:6:HAL_TIM_OC_DelayElapsedCallback	3
-../Core/Src/foc_loop.c:128:6:HAL_TIM_PeriodElapsedCallback	4
+../Core/Inc/as5048a.h:106:21:GetElectricalAngle	2
+../Core/Src/foc_loop.c:34:21:pi_control	5
+../Core/Src/foc_loop.c:49:6:FOC_Init	2
+../Core/Src/foc_loop.c:66:6:FOC_CalibrateEncoder	3
+../Core/Src/foc_loop.c:92:6:FOC_Update	1
+../Core/Src/foc_loop.c:121:6:HAL_ADCEx_InjectedConvCpltCallback	2
+../Core/Src/foc_loop.c:132:6:HAL_TIM_OC_DelayElapsedCallback	3
+../Core/Src/foc_loop.c:141:6:HAL_TIM_PeriodElapsedCallback	4

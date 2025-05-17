@@ -79,6 +79,20 @@ int __io_putchar(int ch)
     HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
     return 1;
 }
+
+void SVPWM_Test_Run(void)
+{
+    float time_s = HAL_GetTick() / 1000.0f;
+    float freq = 1.0f;            // obrót 1 Hz
+    float amplitude = 0.3f;       // nie więcej niż 0.577
+
+    float angle = 2.0f * M_PI * freq * time_s;
+    float valpha = amplitude * cosf(angle);
+    float vbeta  = amplitude * sinf(angle);
+
+    SVPWM_Update(valpha, vbeta);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -116,6 +130,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   FOC_Init(&hadc1, &htim1);
+  FOC_CalibrateEncoder();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -123,53 +138,44 @@ int main(void)
   while (1)
   {
 
-//	SimpleDrive_Run(&htim1);
+//  	SimpleDrive_Run(&htim1);
 
-	// co 100 ms wypisz prądy i kąt
-//	if (HAL_GetTick() - lastPrint >= 1000)
-//	{
-//	  printf("\n\n\n==============================");
-//	  printf("\n       START WHILE\n");
-//	  printf("==============================\n");
-//
-//	  CurrentSense_Read(&currents);
-//	  CurrentSense_GetRaw(&raw_currents);
-//
-//	  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-//			 currents.a, currents.b, currents.c);
-//
-//	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-//			 raw_currents.a, raw_currents.b, raw_currents.c);
-//
-//	  const float angle = AS5048_Get_Angle_Deg();
-//	  if (angle >= 0) {
-//		  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
-//	  } else {
-//		  printf("[ANGLE] Błąd odczytu kąta\n");
-//	  }
-//
-//	  lastPrint = HAL_GetTick();
-//
-//	  printf("\n==============================");
-//	  printf("\n        STOP WHILE\n");
-//	  printf("==============================\n");
-//	}
+//	    SVPWM_Test_Run();  // testuje wirujący wektor bez FOC
+//	    HAL_Delay(1);  // niekoniecznie wymagane, ale ogranicza CPU
 
+	current_ref.d = 0.0f;
+	current_ref.q = 3.0f;
+
+	// Encoder read
 	if (encoder_trigger) {
 		encoder_trigger = false;
 		AS5048_Get_Raw_Position((AS5048_ReadResult *)&raw);
 		raw_copy = raw.position;
-		theta_el = GetElectricalAngle(raw_copy, MOTOR_POLE_PAIRS);
-		encoder_ready = true;
+		theta_el = encoder_direction * (GetElectricalAngle(raw_copy, MOTOR_POLE_PAIRS) - encoder_offset);
 
+		theta_el = fmodf(theta_el, 2.0f * M_PI);
+		if (theta_el < 0.0f)
+		    theta_el += 2.0f * M_PI;
+
+		encoder_ready = true;
 	}
 
+	// Debug section
 	if (HAL_GetTick() - lastPrint >= 1000)
 	{
+
 		lastPrint = HAL_GetTick();
 
-		printf("Kąt: %.2f deg | Ia: %.3f A | Ib: %.3f A | Ic: %.3f A\r\n",
-		debug_angle_deg, debug_ia, debug_ib, debug_ic);
+		printf("\n\n");
+
+		printf("Kąt: %.2f deg | Theta el: %.3f\r\n",
+		debug_angle_deg, debug_theta_el);
+
+		printf("Ia: %.3f A | Ib: %.3f A | Ic: %.3f A\r\n",
+		debug_ia, debug_ib, debug_ic);
+
+		printf("Ta: %d | Tb: %d | Tc: %d\r\n",
+		debug_Ta, debug_Tb, debug_Tc);
 	}
 
     /* USER CODE END WHILE */
