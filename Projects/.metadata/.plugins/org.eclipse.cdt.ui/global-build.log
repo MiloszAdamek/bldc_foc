@@ -1,8 +1,61 @@
-12:43:54 **** Incremental Build of configuration Debug for project BLDC_FOC ****
+12:02:02 **** Incremental Build of configuration Debug for project ihm03_example ****
 make -j16 all 
-arm-none-eabi-gcc "../Core/Src/as5048a.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/as5048a.d" -MT"Core/Src/as5048a.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/as5048a.o"
+arm-none-eabi-size  ihm03_example.elf 
+   text	   data	    bss	    dec	    hex	filename
+  37436	   1272	   7160	  45868	   b32c	ihm03_example.elf
+Finished building: default.size.stdout
+ 
+12:02:05 **** Incremental Build of configuration Debug for project ihm03_example ****
+make -j16 all 
+arm-none-eabi-size  ihm03_example.elf 
+   text	   data	    bss	    dec	    hex	filename
+  37436	   1272	   7160	  45868	   b32c	ihm03_example.elf
+Finished building: default.size.stdout
+ 
+12:05:28 **** Incremental Build of configuration Debug for project BLDC_FOC ****
+make -j16 all 
 arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
-arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: BLDC_FOC.elf
+ 
+arm-none-eabi-size  BLDC_FOC.elf 
+arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
+   text	   data	    bss	    dec	    hex	filename
+  64684	    520	   2528	  67732	  10894	BLDC_FOC.elf
+Finished building: default.size.stdout
+ 
+Finished building: BLDC_FOC.list
+ 
+12:09:53 **** Incremental Build of configuration Debug for project BLDC_FOC ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
+arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: BLDC_FOC.elf
+ 
+arm-none-eabi-size  BLDC_FOC.elf 
+arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
+   text	   data	    bss	    dec	    hex	filename
+  64348	    520	   2520	  67388	  1073c	BLDC_FOC.elf
+Finished building: default.size.stdout
+ 
+Finished building: BLDC_FOC.list
+ 
+12:11:22 **** Incremental Build of configuration Debug for project BLDC_FOC ****
+make -j16 all 
+arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
+arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: BLDC_FOC.elf
+ 
+arm-none-eabi-size  BLDC_FOC.elf 
+arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
+   text	   data	    bss	    dec	    hex	filename
+  64628	    520	   2520	  67668	  10854	BLDC_FOC.elf
+Finished building: default.size.stdout
+ 
+Finished building: BLDC_FOC.list
+ 
+12:18:13 **** Incremental Build of configuration Debug for project BLDC_FOC ****
+make -j16 all 
 arm-none-eabi-gcc "../Core/Src/svpwm.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/svpwm.d" -MT"Core/Src/svpwm.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/svpwm.o"
 arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 Finished building target: BLDC_FOC.elf
@@ -10,77 +63,7 @@ Finished building target: BLDC_FOC.elf
 arm-none-eabi-size  BLDC_FOC.elf 
 arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
    text	   data	    bss	    dec	    hex	filename
-  64552	    504	   2456	  67512	  107b8	BLDC_FOC.elf
-Finished building: default.size.stdout
- 
-Finished building: BLDC_FOC.list
- 
-12:44:01 **** Incremental Build of configuration Debug for project BLDC_FOC ****
-make -j16 all 
-arm-none-eabi-size  BLDC_FOC.elf 
-   text	   data	    bss	    dec	    hex	filename
-  64552	    504	   2456	  67512	  107b8	BLDC_FOC.elf
-Finished building: default.size.stdout
- 
-12:44:38 **** Incremental Build of configuration Debug for project BLDC_FOC ****
-make -j16 all 
-arm-none-eabi-size  BLDC_FOC.elf 
-   text	   data	    bss	    dec	    hex	filename
-  64552	    504	   2456	  67512	  107b8	BLDC_FOC.elf
-Finished building: default.size.stdout
- 
-12:46:33 **** Incremental Build of configuration Debug for project BLDC_FOC ****
-make -j16 all 
-arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
-arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: BLDC_FOC.elf
- 
-arm-none-eabi-size  BLDC_FOC.elf 
-arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
-   text	   data	    bss	    dec	    hex	filename
-  64560	    504	   2456	  67520	  107c0	BLDC_FOC.elf
-Finished building: default.size.stdout
- 
-Finished building: BLDC_FOC.list
- 
-12:46:49 **** Incremental Build of configuration Debug for project BLDC_FOC ****
-make -j16 all 
-arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
-arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: BLDC_FOC.elf
- 
-arm-none-eabi-size  BLDC_FOC.elf 
-arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
-   text	   data	    bss	    dec	    hex	filename
-  64560	    504	   2456	  67520	  107c0	BLDC_FOC.elf
-Finished building: default.size.stdout
- 
-Finished building: BLDC_FOC.list
- 
-12:47:13 **** Incremental Build of configuration Debug for project BLDC_FOC ****
-make -j16 all 
-arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
-arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: BLDC_FOC.elf
- 
-arm-none-eabi-size  BLDC_FOC.elf 
-arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
-   text	   data	    bss	    dec	    hex	filename
-  64560	    504	   2456	  67520	  107c0	BLDC_FOC.elf
-Finished building: default.size.stdout
- 
-Finished building: BLDC_FOC.list
- 
-12:50:30 **** Incremental Build of configuration Debug for project BLDC_FOC ****
-make -j16 all 
-arm-none-eabi-gcc "../Core/Src/foc_loop.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32G431xx -c -I../Core/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc -I../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32G4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/foc_loop.d" -MT"Core/Src/foc_loop.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/foc_loop.o"
-arm-none-eabi-gcc -o "BLDC_FOC.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\AGH\AiR\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\STM32G431RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BLDC_FOC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: BLDC_FOC.elf
- 
-arm-none-eabi-size  BLDC_FOC.elf 
-arm-none-eabi-objdump -h -S BLDC_FOC.elf  > "BLDC_FOC.list"
-   text	   data	    bss	    dec	    hex	filename
-  64560	    504	   2456	  67520	  107c0	BLDC_FOC.elf
+  64628	    520	   2520	  67668	  10854	BLDC_FOC.elf
 Finished building: default.size.stdout
  
 Finished building: BLDC_FOC.list

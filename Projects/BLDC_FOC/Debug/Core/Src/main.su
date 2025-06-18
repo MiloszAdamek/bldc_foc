@@ -1,7 +1,5 @@
-../Core/Inc/as5048a.h:106:21:GetElectricalAngle	24	static
 ../Core/Src/main.c:72:5:__io_putchar	24	static
-../Core/Src/main.c:83:6:SVPWM_Test_Run	40	static
-../Core/Src/main.c:102:5:main	48	static
-../Core/Src/main.c:192:6:SystemClock_Config	88	static
-../Core/Src/main.c:234:6:HAL_TIM_IC_CaptureCallback	16	static
-../Core/Src/main.c:245:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:89:5:main	40	static
+../Core/Src/main.c:190:6:SystemClock_Config	88	static
+../Core/Src/main.c:232:6:HAL_TIM_IC_CaptureCallback	16	static
+../Core/Src/main.c:243:6:Error_Handler	4	static,ignoring_inline_asm

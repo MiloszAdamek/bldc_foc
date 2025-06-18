@@ -8,4 +8,4 @@
 ../Core/Src/foc_loop.c:92:6:FOC_Update	1
 ../Core/Src/foc_loop.c:121:6:HAL_ADCEx_InjectedConvCpltCallback	2
 ../Core/Src/foc_loop.c:132:6:HAL_TIM_OC_DelayElapsedCallback	3
-../Core/Src/foc_loop.c:141:6:HAL_TIM_PeriodElapsedCallback	4
+../Core/Src/foc_loop.c:142:6:HAL_TIM_PeriodElapsedCallback	4

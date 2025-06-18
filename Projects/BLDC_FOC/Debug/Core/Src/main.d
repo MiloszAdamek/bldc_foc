@@ -35,7 +35,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
  ../Core/Inc/adc.h ../Core/Inc/main.h ../Core/Inc/spi.h ../Core/Inc/tim.h \
  ../Core/Inc/usart.h ../Core/Inc/gpio.h ../Core/Inc/svpwm.h \
- ../Core/Inc/current_sense.h ../Core/Inc/simple_drive.h \
+ ../Core/Inc/tim.h ../Core/Inc/current_sense.h ../Core/Inc/simple_drive.h \
  ../Core/Inc/foc_loop.h ../Core/Inc/transforms.h ../Core/Inc/svpwm.h \
  ../Core/Inc/current_sense.h ../Core/Inc/as5048a.h ../Core/Inc/spi.h \
  ../Core/Inc/delay_us.h ../Core/Inc/as5048a.h
@@ -81,6 +81,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/usart.h:
 ../Core/Inc/gpio.h:
 ../Core/Inc/svpwm.h:
+../Core/Inc/tim.h:
 ../Core/Inc/current_sense.h:
 ../Core/Inc/simple_drive.h:
 ../Core/Inc/foc_loop.h:

@@ -9,11 +9,17 @@
 #define INC_SVPWM_H_
 
 #include "main.h"
+#include "stm32g4xx.h"
+#include "tim.h"
 
 extern volatile uint16_t debug_Ta;
 extern volatile uint16_t debug_Tb;
 extern volatile uint16_t debug_Tc;
 
 void SVPWM_Update(float Valpha, float Vbeta);
+
+void SVPWM_Init();
+
+void SVPWM_Test_Run(float freq);
 
 #endif /* INC_SVPWM_H_ */

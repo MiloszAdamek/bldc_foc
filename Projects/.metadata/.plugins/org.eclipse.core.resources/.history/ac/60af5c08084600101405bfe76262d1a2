@@ -1,0 +1,298 @@
+/*
+ * svpwm.c
+ *
+ *  Created on: Mar 30, 2025
+ *      Author: Miloush
+ */
+
+#include "svpwm.h"
+#include "math.h"
+#include "main.h"
+
+#define SQRT3      	1.73205080757f
+#define PI_OVER_3	1.04719755119f
+
+// Dopasuj do ustawień TIM1
+#define PWM_FREQ_HZ 10000.0f         // 10 kHz (czyli co 100 µs)
+#define PWM_PERIOD 100     			 // ARR + 1
+#define Ts (1.0f / PWM_FREQ_HZ)
+#define V_DC 11
+
+volatile uint16_t debug_Ta = 0.0f;
+volatile uint16_t debug_Tb = 0.0f;
+volatile uint16_t debug_Tc = 0.0f;
+
+extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim2;
+
+//void SVPWM_Update(float Valpha, float Vbeta) {
+//    float Uref = sqrtf(Valpha * Valpha + Vbeta * Vbeta);
+//
+//    float Umax = 0.577f;  // skalowane do 1.0
+//    if (Uref > Umax) {
+//        float scale = Umax / Uref;
+//        Valpha *= scale;
+//        Vbeta  *= scale;
+//    }
+//
+//    float angle = atan2f(Vbeta, Valpha);
+//
+//    int sector = (int)(angle / PI_OVER_3);
+//    if (sector < 0) sector += 6;
+//    sector = (sector % 6) + 1;
+//
+//    float T = PWM_PERIOD;
+//    float X = SQRT3 * Uref / T;
+//    float alpha = fmodf(angle, PI_OVER_3);
+//    float T1 = X * sinf(PI_OVER_3 - alpha) * T;
+//    float T2 = X * sinf(alpha) * T;
+//    float T0 = T - T1 - T2;
+//
+//    float Ta, Tb, Tc;
+//
+//    switch (sector) {
+//        case 1:
+//            Ta = (T1 + T2 + T0) / 2;
+//            Tb = (T2 + T0) / 2;
+//            Tc = T0 / 2;
+//            break;
+//        case 2:
+//            Ta = (T1 + T0) / 2;
+//            Tb = (T1 + T2 + T0) / 2;
+//            Tc = T0 / 2;
+//            break;
+//        case 3:
+//            Ta = T0 / 2;
+//            Tb = (T1 + T2 + T0) / 2;
+//            Tc = (T2 + T0) / 2;
+//            break;
+//        case 4:
+//            Ta = T0 / 2;
+//            Tb = (T1 + T0) / 2;
+//            Tc = (T1 + T2 + T0) / 2;
+//            break;
+//        case 5:
+//            Ta = (T2 + T0) / 2;
+//            Tb = T0 / 2;
+//            Tc = (T1 + T2 + T0) / 2;
+//            break;
+//        case 6:
+//            Ta = (T1 + T2 + T0) / 2;
+//            Tb = T0 / 2;
+//            Tc = (T1 + T0) / 2;
+//            break;
+//        default:
+//            Ta = Tb = Tc = T / 2;
+//            break;
+//    }
+//
+//    // DEBUG SECTION
+//
+//    debug_Ta = (uint16_t)Ta;
+//    debug_Tb = (uint16_t)Tb;
+//    debug_Tc = (uint16_t)Tc;
+//
+//    // END DEBUG SECTION
+//
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, (uint16_t)Ta);
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, (uint16_t)Tb);
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, (uint16_t)Tc);
+//}
+
+
+#define SQRT3 1.73205080757f
+#define HALF_SQRT3 (SQRT3 / 2.0f)
+#define INV_DC_LINK 1.0f  // zakładamy normalizację względem Vdc
+
+//void SVPWM_Update(float Valpha, float Vbeta) {
+//    // Oblicz wektory pomocnicze (Clarke)
+//    float X = Valpha;
+//    float Y = -0.5f * Valpha + HALF_SQRT3 * Vbeta;
+//    float Z = -0.5f * Valpha - HALF_SQRT3 * Vbeta;
+//
+//    float T1 = 0.0f, T2 = 0.0f;
+//    float Ta = 0.0f, Tb = 0.0f, Tc = 0.0f;
+//
+//    // Limit napięcia w SVPWM do 1/sqrt(3) = 0.577
+//    float Uref = fmaxf(fabsf(X), fmaxf(fabsf(Y), fabsf(Z)));
+//    const float Umax = 0.577f;
+//    if (Uref > Umax) {
+//        float scale = Umax / Uref;
+//        X *= scale;
+//        Y *= scale;
+//        Z *= scale;
+//    }
+//
+//    // Ustal sektor na podstawie znaków X/Y/Z
+//    uint8_t sector = 0;
+//    if (X > 0) sector |= 0x01;
+//    if (Y > 0) sector |= 0x02;
+//    if (Z > 0) sector |= 0x04;
+//
+//    switch (sector) {
+//        case 3:  // Sektor 1
+//            T1 = Y;
+//            T2 = X;
+//            Ta = T1 + T2;
+//            Tb = T2;
+//            Tc = 0;
+//            break;
+//        case 1:  // Sektor 2
+//            T1 = -Z;
+//            T2 = -X;
+//            Ta = T1;
+//            Tb = T1 + T2;
+//            Tc = 0;
+//            break;
+//        case 5:  // Sektor 3
+//            T1 = Z;
+//            T2 = Y;
+//            Ta = 0;
+//            Tb = T1 + T2;
+//            Tc = T2;
+//            break;
+//        case 4:  // Sektor 4
+//            T1 = -X;
+//            T2 = -Y;
+//            Ta = 0;
+//            Tb = T1;
+//            Tc = T1 + T2;
+//            break;
+//        case 6:  // Sektor 5
+//            T1 = X;
+//            T2 = Z;
+//            Ta = T2;
+//            Tb = 0;
+//            Tc = T1 + T2;
+//            break;
+//        case 2:  // Sektor 6
+//            T1 = -Y;
+//            T2 = -Z;
+//            Ta = T1 + T2;
+//            Tb = 0;
+//            Tc = T1;
+//            break;
+//        default:  // wektor zerowy
+//            Ta = Tb = Tc = 0.5f;
+//            break;
+//    }
+//
+//    // Normalizacja: suma czasów aktywnych
+//    float total = Ta + Tb + Tc;
+//    float T0 = fmaxf(0.0f, 1.0f - total);  // symetryczne rozłożenie T0
+//
+//    Ta = (Ta + T0 / 2.0f);
+//    Tb = (Tb + T0 / 2.0f);
+//    Tc = (Tc + T0 / 2.0f);
+//
+//    // Przeskaluj do wartości całkowitych wypełnienia PWM
+//    uint16_t ta = (uint16_t)(Ta * PWM_PERIOD);
+//    uint16_t tb = (uint16_t)(Tb * PWM_PERIOD);
+//    uint16_t tc = (uint16_t)(Tc * PWM_PERIOD);
+//
+//    // Wpisz do PWM
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ta);
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, tb);
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, tc);
+//
+//    // Debug
+//    debug_Ta = ta;
+//    debug_Tb = tb;
+//    debug_Tc = tc;
+//}
+
+void SVPWM_Update(float Valpha, float Vbeta){
+
+	float Vref = sqrt(Valpha*Valpha + Vbeta*Vbeta);
+	float theta = atan2(Vbeta, Valpha);
+
+	// Sector selection
+    if (theta < 0)
+        theta += 2.0f * M_PI;  // move scope to 0–2π
+
+    uint8_t sector = (uint8_t)(theta / (M_PI / 3.0f)) + 1;
+    if (sector > 6) sector = 6;
+
+    // Local angle in sectior
+    float angle_in_sector = theta - ((float)(sector - 1)) * (M_PI / 3.0f);
+
+    // T1, T2 in timer ticks
+    float T1 = PWM_PERIOD * Vref / V_DC * sinf((M_PI / 3.0f) - angle_in_sector);
+    float T2 = PWM_PERIOD * Vref / V_DC * sinf(angle_in_sector);
+    float T0 = PWM_PERIOD - T1 - T2;
+
+
+    // Duty cycle caluclation
+    float Ta, Tb, Tc;
+
+    switch (sector) {
+        case 1:
+            Ta = T1 + T2 + T0 / 2.0f;
+            Tb = T2 + T0 / 2.0f;
+            Tc = T0 / 2.0f;
+            break;
+        case 2:
+            Ta = T1 + T0 / 2.0f;
+            Tb = T1 + T2 + T0 / 2.0f;
+            Tc = T0 / 2.0f;
+            break;
+        case 3:
+            Ta = T0 / 2.0f;
+            Tb = T1 + T2 + T0 / 2.0f;
+            Tc = T2 + T0 / 2.0f;
+            break;
+        case 4:
+            Ta = T0 / 2.0f;
+            Tb = T1 + T0 / 2.0f;
+            Tc = T1 + T2 + T0 / 2.0f;
+            break;
+        case 5:
+            Ta = T2 + T0 / 2.0f;
+            Tb = T0 / 2.0f;
+            Tc = T1 + T2 + T0 / 2.0f;
+            break;
+        case 6:
+            Ta = T1 + T2 + T0 / 2.0f;
+            Tb = T0 / 2.0f;
+            Tc = T1 + T0 / 2.0f;
+            break;
+    }
+
+    // TIM1 UPDATE
+    uint32_t compareA = (uint32_t)(Ta);
+    uint32_t compareB = (uint32_t)(Tb);
+    uint32_t compareC = (uint32_t)(Tc);
+
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, compareA);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, compareB);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, compareC);
+
+    // DEBUG SECTION
+	debug_Ta = compareA;
+	debug_Tb = compareB;
+	debug_Tc = compareC;
+}
+
+void SVPWM_Test_Run(float freq)
+{
+	static float time_s = 0;
+    float amplitude = 0.3f;       // nie więcej niż 0.577
+
+    float angle = 2.0f * M_PI * freq * time_s;
+    float valpha = amplitude * cosf(angle);
+    float vbeta  = amplitude * sinf(angle);
+    time_s += Ts;
+
+    SVPWM_Update(valpha, vbeta);
+}
+
+void SVPWM_Init()
+{
+    HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_SET);
+
+    HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
+
+    HAL_TIM_Base_Start_IT(&htim2); // Start przerwania z wywołaniem STVPW_Test_Run
+}
