@@ -1,4 +1,0 @@
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32_mc_common_it.c:71:6:USART2_IRQHandler	12
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32_mc_common_it.c:149:6:HardFault_Handler	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32_mc_common_it.c:168:6:SysTick_Handler	3
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/stm32_mc_common_it.c:214:6:EXTI15_10_IRQHandler	2

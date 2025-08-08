@@ -130,51 +130,39 @@ int main(void)
   while (1)
   {
 
-// TEST RUN SECTION
+		SimpleDrive_Run(&htim1);
 
-//  	SimpleDrive_Run(&htim1);
+		// co 100 ms wypisz prądy i kąt
+		if (HAL_GetTick() - lastPrint >= 1000)
+		{
+		  printf("\n\n\n==============================");
+		  printf("\n       START WHILE\n");
+		  printf("==============================\n");
 
-// END TEST RUN SECTION
+		  CurrentSense_Read(&currents);
+		  CurrentSense_GetRaw(&raw_currents);
+
+		  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
+				 currents.a, currents.b, currents.c);
+
+		  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
+				 raw_currents.a, raw_currents.b, raw_currents.c);
 
 
+		  const float angle = AS5048_Get_Angle_Deg();
+		  if (angle >= 0) {
+			  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
+		  } else {
+			  printf("[ANGLE] Błąd odczytu kąta\n");
+		  }
 
+		  lastPrint = HAL_GetTick();
 
-//	    HAL_Delay(1);  // niekoniecznie wymagane, ale ogranicza CPU
+		  printf("\n==============================");
+		  printf("\n        STOP WHILE\n");
+		  printf("==============================\n");
+		}
 
-//	current_ref.d = 0.0f;
-//	current_ref.q = 3.0f;
-//
-//	// Encoder read
-//	if (encoder_trigger) {
-//		encoder_trigger = false;
-//		AS5048_Get_Raw_Position((AS5048_ReadResult *)&raw);
-//		raw_copy = raw.position;
-//		theta_el = encoder_direction * (GetElectricalAngle(raw_copy, MOTOR_POLE_PAIRS) - encoder_offset);
-//
-//		theta_el = fmodf(theta_el, 2.0f * M_PI);
-//		if (theta_el < 0.0f)
-//		    theta_el += 2.0f * M_PI;
-//
-//		encoder_ready = true;
-//	}
-//
-	// Debug section
-	if (HAL_GetTick() - lastPrint >= 1000)
-	{
-
-		lastPrint = HAL_GetTick();
-
-		printf("\n\n");
-
-		printf("Kąt: %.2f deg | Theta el: %.3f\r\n",
-		debug_angle_deg, debug_theta_el);
-
-		printf("Ia: %.3f A | Ib: %.3f A | Ic: %.3f A\r\n",
-		debug_ia, debug_ib, debug_ic);
-
-		printf("Ta: %d | Tb: %d | Tc: %d\r\n",
-		debug_Ta, debug_Tb, debug_Tc);
-	}
 
     /* USER CODE END WHILE */
 

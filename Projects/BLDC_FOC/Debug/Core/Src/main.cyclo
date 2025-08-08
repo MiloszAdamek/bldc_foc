@@ -1,5 +1,5 @@
 ../Core/Src/main.c:72:5:__io_putchar	2
-../Core/Src/main.c:89:5:main	2
-../Core/Src/main.c:190:6:SystemClock_Config	3
-../Core/Src/main.c:232:6:HAL_TIM_IC_CaptureCallback	1
-../Core/Src/main.c:243:6:Error_Handler	1
+../Core/Src/main.c:89:5:main	3
+../Core/Src/main.c:178:6:SystemClock_Config	3
+../Core/Src/main.c:220:6:HAL_TIM_IC_CaptureCallback	1
+../Core/Src/main.c:231:6:Error_Handler	1
