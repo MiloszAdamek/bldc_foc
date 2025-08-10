@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ScratchFile FileVersion="3.0">
+  <FileVersion>3.0</FileVersion>
+  <Workspace>
+    <WorkspaceType>Single-project</WorkspaceType>
+    <WorkspacePath>C:\Users\Miloush\Documents\AGH\Praca_inzynierska\bldc_foc\Projects\BLDC_FOC\</WorkspacePath>
+    <underRoot>true</underRoot>
+    <TrustZone>0</TrustZone>
+    <HAL_Driver>C:\Users\Miloush\STM32Cube\Repository\STM32Cube_FW_G4_V1.6.1</HAL_Driver>
+    <CMSIS>Drivers/CMSIS</CMSIS>
+    <Toolchain>STM32CubeIDE</Toolchain>
+    <IocFile>BLDC_FOC.ioc</IocFile>
+    <Project>
+              
+      <ProjectName>BLDC_FOC</ProjectName>
+           
+      <ProjectNature>C</ProjectNature>
+       
+      <Secure/>
+            
+      <filestoremove>
+                
+        <file>
+                      
+          <name>Core/Src/usart.c</name>
+                  
+        </file>
+        <file>
+                      
+          <name>..\Src\stm32g4xx_nucleo.c</name>
+                  
+        </file>
+        <file>
+                      
+          <name>Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c</name>
+                  
+        </file>
+        <file>
+                      
+          <name>Drivers/STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c</name>
+                  
+        </file>
+                           
+      </filestoremove>
+      <sourceEntriesToRemove>
+            
+        <sourceEntry/>
+      </sourceEntriesToRemove>
+          
+      <configs>
+        <config>
+              
+          <name>BLDC_FOC</name>
+          	 
+          <mainSourceRepo>Core</mainSourceRepo>
+             
+          <sourceStructure>Advanced</sourceStructure>
+           
+          <device>STM32G431RBTx</device>
+          		     
+          <cpucore>ARM Cortex-M4</cpucore>
+                  
+          <fpu>SP</fpu>
+                
+          <memories>
+                       
+            <memory access="xrw" name="RAM" size="32768" start="0x20000000"/>
+                    
+            <memory access="rx" name="FLASH" size="131072" start="0x8000000"/>
+                
+          </memories>
+              
+          <startup>C:\Users\Miloush\STM32Cube\Repository\STM32Cube_FW_G4_V1.6.1\Drivers\CMSIS\Device\ST\STM32G4xx\Source\Templates\gcc\startup_stm32g431xx.s</startup>
+                
+          <LinkSettings>
+            	
+            <LinkAdditionalLibs>	</LinkAdditionalLibs>
+          </LinkSettings>
+              
+          <heapSize>0x200</heapSize>
+              
+          <stackSize>0x400</stackSize>
+                  
+          <cpuclock>170</cpuclock>
+                  
+          <board>NUCLEO-G431RB</board>
+              
+          <debugprobe>swd</debugprobe>
+              
+          <optimization/>
+              
+          <Aincludes>
+                    
+            <include/>
+                    
+          </Aincludes>
+              
+          <Adefines>        </Adefines>
+                
+          <Cdefines>
+                    
+            <define>USE_HAL_DRIVER</define>
+                    
+            <define>STM32G431xx</define>
+                    
+          </Cdefines>
+              
+          <Ldefines>        </Ldefines>
+                  
+          <Cincludes>
+            		        
+            <include>Core\Inc</include>
+                    
+            <include>Drivers\STM32G4xx_HAL_Driver\Inc</include>
+                    
+            <include>Drivers\STM32G4xx_HAL_Driver\Inc\Legacy</include>
+                    
+            <include>Drivers\CMSIS\Device\ST\STM32G4xx\Include</include>
+                    
+            <include>Drivers\CMSIS\Include</include>
+                    
+          </Cincludes>
+              
+          <definestoremove>
+                    
+            <Adefines>            </Adefines>
+                    
+            <Cdefines>
+                                  
+              <define>USE_FULL_LL_DRIVER</define>
+                                  
+              <define>USE_FULL_ASSERT=1U</define>
+                          
+            </Cdefines>
+                     
+            <Ldefines>            </Ldefines>
+                     
+          </definestoremove>
+              
+          <inctoremove>
+                    
+            <Aincludes>
+                          
+              <include/>
+                          
+            </Aincludes>
+                    
+            <Cincludes>            </Cincludes>
+                    
+          </inctoremove>
+                 
+        </config>
+                
+      </configs>
+       
+      <copyAsReference>false</copyAsReference>
+               
+      <sourceEntries>
+                    
+        <sourceEntry>
+                      
+          <name>Core</name>
+                      
+        </sourceEntry>
+                            
+        <sourceEntry>
+                      
+          <name>Drivers</name>
+                  
+        </sourceEntry>
+                	          
+      </sourceEntries>
+      <Groups>    </Groups>
+       
+    </Project>
+  </Workspace>
+</ScratchFile>

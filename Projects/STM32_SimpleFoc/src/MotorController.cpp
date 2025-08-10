@@ -94,3 +94,7 @@ void MotorController::onTargetCmd(char* cmd) {
     instance->command.scalar(&instance->motor.target, cmd);
   }
 }
+
+void MotorController::feedCommand(char* cmdString) {
+  command.run(cmdString);
+}

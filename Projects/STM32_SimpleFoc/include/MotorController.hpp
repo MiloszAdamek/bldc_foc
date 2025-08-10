@@ -13,6 +13,8 @@ public:
   void update();       // wywołuj w loop() - FOC + sterowanie
   void runCommand();   // wywołuj w loop() - Commander
 
+  void feedCommand(char* cmdString); // przekazanie komendy jako ciąg znaków
+
   void setTarget(float rad_s);
   float getTarget() const { return motor.target; }
 
