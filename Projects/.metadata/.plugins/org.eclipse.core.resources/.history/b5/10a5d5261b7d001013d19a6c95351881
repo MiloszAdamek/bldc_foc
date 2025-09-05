@@ -148,7 +148,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             float sin_theta = sinf(theta_el);
             float cos_theta = cosf(theta_el);
 
-            FOC_Update(&currents, sin_theta, cos_theta, &current_ref);
+//            FOC_Update(&currents, sin_theta, cos_theta, &current_ref);
 
             // DEBUG SECTION
 

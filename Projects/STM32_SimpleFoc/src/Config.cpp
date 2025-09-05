@@ -32,10 +32,23 @@ const MotorConfig BoardConfig = {
   20000,      // pwm_frequency [Hz]
 
   // Sterowanie
-  0.1f, 0.05f, 0.0f, // PID P,I,D
-  1000.0f,           // output ramp
-  0.01f,             // LPF Tf
-  1.0f,              // current_limit [A]
+
+    // Velocity
+    0.1f, 0.05f, 0.0f, // PID P,I,D
+    1000.0f,           // output ramp
+    0.01f,             // LPF Tf
+    1.0f,              // current_limit [A]
+
+    // Torque, Id, Iq
+      // I_Q axis
+      5.0f, 1000.0f, 0.0f, // PID P,I,D, I_q
+      1000.0f,
+      0.005f, // output ramp, LPF Tf
+
+      // I_D axis
+      5.0f, 1000.0f, 0.0f, // PID P,I,D, I_d
+      1000.0f,
+      0.005f, // output ramp, LPF Tf
 
   // Startowy target
   10.0f              // [rad/s]

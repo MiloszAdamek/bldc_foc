@@ -56,6 +56,8 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim)
         HAL_TIM_PWM_Start(htim, TIM_CHANNEL_2);
         HAL_TIM_PWM_Start(htim, TIM_CHANNEL_3);
 
+        FOC_CalibrateEncoder();
+
         HAL_TIM_Base_Start_IT(htim);           		// Start timera z przerwaniem
         HAL_TIM_OC_Start_IT(htim, TIM_CHANNEL_4); 	// Start CH4 jako output compare z przerwaniem
     }
@@ -80,7 +82,6 @@ void FOC_CalibrateEncoder(void)
     encoder_offset = before;
     encoder_direction = (after > before) ? +1 : -1;
 
-    encoder_direction = 1;
     encoder_calibrated = true;
 
     printf("Encoder offset: %.3f rad\n", encoder_offset);
@@ -134,7 +135,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
     if (htim->Instance == TIM1 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
     {
         encoder_trigger = true;
-//        SVPWM_Test_Run(10.0f); // np. 1 Hz obrót
+        SVPWM_Test_Run(10.0f); // np. 1 Hz obrót
     }
 }
 

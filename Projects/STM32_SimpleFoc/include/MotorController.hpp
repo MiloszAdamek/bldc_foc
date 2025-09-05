@@ -23,7 +23,9 @@ private:
 
   // Commander: statyczny wskaźnik do instancji + statyczny callback
   static MotorController* instance;
-  static void onTargetCmd(char* cmd);
+  static void onTargetCmd(char* cmd); // Zmiana zadanej prędkości obrotowej
+  static void onModeCmd(char* cmd); // Zmiana trybu pracy kontrolera
+  static void onCurrentCmd(char* cmd); // Zadanie prądu w trybie torque
 
   // Obiekty SimpleFOC
   BLDCMotor motor;

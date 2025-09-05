@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -118,9 +119,10 @@ int main(void)
   MX_SPI3_Init();
   MX_TIM2_Init();
   MX_SPI1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   FOC_Init(&hadc1, &htim1);
-  FOC_CalibrateEncoder();
+
   SVPWM_Init();
   /* USER CODE END 2 */
 
@@ -129,38 +131,38 @@ int main(void)
   while (1)
   {
 
-		SimpleDrive_Run(&htim1);
+//		SimpleDrive_Run(&htim1);
 
 		// co 100 ms wypisz prądy i kąt
-		if (HAL_GetTick() - lastPrint >= 1000)
-		{
-		  printf("\n\n\n==============================");
-		  printf("\n       START WHILE\n");
-		  printf("==============================\n");
-
-		  CurrentSense_Read(&currents);
-		  CurrentSense_GetRaw(&raw_currents);
-
-		  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-				 currents.a, currents.b, currents.c);
-
-		  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-				 raw_currents.a, raw_currents.b, raw_currents.c);
-
-
-		  const float angle = AS5048_Get_Angle_Deg();
-		  if (angle >= 0) {
-			  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
-		  } else {
-			  printf("[ANGLE] Błąd odczytu kąta\n");
-		  }
-
-		  lastPrint = HAL_GetTick();
-
-		  printf("\n==============================");
-		  printf("\n        STOP WHILE\n");
-		  printf("==============================\n");
-		}
+//		if (HAL_GetTick() - lastPrint >= 1000)
+//		{
+//		  printf("\n\n\n==============================");
+//		  printf("\n       START WHILE\n");
+//		  printf("==============================\n");
+//
+//		  CurrentSense_Read(&currents);
+//		  CurrentSense_GetRaw(&raw_currents);
+//
+//		  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
+//				 currents.a, currents.b, currents.c);
+//
+//		  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
+//				 raw_currents.a, raw_currents.b, raw_currents.c);
+//
+//
+//		  const float angle = AS5048_Get_Angle_Deg();
+//		  if (angle >= 0) {
+//			  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
+//		  } else {
+//			  printf("[ANGLE] Błąd odczytu kąta\n");
+//		  }
+//
+//		  lastPrint = HAL_GetTick();
+//
+//		  printf("\n==============================");
+//		  printf("\n        STOP WHILE\n");
+//		  printf("==============================\n");
+//		}
 
 
     /* USER CODE END WHILE */

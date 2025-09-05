@@ -31,10 +31,23 @@ struct MotorConfig {
   uint32_t pwm_frequency;
 
   // Sterowanie
-  float pid_p, pid_i, pid_d;
-  float pid_output_ramp;
-  float lpf_velocity_Tf;
-  float current_limit;
+
+    // Velocity
+    float pid_v_p, pid_v_i, pid_v_d;
+    float pid_v_output_ramp;
+    float lpf_velocity_Tf;
+    float current_limit;
+
+    // Torque, Id, Iq
+    // I_Q axis
+    float pid_iq_p, pid_iq_i, pid_iq_d;
+    float pid_iq_output_ramp;
+    float lpf_iq_Tf;
+
+    // I_D axis
+    float pid_id_p, pid_id_i, pid_id_d;
+    float pid_id_output_ramp;
+    float lpf_id_Tf;
 
   // Startowy target
   float initial_target_velocity;

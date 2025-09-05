@@ -60,7 +60,7 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim)
         HAL_TIM_OC_Start_IT(htim, TIM_CHANNEL_4); 	// Start CH4 jako output compare z przerwaniem
     }
     AS5048_Init();
-//    CurrentSense_Init(hadc);
+    CurrentSense_Init(hadc);
 }
 
 void FOC_CalibrateEncoder(void)
@@ -80,7 +80,6 @@ void FOC_CalibrateEncoder(void)
     encoder_offset = before;
     encoder_direction = (after > before) ? +1 : -1;
 
-    encoder_direction = 1;
     encoder_calibrated = true;
 
     printf("Encoder offset: %.3f rad\n", encoder_offset);
@@ -148,7 +147,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             float sin_theta = sinf(theta_el);
             float cos_theta = cosf(theta_el);
 
-            FOC_Update(&currents, sin_theta, cos_theta, &current_ref);
+//            FOC_Update(&currents, sin_theta, cos_theta, &current_ref);
 
             // DEBUG SECTION
 

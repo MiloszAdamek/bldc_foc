@@ -5,7 +5,7 @@
 
 MotorController foc(AppConfig::BoardConfig);
 
-DriverSPI driver(hspi1); // DriverSPI z naszym SPI2
+// DriverSPI driver(hspi1); // DriverSPI z naszym SPI1
 
 void spiCommandHandler(uint8_t* data, size_t len) {
     data[len] = '\0';
@@ -16,12 +16,12 @@ void setup() {
 
     foc.begin();
 
-    // MX_SPI2_Init_Master();  
+    // MX_SPI1_Init_Master();  
 
-    MX_SPI1_Init_Slave();
+    // MX_SPI1_Init_Slave();
 
-    driver.onCommand(spiCommandHandler);
-    driver.beginSlave();
+    // driver.onCommand(spiCommandHandler);
+    // driver.beginSlave();
 }
 
 void loop() {

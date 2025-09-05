@@ -43,15 +43,36 @@ void MotorController::begin() {
 
   // MOTOR
   motor.controller = MotionControlType::velocity;
+  motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
   motor.init();
 
   // PID / FILTRY / LIMITY
-  motor.PID_velocity.P = config.pid_p;
-  motor.PID_velocity.I = config.pid_i;
-  motor.PID_velocity.D = config.pid_d;
-  motor.PID_velocity.output_ramp = config.pid_output_ramp;
+
+  // PID - velocity
+  motor.PID_velocity.P = config.pid_v_p;
+  motor.PID_velocity.I = config.pid_v_i;
+  motor.PID_velocity.D = config.pid_v_d;
+  motor.PID_velocity.output_ramp = config.pid_v_output_ramp;
   motor.LPF_velocity.Tf = config.lpf_velocity_Tf;
   motor.current_limit = config.current_limit;
+
+  // PID - torque -> Id, Iq
+
+  // Q axis
+  motor.PID_current_q.P = config.pid_iq_p;                        
+  motor.PID_current_q.I = config.pid_iq_i;                        
+  motor.PID_current_q.D = config.pid_iq_d;
+  motor.PID_current_q.limit = motor.voltage_limit; 
+  motor.PID_current_q.output_ramp = config.pid_iq_output_ramp;    
+  motor.LPF_current_q.Tf= config.lpf_iq_Tf;                      
+
+  // D axis
+  motor.PID_current_d.P = config.pid_id_p;                        
+  motor.PID_current_d.I = config.pid_id_i;                        
+  motor.PID_current_d.D = config.pid_id_d;
+  motor.PID_current_d.limit = motor.voltage_limit; 
+  motor.PID_current_d.output_ramp = config.pid_id_output_ramp;    
+  motor.LPF_current_d.Tf= config.lpf_id_Tf;                       
 
   // FOC init
   motor.initFOC();
@@ -70,6 +91,8 @@ void MotorController::begin() {
 
   // Commander
   command.add('T', onTargetCmd, "target velocity [rad/s]");
+  command.add('M', onModeCmd, "mode: 0-torque, 1-velocity, 2-angle"); 
+  command.add('C', onTargetCmd, "target current [A]"); // Zadanie prądu w trybie torque
 
   _delay(1000);
   Serial.println("SimpleFOC configuration complete. Entering loop...");
@@ -89,9 +112,38 @@ void MotorController::setTarget(float rad_s) {
   motor.target = rad_s;
 }
 
-void MotorController::onTargetCmd(char* cmd) {
+void MotorController::onTargetCmd(char* cmd) { // Velocity target in velocity mode
   if (instance) {
     instance->command.scalar(&instance->motor.target, cmd);
+  }
+}
+
+void MotorController::onCurrentCmd(char* cmd) { // Current target in torque mode
+  if (instance) {
+    instance->command.scalar(&instance->motor.target, cmd);
+  }
+}
+
+void MotorController::onModeCmd(char* cmd) {
+  if (instance) {
+    int mode = atoi(cmd); // zamiana tekstu na liczbę
+    switch (mode) {
+      case 0:
+        instance->motor.controller = MotionControlType::torque;
+        Serial.println("Mode: torque");
+        break;
+      case 1:
+        instance->motor.controller = MotionControlType::velocity;
+        Serial.println("Mode: velocity");
+        break;
+      case 2:
+        instance->motor.controller = MotionControlType::angle;
+        Serial.println("Mode: angle");
+        break;
+      default:
+        Serial.println("Unknown mode!");
+        break;
+    }
   }
 }
 
