@@ -38,6 +38,8 @@ static uint16_t offset_c = 0;
 
 static bool is_calibrated = false;
 
+static ADC_HandleTypeDef *hadc_local = NULL;
+
 static void CurrentSense_CalibrateOffset(void)
 {
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
@@ -61,8 +63,7 @@ static void CurrentSense_CalibrateOffset(void)
     printf("Offset A: %u, B: %u, C: %u\r\n", offset_a >> ADC_LEFT_SHIFT, offset_b >> ADC_LEFT_SHIFT, offset_c >> ADC_LEFT_SHIFT);
 }
 
-void CurrentSense_Init(ADC_HandleTypeDef *hadc)
-{
+void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
 	if (hadc->Instance == ADC1){
 
 	    hadc_local = hadc;
@@ -75,9 +76,10 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc)
 	    HAL_ADCEx_InjectedStop(hadc_local);
 
 	    // Tryb wyzwalany przez TIM1, z przerwaniem
-	    HAL_ADCEx_InjectedStart_IT(hadc_local);
+//	    HAL_ADCEx_InjectedStart_IT(hadc_local);
 	}
 }
+
 
 void CurrentSense_Measurement(ADC_HandleTypeDef* hadc){
 

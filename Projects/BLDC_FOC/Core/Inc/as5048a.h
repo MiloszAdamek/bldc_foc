@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "delay_us.h"
 #include "math.h"
+#include "config.h"
 
 // Control and Error Registers
 #define AS_NOP 				0x0000

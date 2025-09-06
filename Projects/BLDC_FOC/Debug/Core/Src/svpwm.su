@@ -1,3 +1,3 @@
-../Core/Src/svpwm.c:204:6:SVPWM_Update	88	static
-../Core/Src/svpwm.c:282:6:SVPWM_Test_Run	40	static
-../Core/Src/svpwm.c:296:6:SVPWM_Init	8	static
+../Core/Src/svpwm.c:29:6:SVPWM_Init	16	static
+../Core/Src/svpwm.c:50:6:SVPWM_Update	64	static
+../Core/Src/svpwm.c:132:6:SVPWM_Test_Run	24	static

@@ -33,6 +33,8 @@
 #include "simple_drive.h"
 #include "foc_loop.h"
 #include "as5048a.h"
+#include "config.h"
+
 
 /* USER CODE END Includes */
 
@@ -43,7 +45,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ENABLE_SERIAL_DEBUGGING
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -118,18 +120,20 @@ int main(void)
   MX_ADC1_Init();
   MX_SPI3_Init();
   MX_TIM2_Init();
-  MX_SPI1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   FOC_Init(&hadc1, &htim1);
-
-  SVPWM_Init();
+//  SVPWM_Init(&htim1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//    SVPWM_Test_Run(30.0f);
+////
+//	HAL_Delay(1); // Utrzymuj stały krok czasowy
+
 
 //		SimpleDrive_Run(&htim1);
 
@@ -221,6 +225,28 @@ void SystemClock_Config(void)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 
+}
+
+static float test_theta = 0.0f;
+static const float TEST_SPEED_HZ = 1.0f;
+static const float TEST_VOLTAGE = 3.0f;
+
+// Krok czasowy jest stały, bo przerwanie jest stałe
+static const float DT = 1.0f / 40000.0f; // Zakładając 40kHz pętli (2x PWM freq)
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if (htim->Instance == TIM1) {
+    // 1. Zwiększ kąt
+    test_theta += _2PI * TEST_SPEED_HZ * DT;
+    if (test_theta > _2PI) test_theta -= _2PI;
+
+    // 2. Oblicz napięcia
+    float u_alpha = TEST_VOLTAGE * cosf(test_theta);
+    float u_beta = TEST_VOLTAGE * sinf(test_theta);
+
+    // 3. Zaktualizuj PWM
+    SVPWM_Update(u_alpha, u_beta);
+  }
 }
 
 /* USER CODE END 4 */

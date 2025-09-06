@@ -7,11 +7,10 @@
 
 #include "as5048a.h"
 #include <stdio.h>
+#include "config.h"
 
 // as5048a.c - sterownik AS5048A z diagnostyką błędów
 
-#include "as5048a.h"
-#include <stdio.h>
 
 static inline void AS5048_CS_LOW(void) {
     HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
@@ -186,17 +185,6 @@ float AS5048_Get_Angle_Deg(void) {
     float angle = ((float)raw.position * 360.0f) / AS5048_RESOLUTION;
     return angle;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 //void AS5048_Diagnose(void) {
 //    uint16_t agc = 0, mag = 0, diag = 0;

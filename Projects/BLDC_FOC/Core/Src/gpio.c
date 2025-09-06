@@ -38,6 +38,8 @@
         * Output
         * EVENT_OUT
         * EXTI
+     PA6   ------> SPI1_MISO
+     PA7   ------> SPI1_MOSI
 */
 void MX_GPIO_Init(void)
 {
@@ -56,6 +58,14 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PWM_EN_FAULT_Pin */
   GPIO_InitStruct.Pin = PWM_EN_FAULT_Pin;
