@@ -41,12 +41,17 @@ void MotorController::begin() {
   motor.linkCurrentSense(&current_sense);
   Serial.println("Current sense initialized.");
 
+  SimpleFOCDebug::enable(&Serial);
+
   // MOTOR
-  motor.controller = MotionControlType::velocity;
+  motor.controller = MotionControlType::torque;
+  motor.torque_controller = TorqueControlType::foc_current;
   motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
   motor.init();
 
   // PID / FILTRY / LIMITY
+
+  motor.P_angle.P = 5.0f;
 
   // PID - velocity
   motor.PID_velocity.P = config.pid_v_p;
@@ -74,20 +79,20 @@ void MotorController::begin() {
   motor.PID_current_d.output_ramp = config.pid_id_output_ramp;    
   motor.LPF_current_d.Tf= config.lpf_id_Tf;                       
 
-  // FOC init
-  motor.initFOC();
-  Serial.println("Motor FOC initialized!");
+  // // // FOC init
+  // motor.initFOC();
+  // // Serial.println("Motor FOC initialized!");
 
-  // Target startowy
-  motor.target = config.initial_target_velocity;
-  Serial.print("Initial motor target set to: ");
-  Serial.print(motor.target);
-  Serial.println(" rad/s");
+  // // // Target startowy
+  // motor.target = config.initial_target_velocity;
+  // Serial.print("Initial motor target set to: ");
+  // Serial.print(motor.target);
+  // Serial.println(" rad/s");
 
-  // Monitoring (opcjonalnie)
-  motor.useMonitoring(Serial);
-  motor.monitor_downsample = 100;
-  motor.monitor_variables = _MON_VEL | _MON_ANGLE | _MON_TARGET | _MON_CURR_Q | _MON_CURR_D | _MON_VOLT_Q | _MON_VOLT_D;
+  // // Monitoring (opcjonalnie)
+  // motor.useMonitoring(Serial);
+  // motor.monitor_downsample = 100;
+  // motor.monitor_variables = _MON_VEL | _MON_ANGLE | _MON_TARGET | _MON_CURR_Q | _MON_CURR_D | _MON_VOLT_Q | _MON_VOLT_D;
 
   // Commander
   command.add('T', onTargetCmd, "target velocity [rad/s]");
@@ -149,4 +154,76 @@ void MotorController::onModeCmd(char* cmd) {
 
 void MotorController::feedCommand(char* cmdString) {
   command.run(cmdString);
+}
+
+// W pliku lib/MotorControllerLib/MotorController.cpp
+
+void MotorController::runAlignmentTest() {
+    // --- ZDEFINIUJ TABLICE TUTAJ, WEWNĄTRZ FUNKCJI ---
+    static const float voltageAlign[] = { 3.0f, 6.0f }; // Tablica napięć testowych
+    
+    // TABLICA ZDEFINIOWANA W STOPNIACH - bardziej czytelna
+    static const int positionAlignDeg[] = { 45, 180, 270};
+
+    Serial.println("\n--- Rozpoczynam procedure testowania kalibracji ---");
+    
+    // Ustaw tryb ANGLE, aby móc precyzyjnie pozycjonować silnik
+    motor.controller = MotionControlType::angle;
+    Serial.println("Tryb sterowania ustawiony na: ANGLE");
+
+    // Pętla po różnych napięciach kalibracji
+    for (int i = 0; i < 2; i++) {
+        float current_voltage = voltageAlign[i];
+        Serial.printf("\n============================================\n");
+        Serial.printf("  TESTUJE DLA NAPIECIA: %.1f V\n", current_voltage);
+        Serial.printf("============================================\n");
+        
+        motor.voltage_sensor_align = current_voltage;
+
+        // Pętla po różnych pozycjach startowych
+        for (int j = 0; j < 3; j++) {
+            // Pobierz pozycję w stopniach z tablicy
+            int target_position_deg = positionAlignDeg[j];
+            
+            // Przelicz pozycję na radiany - TYLKO do użycia w `motor.target`
+            float target_position_rad = (float)target_position_deg * DEG_TO_RAD;
+
+            // Loguj w stopniach dla czytelności
+            Serial.printf("\n--- Test dla pozycji startowej: %d deg (%.2f rad) ---\n", target_position_deg, target_position_rad);
+
+            // --- Krok 1: Dojedź do pozycji startowej ---
+            Serial.println("  1. Dojazd do pozycji startowej...");
+            
+            motor.target = target_position_rad; // Ustaw target w radianach
+            long move_start_time = millis();
+            
+            while (millis() - move_start_time < 3000) {
+                motor.loopFOC();
+                motor.move();
+                // Porównuj w radianach
+                if (abs(target_position_rad - motor.shaft_angle) < 0.02) {
+                    break;
+                }
+            }
+            // Loguj wynik końcowy w stopniach i radianach
+            Serial.printf("     -> Pozycja koncowa: %.3f rad (%.1f deg)\n", motor.shaft_angle, motor.shaft_angle * RAD_TO_DEG);
+            HAL_Delay(500);
+
+            // --- Krok 2: Uruchom kalibrację ---
+            Serial.println("  2. Reset i uruchomienie initFOC()...");
+            motor.zero_electric_angle = NOT_SET;
+            _delay(1000);
+            motor.initFOC();
+            _delay(1000);
+            
+            // Loguj wynik (offset) w radianach (standard) i stopniach (dla łatwiejszej interpretacji)
+            Serial.print("  3. >>> WYNIK: Znaleziony offset: ");
+            Serial.print(motor.zero_electric_angle, 4);
+            Serial.print(" rad (");
+            Serial.print(motor.zero_electric_angle * RAD_TO_DEG, 2);
+            Serial.println(" deg) <<<");
+        }
+    }
+
+    Serial.println("\n--- TEST ZAKONCZONY ---");
 }

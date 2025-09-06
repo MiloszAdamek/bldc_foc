@@ -51,7 +51,7 @@ const MotorConfig BoardConfig = {
       0.005f, // output ramp, LPF Tf
 
   // Startowy target
-  10.0f              // [rad/s]
+  0.05f              // [rad/s]
 };
 
 } // namespace AppConfig
