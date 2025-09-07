@@ -15,6 +15,7 @@
 #include "current_sense.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include "main.h"
 
 #define ADC_REF_VOLTAGE   3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION    4096.0f    // dla 12-bit ADC
@@ -44,6 +45,11 @@ static void CurrentSense_CalibrateOffset(void)
 {
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
     const int samples = 1000;
+
+    HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
 
     for (int i = 0; i < samples; ++i)
     {

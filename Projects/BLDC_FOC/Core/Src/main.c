@@ -227,28 +227,6 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
 }
 
-static float test_theta = 0.0f;
-static const float TEST_SPEED_HZ = 1.0f;
-static const float TEST_VOLTAGE = 3.0f;
-
-// Krok czasowy jest stały, bo przerwanie jest stałe
-static const float DT = 1.0f / 40000.0f; // Zakładając 40kHz pętli (2x PWM freq)
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  if (htim->Instance == TIM1) {
-    // 1. Zwiększ kąt
-    test_theta += _2PI * TEST_SPEED_HZ * DT;
-    if (test_theta > _2PI) test_theta -= _2PI;
-
-    // 2. Oblicz napięcia
-    float u_alpha = TEST_VOLTAGE * cosf(test_theta);
-    float u_beta = TEST_VOLTAGE * sinf(test_theta);
-
-    // 3. Zaktualizuj PWM
-    SVPWM_Update(u_alpha, u_beta);
-  }
-}
-
 /* USER CODE END 4 */
 
 /**

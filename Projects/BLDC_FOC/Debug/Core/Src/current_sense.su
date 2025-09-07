@@ -1,5 +1,5 @@
-../Core/Src/current_sense.c:43:13:CurrentSense_CalibrateOffset	32	static
-../Core/Src/current_sense.c:66:6:CurrentSense_Init	16	static
-../Core/Src/current_sense.c:84:6:CurrentSense_Measurement	40	static
-../Core/Src/current_sense.c:114:6:CurrentSense_Read	16	static
-../Core/Src/current_sense.c:121:6:CurrentSense_GetRaw	16	static
+../Core/Src/current_sense.c:44:13:CurrentSense_CalibrateOffset	32	static
+../Core/Src/current_sense.c:72:6:CurrentSense_Init	16	static
+../Core/Src/current_sense.c:90:6:CurrentSense_Measurement	40	static
+../Core/Src/current_sense.c:120:6:CurrentSense_Read	16	static
+../Core/Src/current_sense.c:127:6:CurrentSense_GetRaw	16	static

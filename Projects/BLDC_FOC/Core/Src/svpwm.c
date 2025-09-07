@@ -13,8 +13,8 @@
 #define _2PI 6.28318530718f
 #define _SQRT3 1.73205080757f
 static const float V_DC = 12.0f;        // Napięcie zasilania
-static const uint32_t PWM_PERIOD = 8499; // Wartość ARR timera
-static const uint32_t PWM_FREQ = 40000; // Hz 40kHz a nie 20kHz, bo przerwanie od ADC wykonuje sie 2x na okres PWM
+static const uint32_t PWM_PERIOD = 4249; // Wartość ARR timera
+static const uint32_t PWM_FREQ = 20000; // 170MHz / (2 * 1 * 4249); -> 2 * bo tryb center-aligned
 static const float T_PWM_SEC = 1.0f / PWM_FREQ; // Okres PWM w sekundach
 
 volatile uint16_t debug_Ta = 0.0f;
@@ -24,7 +24,7 @@ volatile uint16_t debug_Tc = 0.0f;
 static TIM_HandleTypeDef* svpwm_htim;
 
 const float TEST_VOLTAGE_AMPLITUDE = 3.0f; // Zacznij od małego napięcia
-float angle = 0.0f;
+float theta = 0.0f;
 
 void SVPWM_Init(TIM_HandleTypeDef *htim) {
 
@@ -131,16 +131,15 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
 
 void SVPWM_Test_Run(float test_freq_hz)
 {
-	// 1. Oblicz docelowe napięcia Ualpha i Ubeta
-	float Ualpha = TEST_VOLTAGE_AMPLITUDE * cosf(angle);
-	float Ubeta = TEST_VOLTAGE_AMPLITUDE * sinf(angle);
 
-	// 2. Przekaż je do modułu SVPWM, aby ustawił PWM
+	theta += _2PI * test_freq_hz * T_PWM_SEC;
+	if (theta > _2PI) theta -= _2PI;
+
+	float Ualpha = TEST_VOLTAGE_AMPLITUDE * cosf(theta);
+	float Ubeta = TEST_VOLTAGE_AMPLITUDE * sinf(theta);
+
 	SVPWM_Update(Ualpha, Ubeta);
 
-	// 3. Zwiększ kąt na potrzeby następnej iteracji
-	angle += _2PI * test_freq_hz * 0.001f;
-	if (angle > _2PI) angle -= _2PI;
 }
 
 

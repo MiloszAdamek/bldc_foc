@@ -68,25 +68,22 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim)
 
         AS5048_Init();
 
-        HAL_TIM_Base_Start(htim);           		// Start timera z przerwaniem
-        HAL_TIM_OC_Start(htim, TIM_CHANNEL_4); 	// Start CH4 jako output compare z przerwaniem
-
-        HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
+        HAL_TIM_Base_Start(foc_htim);
+        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
         HAL_Delay(50);
 
         // Kalibracja przed aktywowaniem drivera PWM
         CurrentSense_Init(hadc);
 
-
         SVPWM_Init(foc_htim); // Włączenie driverów i PWM
         FOC_AlignSensor();
 
-        HAL_TIM_Base_Start_IT(htim);
-//        HAL_ADCEx_InjectedStart_IT(hadc);
+        HAL_TIM_Base_Stop(foc_htim);
+        HAL_TIM_Base_Start_IT(foc_htim);
+
+        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
+        HAL_ADCEx_InjectedStart_IT(hadc);
 }
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
@@ -311,10 +308,17 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 //        CurrentSense_Read(&currents);
 //        currents_ready = true;
 
-//        SVPWM_Test_Run(10.0f);
+        SVPWM_Test_Run(50.0f);
     }
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if (htim->Instance == TIM1) {
+
+//	  SVPWM_Test_Run(50.0f);
+
+  }
+}
 
 
 
