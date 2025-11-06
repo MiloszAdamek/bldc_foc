@@ -1,0 +1,9 @@
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:180:6:ASPEP_start	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:207:6:ASPEP_sendBeacon	3
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:251:6:ASPEP_sendPing	3
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:285:6:ASPEP_getBuffer	5
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:404:9:ASPEP_sendPacket	14
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:590:6:ASPEP_HWDataTransmittedIT	8
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:668:10:ASPEP_RXframeProcess	29
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:836:6:ASPEP_HWDataReceivedIT	9
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/aspep.c:924:6:ASPEP_HWReset	1

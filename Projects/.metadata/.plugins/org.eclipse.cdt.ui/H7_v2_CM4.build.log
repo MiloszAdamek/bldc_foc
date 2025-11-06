@@ -1,0 +1,10 @@
+14:19:43 **** Incremental Build of configuration Debug for project H7_v2_CM4 ****
+make -j16 all 
+arm-none-eabi-size  H7_v2_CM4.elf 
+   text	   data	    bss	    dec	    hex	filename
+   4372	     16	   1568	   5956	   1744	H7_v2_CM4.elf
+Finished building: default.size.stdout
+ 
+
+14:19:43 Build Finished. 0 errors, 0 warnings. (took 211ms)
+

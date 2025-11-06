@@ -1,0 +1,10 @@
+11:04:47 **** Incremental Build of configuration Debug for project H7_CAN_CM7 ****
+make -j16 all 
+arm-none-eabi-size  H7_CAN_CM7.elf 
+   text	   data	    bss	    dec	    hex	filename
+  60428	    472	   2368	  63268	   f724	H7_CAN_CM7.elf
+Finished building: default.size.stdout
+ 
+
+11:04:48 Build Finished. 0 errors, 0 warnings. (took 203ms)
+

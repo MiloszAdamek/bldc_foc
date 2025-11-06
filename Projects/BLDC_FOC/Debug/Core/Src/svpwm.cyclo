@@ -1,3 +1,3 @@
-../Core/Src/svpwm.c:30:6:SVPWM_Init	2
-../Core/Src/svpwm.c:51:6:SVPWM_Update	10
-../Core/Src/svpwm.c:133:6:SVPWM_Test_Run	2
+../Core/Src/svpwm.c:28:6:SVPWM_Init	2
+../Core/Src/svpwm.c:48:6:SVPWM_Update	10
+../Core/Src/svpwm.c:130:6:SVPWM_Test_Run	2

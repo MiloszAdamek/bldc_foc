@@ -11,4 +11,4 @@
 ../Core/Src/foc_loop.c:184:6:FOC_AlignSensor	16
 ../Core/Src/foc_loop.c:274:6:FOC_Update	1
 ../Core/Src/foc_loop.c:303:6:HAL_ADCEx_InjectedConvCpltCallback	2
-../Core/Src/foc_loop.c:315:6:HAL_TIM_PeriodElapsedCallback	1
+../Core/Src/foc_loop.c:316:6:HAL_TIM_PeriodElapsedCallback	1

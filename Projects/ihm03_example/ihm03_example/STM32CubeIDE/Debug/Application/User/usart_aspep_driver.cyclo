@@ -1,0 +1,6 @@
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:44:6:UASPEP_INIT	5
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:56:6:UASPEP_TX_INIT	3
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:93:6:UASPEP_RX_INIT	3
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:130:6:UASPEP_CFG_TRANSMISSION	2
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:153:6:UASPEP_CFG_RECEPTION	1
+E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:169:6:UASPEP_IDLE_ENABLE	2
