@@ -16,11 +16,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "main.h"
+#include "motor_config.h"
 
 #define ADC_REF_VOLTAGE   3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION    4096.0f    // dla 12-bit ADC
-#define SHUNT_RESISTOR    0.33f      // Ohm
-#define CURRENT_GAIN      1.528f     // Wzmocnienie wzmacniacza
 #define ADC_LEFT_SHIFT    4          // left align = 12-bit przesunięte o 4 bity
 
 static ADC_HandleTypeDef *hadc_local;
@@ -110,9 +109,9 @@ void CurrentSense_Measurement(ADC_HandleTypeDef* hadc){
         float voltage_c = ((float)(raw_c - off_c) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
 
         // Napięcie -> prąd
-        current_a = voltage_a / (SHUNT_RESISTOR * CURRENT_GAIN);
-        current_b = voltage_b / (SHUNT_RESISTOR * CURRENT_GAIN);
-        current_c = voltage_c / (SHUNT_RESISTOR * CURRENT_GAIN);
+        current_a = voltage_a / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+        current_b = voltage_b / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+        current_c = voltage_c / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
     }
 
 }

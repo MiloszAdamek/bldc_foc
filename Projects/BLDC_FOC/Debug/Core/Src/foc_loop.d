@@ -1,4 +1,4 @@
-Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/foc_loop.h \
+Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/motor_config.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h \
  ../Core/Inc/stm32g4xx_hal_conf.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_rcc.h \
@@ -33,11 +33,11 @@ Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/foc_loop.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h \
  ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h \
- ../Core/Inc/transforms.h ../Core/Inc/svpwm.h ../Core/Inc/main.h \
- ../Core/Inc/tim.h ../Core/Inc/current_sense.h ../Core/Inc/as5048a.h \
- ../Core/Inc/spi.h ../Core/Inc/delay_us.h ../Core/Inc/config.h \
- ../Core/Inc/config.h ../Core/Inc/main.h
-../Core/Inc/foc_loop.h:
+ ../Core/Inc/foc_loop.h ../Core/Inc/transforms.h ../Core/Inc/svpwm.h \
+ ../Core/Inc/main.h ../Core/Inc/tim.h ../Core/Inc/current_sense.h \
+ ../Core/Inc/as5048a.h ../Core/Inc/spi.h ../Core/Inc/delay_us.h \
+ ../Core/Inc/main.h
+../Core/Inc/motor_config.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal.h:
 ../Core/Inc/stm32g4xx_hal_conf.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_rcc.h:
@@ -72,6 +72,7 @@ Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/foc_loop.h \
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_tim_ex.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart.h:
 ../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_hal_uart_ex.h:
+../Core/Inc/foc_loop.h:
 ../Core/Inc/transforms.h:
 ../Core/Inc/svpwm.h:
 ../Core/Inc/main.h:
@@ -80,6 +81,4 @@ Core/Src/foc_loop.o: ../Core/Src/foc_loop.c ../Core/Inc/foc_loop.h \
 ../Core/Inc/as5048a.h:
 ../Core/Inc/spi.h:
 ../Core/Inc/delay_us.h:
-../Core/Inc/config.h:
-../Core/Inc/config.h:
 ../Core/Inc/main.h:

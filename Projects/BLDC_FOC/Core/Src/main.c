@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -27,15 +28,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "svpwm.h"
-#include "math.h"
 #include "current_sense.h"
-#include "simple_drive.h"
 #include "foc_loop.h"
 #include "as5048a.h"
-#include "config.h"
-
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,11 +51,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-abc_current_t currents;
-abc_raw_t raw_currents;
-uint32_t lastPrint = 0;
-//AS5048_ReadResult raw_angle;
+#ifdef ENABLE_SERIAL_DEBUGGING
+	abc_current_t currents;
+	abc_raw_t raw_currents;
+	uint32_t lastPrint = 0;
+#endif
 
+volatile dq_ref_t current_ref = {0.0f, 1.0f};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -81,7 +78,6 @@ int __io_putchar(int ch)
     HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
     return 1;
 }
-
 /* USER CODE END 0 */
 
 /**
@@ -116,61 +112,64 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM1_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_SPI3_Init();
   MX_TIM2_Init();
+  MX_TIM1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  FOC_Init(&hadc1, &htim1);
+  FOC_Init(&hadc1, &htim1, &hspi3);
+  FOC_SetIqTarget(0.5f);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//    SVPWM_Test_Run(30.0f);
-////
+
 //	HAL_Delay(1); // Utrzymuj stały krok czasowy
 
-
-//		SimpleDrive_Run(&htim1);
-
-		// co 100 ms wypisz prądy i kąt
-//		if (HAL_GetTick() - lastPrint >= 1000)
-//		{
-//		  printf("\n\n\n==============================");
-//		  printf("\n       START WHILE\n");
-//		  printf("==============================\n");
+//	if (HAL_GetTick() - lastPrint >= 1000)
+//	{
+//	  printf("\n\n\n==============================");
+//	  printf("\n       START WHILE\n");
+//	  printf("==============================\n");
 //
-//		  CurrentSense_Read(&currents);
-//		  CurrentSense_GetRaw(&raw_currents);
-//
-//		  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-//				 currents.a, currents.b, currents.c);
-//
-//		  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-//				 raw_currents.a, raw_currents.b, raw_currents.c);
+////	  CurrentSense_Read(&currents);
+////	  CurrentSense_GetRaw(&raw_currents);
+////
+////	  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
+////			 currents.a, currents.b, currents.c);
+////
+////	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
+////			 raw_currents.a, raw_currents.b, raw_currents.c);
 //
 //
-//		  const float angle = AS5048_Get_Angle_Deg();
-//		  if (angle >= 0) {
-//			  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
-//		  } else {
-//			  printf("[ANGLE] Błąd odczytu kąta\n");
-//		  }
+//	  const float angle = AS5048_Get_Angle_Deg();
+//	  if (angle >= 0) {
+//		  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
+//	  } else {
+//		  printf("[ANGLE] Błąd odczytu kąta\n");
+//	  }
 //
-//		  lastPrint = HAL_GetTick();
+//	  lastPrint = HAL_GetTick();
 //
-//		  printf("\n==============================");
-//		  printf("\n        STOP WHILE\n");
-//		  printf("==============================\n");
-//		}
+//	  printf("\n==============================");
+//	  printf("\n        STOP WHILE\n");
+//	  printf("==============================\n");
+//	}
 
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	if(foc_update_ready){
+		foc_update_ready = false;
+		FOC_Update();
+	}
+
   }
   /* USER CODE END 3 */
 }

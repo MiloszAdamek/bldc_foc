@@ -2,6 +2,7 @@
 "./Core/Src/as5048a.o"
 "./Core/Src/current_sense.o"
 "./Core/Src/delay_us.o"
+"./Core/Src/dma.o"
 "./Core/Src/foc_loop.o"
 "./Core/Src/gpio.o"
 "./Core/Src/main.o"

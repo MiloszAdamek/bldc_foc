@@ -7,132 +7,137 @@
 
 #include "as5048a.h"
 #include <stdio.h>
-#include "config.h"
 
-// as5048a.c - sterownik AS5048A z diagnostyką błędów
+static SPI_HandleTypeDef* as5048_hspi;
 
+volatile bool spi_ready = true;
 
-static inline void AS5048_CS_LOW(void) {
-    HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
+static uint8_t spi_tx_buf[2];
+static uint8_t spi_rx_buf[2];
+
+static volatile AS5048_ReadResult raw_angle;
+
+static inline void AS5048_CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
+static inline void AS5048_CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
+
+void AS5048_Init(SPI_HandleTypeDef *hspi){
+	as5048_hspi = hspi;
+	DWT_Init();
+	AS5048_CS_HIGH();
 }
 
-static inline void AS5048_CS_HIGH(void) {
-    HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
-}
-
-static uint16_t AS5048_AddParity(uint16_t cmd) {
+static uint16_t AS5048_AddParity(uint16_t cmd)
+{
     uint16_t count = 0;
-    for (int i = 0; i < 15; i++) {
-        count += (cmd >> i) & 1;
-    }
-    if (count % 2) cmd |= 0x8000;
-    else cmd &= ~0x8000;
+    for (int i = 0; i < 15; i++)
+        count += (cmd >> i) & 1u;
+
+    if (count % 2)
+        cmd |= 0x8000;
+    else
+        cmd &= ~0x8000;
+
     return cmd;
 }
 
-void AS5048_Init(){
-	DWT_Init();
-}
+/**
+ * @brief Check error on 14th bit in received frame
+ * @param response Received data
+ * @return Bool 1 -> ERROR
+ */
+static bool AS5048_HasError(uint16_t response) {return (response & AS_ERROR_BIT);}
 
-AS5048_Status AS5048_Reg_Read(uint16_t regAddr, uint16_t *dst) {
-//    printf("\n[READ] Rejestr: 0x%04X\n", regAddr);
-
-    uint16_t cmd = 0x4000 | (regAddr & 0x3FFF);
-    cmd = AS5048_AddParity(cmd);
-
-    uint8_t txBuf[2] = {cmd >> 8, cmd & 0xFF};
-    uint8_t rxBuf[2] = {0};
-
-//    printf("[SPI] TX (read cmd): %02X %02X\n", txBuf[0], txBuf[1]);
-
+static AS5048_Status AS5048_TransceiveReceive(const uint8_t *tx, uint8_t *rx)
+{
     AS5048_CS_LOW();
     delay_us(AS_US_DELAY/2);
-    if (HAL_SPI_TransmitReceive(AS5048_SPI_HANDLE, txBuf, rxBuf, 2, HAL_MAX_DELAY) != HAL_OK) {
-        AS5048_CS_HIGH();
-//        printf("[SPI] Błąd transmisji komendy\n");
-        return AS5048_ERR_SPI;
-    }
+    HAL_StatusTypeDef result = HAL_SPI_TransmitReceive(as5048_hspi, tx, rx, 2, HAL_MAX_DELAY);
     AS5048_CS_HIGH();
     delay_us(AS_US_DELAY);
+    return (result == HAL_OK) ? AS5048_OK : AS5048_ERR_SPI;
+}
 
-//    printf("[SPI] RX (read dummy): %02X %02X\n", rxBuf[0], rxBuf[1]);
-
-    uint8_t txBuf2[2] = {0x00, 0x00};
-    uint8_t rxBuf2[2] = {0};
-
-//    printf("[SPI] TX (NOP): %02X %02X\n", txBuf2[0], txBuf2[1]);
-
+static AS5048_Status AS5048_Transceive(const uint8_t *tx)
+{
     AS5048_CS_LOW();
     delay_us(AS_US_DELAY/2);
-    if (HAL_SPI_TransmitReceive(AS5048_SPI_HANDLE, txBuf2, rxBuf2, 2, HAL_MAX_DELAY) != HAL_OK) {
-        AS5048_CS_HIGH();
-//        printf("[SPI] Błąd transmisji NOP\n");
-        return AS5048_ERR_SPI;
-    }
+    HAL_StatusTypeDef result = HAL_SPI_Transmit(as5048_hspi, tx, 2, HAL_MAX_DELAY);
     AS5048_CS_HIGH();
+    delay_us(AS_US_DELAY);
+    return (result == HAL_OK) ? AS5048_OK : AS5048_ERR_SPI;
+}
 
-//    printf("[SPI] RX (data): %02X %02X\n", rxBuf2[0], rxBuf2[1]);
+/**
+ * @brief Read value from AS5048A register
+ * @param regAddr 14-bit register address
+ * @param dst Pointer to store the result
+ * @return Status of the operation (AS5048_OK, AS5048_ERR_SPI, etc.)
+ */
+static AS5048_Status AS5048_RegRead(const uint16_t regAddr, uint16_t *dst)
+{
+    AS5048_Status s;
+    uint16_t cmd = AS_READ | (regAddr & AS_ANGLE);
+    cmd = AS5048_AddParity(cmd);
 
-    uint16_t response = (rxBuf2[0] << 8) | rxBuf2[1];
+    uint8_t txBuf[2] = {cmd >> 8, cmd & 0xFF };
+    uint8_t rxBuf[2] = {0};
 
-    if (regAddr != 0x0001 && AS5048_Has_Error(response)) {
-//        printf("[ERROR] Bit błędu ustawiony w odpowiedzi: 0x%04X\n", response);
+    s = AS5048_TransceiveReceive(txBuf, rxBuf);
+    if (s != AS5048_OK) return s;
+
+    uint8_t txBuf2[2] = {0,0};
+    uint8_t rxBuf2[2] = {0};
+
+    s = AS5048_TransceiveReceive(txBuf2, rxBuf2);
+    if (s != AS5048_OK) return s;
+
+    uint16_t rx_data = ((uint16_t)rxBuf2[0] << 8) | rxBuf2[1];
+    if (regAddr != AS_CLR_ERR && AS5048_HasError(rx_data))
         return AS5048_ERR_FLAG;
-    }
 
-    *dst = response & 0x3FFF;
-//    printf("[READ] Dane: 0x%04X (%u)\n", *dst, *dst);
+    *dst = rx_data & AS_ANGLE; // 14 bitów właściwych danych
     return AS5048_OK;
 }
 
-AS5048_Status AS5048_Reg_Write(uint16_t regAddr, uint16_t value, uint16_t *confirm) {
-    uint16_t cmd = 0x0000 | (regAddr & 0x3FFF);
+/**
+ * @brief Write value to AS5048A register
+ * @param regAddr 14-bit register address
+ * @param value Data to write into register
+ * @param confirm Pointer to store the send comfirmation
+ * @return Status of the operation (AS5048_OK, AS5048_ERR_SPI, etc.)
+ */
+static AS5048_Status AS5048_RegWrite(const uint16_t regAddr, const uint16_t value, uint16_t *confirm){
+
+	AS5048_Status s;
+
+	uint16_t cmd = AS_WRITE | (regAddr & AS_ANGLE);
     cmd = AS5048_AddParity(cmd);
     uint8_t txCmd[2] = {cmd >> 8, cmd & 0xFF};
 
-    AS5048_CS_LOW();
-    delay_us(AS_US_DELAY/2);
-    if (HAL_SPI_Transmit(AS5048_SPI_HANDLE, txCmd, 2, HAL_MAX_DELAY) != HAL_OK) {
-        AS5048_CS_HIGH();
-        return AS5048_ERR_SPI;
-    }
-    AS5048_CS_HIGH();
-    delay_us(AS_US_DELAY);
+    s = AS5048_Transceive(txCmd);
+    if(s != AS5048_OK) return s;
 
     uint8_t txData[2] = {value >> 8, value & 0xFF};
-    AS5048_CS_LOW();
-    delay_us(AS_US_DELAY/2);
-    if (HAL_SPI_Transmit(AS5048_SPI_HANDLE, txData, 2, HAL_MAX_DELAY) != HAL_OK) {
-        AS5048_CS_HIGH();
-        return AS5048_ERR_SPI;
-    }
-    AS5048_CS_HIGH();
-    delay_us(AS_US_DELAY);
+
+    s = AS5048_Transceive(txData);
+    if(s != AS5048_OK) return s;
 
     uint8_t txBuf3[2] = {0x00, 0x00}, rxBuf3[2] = {0};
-    AS5048_CS_LOW();
-    delay_us(5);
-    if (HAL_SPI_TransmitReceive(AS5048_SPI_HANDLE, txBuf3, rxBuf3, 2, HAL_MAX_DELAY) != HAL_OK) {
-        AS5048_CS_HIGH();
-        return AS5048_ERR_SPI;
-    }
-    AS5048_CS_HIGH();
+
+    s = AS5048_TransceiveReceive(txBuf3, rxBuf3);
+    if(s != AS5048_OK) return s;
 
     *confirm = (rxBuf3[0] << 8) | rxBuf3[1];
-    if (AS5048_Has_Error(*confirm)) return AS5048_ERR_FLAG;
+    if (AS5048_HasError(*confirm)) return AS5048_ERR_FLAG;
     return AS5048_OK;
 }
 
-bool AS5048_Has_Error(uint16_t response) {
-    return (response & 0x4000);
-}
-
-AS5048_ErrorFlags AS5048_Get_Error_Details(void) {
+AS5048_ErrorFlags AS5048_GetErrorDetails(void) {
 //    printf("[ERROR] Rozpoczynam odczyt rejestru błędów (0x0001)\n");
 
     AS5048_ErrorFlags err = {0};
     uint16_t response = 0;
-    AS5048_Reg_Read(0x0001, &response);
+    AS5048_RegRead(AS_CLR_ERR, &response);
     uint16_t reg = response & 0x3FFF;
 
     err.watchdogError   = reg & (1 << 0);
@@ -146,47 +151,92 @@ AS5048_ErrorFlags AS5048_Get_Error_Details(void) {
 
     // CLEAR ERROR FLAG mechanizm z dokumentacji: kolejny odczyt kasuje flagę
     uint16_t dummy;
-    AS5048_Reg_Read(0x0000, &dummy);
+    AS5048_RegRead(AS_NOP, &dummy);
 
     return err;
 }
 
-void AS5048_Get_Raw_Position(AS5048_ReadResult *raw_angle) {
-    *raw_angle = (AS5048_ReadResult){0};
+void AS5048_GetRawPosition(void) {
+
     uint16_t raw = 0;
     AS5048_Status status = AS5048_ERR_SPI;
 
     for (int attempt = 0; attempt < 3; attempt++) {
 //        printf("\n[TRY] Próba odczytu kąta #%d\n", attempt + 1);
-        status = AS5048_Reg_Read(0x3FFF, &raw);
+        status = AS5048_RegRead(AS_ANGLE, &raw);
         if (status == AS5048_OK) break;
         delay_us(20);
     }
 
-    raw_angle->status = status;
+    raw_angle.status = status;
     if (status == AS5048_OK) {
-        raw_angle->position = raw;
+        raw_angle.position = raw;
 //        printf("[INFO] Prawidłowy odczyt kąta: %u\n", raw);
     } else if (status == AS5048_ERR_FLAG) {
-        raw_angle->errorFlags = AS5048_Get_Error_Details();
+        raw_angle.errorFlags = AS5048_GetErrorDetails();
     } else {
 //        printf("[ERROR] Błąd SPI podczas odczytu kąta\n");
     }
 }
 
-float AS5048_Get_Angle_Deg(void) {
-    AS5048_ReadResult raw = {0};
-    AS5048_Get_Raw_Position(&raw);
+float AS5048_GetAngleDeg(void) {
+    AS5048_GetRawPosition();
 
-    if (raw.status != AS5048_OK) {
+    if (raw_angle.status != AS5048_OK) {
         return -1.0f;
     }
 
-    float angle = ((float)raw.position * 360.0f) / AS5048_RESOLUTION;
-    return angle;
+    float angle_deg = ((float)raw_angle.position * 360.0f) / AS5048_RESOLUTION;
+    return angle_deg;
 }
 
-//void AS5048_Diagnose(void) {
+float AS5048_GetAngleRad(void){
+    AS5048_GetRawPosition();
+
+    if (raw_angle.status != AS5048_OK) {
+        return -1.0f;
+    }
+
+    float angle_rad = ((float)raw_angle.position / AS5048_RESOLUTION) * M_TWOPI;
+    return angle_rad;
+}
+
+// Transmisja przez DMA
+
+void AS5048_ReadAngleDMA(void)
+{
+    if (!spi_ready) return; // trwa poprzedni transfer
+
+    spi_ready = false;
+    uint16_t cmd = AS_READ | AS_ANGLE;
+    cmd  = AS5048_AddParity(cmd);
+
+    spi_tx_buf[0] = (uint8_t)(cmd >> 8);
+    spi_tx_buf[1] = (uint8_t)(cmd & 0xFF);
+
+    AS5048_CS_LOW();
+    HAL_SPI_TransmitReceive_DMA(as5048_hspi, spi_tx_buf, spi_rx_buf, 2);
+}
+
+/* --- Callback wywoływany po zakończeniu transmisji po DMA --- */
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    if (hspi == as5048_hspi)
+    {
+        /* zwolnij CS i oznacz transfer zakończony */
+        AS5048_CS_HIGH();
+        spi_ready = true;
+
+        /* zdekoduj dane */
+        raw_angle.position = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
+        raw_angle.position &= AS_ANGLE; // 14 bitów właściwych danych
+        raw_angle.status = AS5048_OK;
+    }
+}
+
+float AS5048_GetMechanicalAngle(void) {return (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;}
+
+//void AS5048_Diagnose(void) {0
 //    uint16_t agc = 0, mag = 0, diag = 0;
 //
 //    printf("\n=== DIAGNOSTYKA AS5048A ===\n");

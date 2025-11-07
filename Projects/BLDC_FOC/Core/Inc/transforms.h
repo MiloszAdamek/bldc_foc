@@ -42,16 +42,16 @@ static inline void InvParkTransform(float vd, float vq, float theta, float *valp
     *vbeta  = vd * sin_theta + vq * cos_theta;
 }
 
-static inline void ParkTransformTrig(float ialpha, float ibeta, float sin_theta, float cos_theta, float *id, float *iq)
+static inline void ParkTransformTrig(float ialpha, float ibeta, float *sin_theta, float *cos_theta, float *id, float *iq)
 {
-    *id =  ialpha * cos_theta + ibeta * sin_theta;
-    *iq = -ialpha * sin_theta + ibeta * cos_theta;
+    *id =  ialpha * (*cos_theta) + ibeta * (*sin_theta);
+    *iq = -ialpha * (*sin_theta) + ibeta * (*cos_theta);
 }
 
-static inline void InvParkTransformTrig(float vd, float vq, float sin_theta, float cos_theta, float *valpha, float *vbeta)
+static inline void InvParkTransformTrig(float vd, float vq, float *sin_theta, float *cos_theta, float *valpha, float *vbeta)
 {
-    *valpha = vd * cos_theta - vq * sin_theta;
-    *vbeta  = vd * sin_theta + vq * cos_theta;
+    *valpha = vd * (*cos_theta) - vq * (*sin_theta);
+    *vbeta  = vd * (*sin_theta) + vq * (*cos_theta);
 }
 
 

@@ -13,27 +13,26 @@
 #include <stdbool.h>
 #include "delay_us.h"
 #include "math.h"
-#include "config.h"
 
-// Control and Error Registers
-#define AS_NOP 				0x0000
-#define AS_CLR_ERR 			0x0001
-#define AS_PROG				0x0003
-// Programmable Customer Settings
-#define AS_OTP_ZERO_POS_H 	0x0016
-#define AS_OTP_ZERO_POS_L 	0x0017
-// Readout Registers
-#define AS_DIAG_AGC			0x3FFD
-#define AS_MAGNITUDE		0x3FFE
-#define AS_ANGLE			0x3FFF
+#define AS_WRITE            0x0000  // bit14=0 -> zapis
+#define AS_READ             0x4000  // bit14=1 -> odczyt
+#define AS_NOP              0x0000  // „No Operation” – druga ramka, żeby odebrać dane
+#define AS_CLR_ERR          0x0001  // odczyt tego kasuje flagę błędów
+#define AS_PROG             0x0003  // programowanie OTP
+#define AS_OTP_ZERO_POS_H   0x0016  // wysokie bity pozycji zerowej
+#define AS_OTP_ZERO_POS_L   0x0017  // niskie bity pozycji zerowej
+#define AS_DIAG_AGC         0x3FFD  // AGC
+#define AS_MAGNITUDE        0x3FFE  // pole magnetyczne
+#define AS_ANGLE            0x3FFF  // aktualny kąt (14 bitów danych)
+#define AS_ERROR_BIT 		0x4000
 
-#define AS5048_SPI_HANDLE   (&hspi3)
+#define AS5048_SPI_HANDLER  (&hspi3)
 
 #define AS_US_DELAY			4
 
 #define AS5048_RESOLUTION   16384.0f
-#define TWO_PI              6.28318530718f
 
+extern volatile bool spi_ready;
 
 // Status funkcji
 typedef enum {
@@ -58,63 +57,26 @@ typedef struct {
 } AS5048_ReadResult;
 
 /**
- * @brief Read value from AS5048A register
- * @param regAddr 14-bit register address
- * @param dst Pointer to store the result
- * @return Status of the operation (AS5048_OK, AS5048_ERR_SPI, etc.)
- */
-AS5048_Status AS5048_Reg_Read(uint16_t regAddr, uint16_t *dst);
-
-/**
- * @brief Write value to AS5048A register
- * @param regAddr 14-bit register address
- * @param value Data to write into register
- * @param confirm Pointer to store the send comfirmation
- * @return Status of the operation (AS5048_OK, AS5048_ERR_SPI, etc.)
- */
-AS5048_Status AS5048_Reg_Write(uint16_t regAddr, uint16_t value, uint16_t *confirm);
-
-/**
  * @brief Get error details
  * @return ErrorFlag of error(watchdogError, offsetfinished, cordicOverflow)
  */
-AS5048_ErrorFlags AS5048_Get_Error_Details(void);
+AS5048_ErrorFlags AS5048_GetErrorDetails(void);
 
-void AS5048_Get_Raw_Position(AS5048_ReadResult *raw_angle);
-
-/**
- * @brief Add parity bit value into command to send
- * @param cmd Command to send
- * @return Command to send with parity bit
- */
-uint16_t AS5048_Add_Parity(uint16_t cmd);
-
-/**
- * @brief Check error on 14th bit in received frame
- * @param response Received data
- * @return Bool 1 -> ERROR
- */
-bool AS5048_Has_Error(uint16_t response);
+void AS5048_GetRawPosition(void);
 
 /**
  * @brief Convert raw angle to degrees
  * @return float, -1.0f when raw.status != AS5048_OK
  */
-float AS5048_Get_Angle_Deg(void);
+float AS5048_GetAngleDeg(void);
+
+float AS5048_GetAngleRad(void);
 
 void AS5048_Diagnose(void);
 
-static inline float GetElectricalAngle(uint16_t raw_position, uint8_t pole_pairs)
-{
-    float mech_angle = ((float)raw_position / 16384.0f) * 2.0f * M_PI;
-    float elec_angle = mech_angle * pole_pairs;
+void AS5048_ReadAngleDMA(void);
 
-    elec_angle = fmodf(elec_angle, 2.0f * M_PI);
-    if (elec_angle < 0.0f)
-        elec_angle += 2.0f * M_PI;
-
-    return elec_angle;
-}
+float AS5048_GetMechanicalAngle();
 
 void AS5048_Init();
 

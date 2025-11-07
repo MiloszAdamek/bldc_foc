@@ -16,13 +16,9 @@
 #include <stdio.h>
 #include "math.h"
 
-//#define PWM_PERIOD 8499
-#define _PI 3.14159265359f
-#define _2PI 6.28318530718f
 #define _PI_2 1.57079632679f
 #define _3PI_2 4.71238898038f
 #define _SQRT3_2 0.86602540378f
-#define MOTOR_POLE_PAIRS	7
 
 // Ustawienia regulatorów PI
 typedef struct {
@@ -37,7 +33,6 @@ typedef struct {
     float q;
 } dq_ref_t;
 
-extern volatile dq_ref_t current_ref;
 extern volatile float theta_el;
 extern volatile AS5048_ReadResult raw;
 extern volatile float encoder_offset;
@@ -51,17 +46,20 @@ extern volatile float debug_ib;
 extern volatile float debug_ic;
 extern volatile uint16_t raw_copy;
 
-
 // Flags
 extern volatile bool currents_ready;
 extern volatile bool encoder_ready;
 extern volatile bool encoder_trigger;
 extern volatile bool encoder_calibrated;
+extern volatile bool foc_update_ready;
+extern volatile bool ramp_active;
 
-void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim);
+void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi);
 
 // Główna pętla FOC
-void FOC_Update(abc_current_t *currents, float sin_theta, float cos_theta, volatile dq_ref_t *i_ref);
+void FOC_Update();
+
+void FOC_SetIqTarget(float new_target);
 
 // Kalibracja enkodera
 void FOC_AlignSensor();

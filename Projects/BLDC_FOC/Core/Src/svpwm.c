@@ -5,16 +5,12 @@
  *      Author: Miloush
  */
 
+#include "motor_config.h"
 #include "svpwm.h"
 #include "math.h"
 #include "main.h"
 
 #define _PI_3 (M_PI / 3.0f)
-
-static const float V_DC = 12.0f;        // Napięcie zasilania
-static const uint32_t PWM_PERIOD = 4249; // Wartość ARR timera
-static const uint32_t PWM_FREQ = 20000; // 170MHz / (2 * 1 * 4249); -> 2 * bo tryb center-aligned
-static const float T_PWM_SEC = 1.0f / PWM_FREQ; // Okres PWM w sekundach
 
 volatile uint16_t debug_Ta = 0.0f;
 volatile uint16_t debug_Tb = 0.0f;
@@ -41,8 +37,6 @@ void SVPWM_Init(TIM_HandleTypeDef *htim) {
     HAL_TIM_PWM_Start(svpwm_htim, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(svpwm_htim, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(svpwm_htim, TIM_CHANNEL_3);
-
-//    HAL_TIM_Base_Start_IT(&htim2); // Start przerwania z wywołaniem STVPW_Test_Run
 }
 
 void SVPWM_Update(float Ualpha, float Ubeta) {
@@ -50,8 +44,8 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
 
     // --- Krok 1: Ograniczenie napięcia ---
     float U_ref = sqrtf(Ualpha * Ualpha + Ubeta * Ubeta);
-    if (U_ref > V_DC / M_SQRT3) {
-        float scale = (V_DC / M_SQRT3) / U_ref;
+    if (U_ref > VOLTAGE_SUPPLY / M_SQRT3) {
+        float scale = (VOLTAGE_SUPPLY / M_SQRT3) / U_ref;
         Ualpha *= scale;
         Ubeta *= scale;
         U_ref *= scale; // Zaktualizuj też U_ref
@@ -70,17 +64,17 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
     // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
     float T1, T2;
     // Współczynnik modulacji (0.0 do 1.0)
-    float m = M_SQRT3 * U_ref / V_DC;
+    float m = M_SQRT3 * U_ref / VOLTAGE_SUPPLY;
     // Kąt wewnątrz bieżącego sektora
     float angle_in_sector = angle - (float)sector * _PI_3;
 
-    T1 = m * sinf(_PI_3 - angle_in_sector) * T_PWM_SEC;
-    T2 = m * sinf(angle_in_sector) * T_PWM_SEC;
+    T1 = m * sinf(_PI_3 - angle_in_sector) * PWM_PERIOD_SEC;
+    T2 = m * sinf(angle_in_sector) * PWM_PERIOD_SEC;
 
     // --- Krok 4: Obliczenie czasów włączenia dla każdej fazy (w sekundach) ---
     // T0 to czas, przez który używane są wektory zerowe (gdy wszystkie tranzystory
     // są w tym samym stanie). Rozdzielamy go symetrycznie.
-    float T0 = T_PWM_SEC - T1 - T2;
+    float T0 = PWM_PERIOD_SEC - T1 - T2;
 
     switch (sector) {
         case 0: // Sektor 1 (wektory V1, V2)
@@ -114,30 +108,28 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
             Tc = T1 + T0 / 2.0f;
             break;
         default: // Powinno się nigdy nie zdarzyć
-            Ta = Tb = Tc = T_PWM_SEC / 2.0f;
+            Ta = Tb = Tc = PWM_PERIOD_SEC / 2.0f;
             break;
     }
     //  Mapowanie na PWM: Ostateczne czasy włączenia dla każdej fazy (Ta, Tb, Tc)
-    //  są w zakresie od 0 do T_pwm_sec (okres PWM w sekundach). Dzielimy je przez T_pwm_sec,
+    //  są w zakresie od 0 do PWM_PERIOD_SEC (okres PWM w sekundach). Dzielimy je przez PWM_PERIOD_SEC,
     //	aby uzyskać współczynnik wypełnienia od 0.0 do 1.0, a następnie mnożymy przez PWM_PERIOD,
     //	aby uzyskać wartość do wpisania do rejestru compare timera.
-    // --- Krok 5: Przeskaluj czasy [0, T_PWM_SEC] na wartości compare [0, PWM_PERIOD] ---
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, (uint32_t)(Ta / T_PWM_SEC * PWM_PERIOD));
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, (uint32_t)(Tb / T_PWM_SEC * PWM_PERIOD));
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, (uint32_t)(Tc / T_PWM_SEC * PWM_PERIOD));
+    // --- Krok 5: Przeskaluj czasy [0, PWM_PERIOD_SEC] na wartości compare [0, PWM_PERIOD_ARR] ---
+    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, (uint32_t)(Ta / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
+    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, (uint32_t)(Tb / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
+    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, (uint32_t)(Tc / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
 }
 
 void SVPWM_Test_Run(float test_freq_hz)
 {
-
-	theta += M_TWOPI * test_freq_hz * T_PWM_SEC;
+	theta += M_TWOPI * test_freq_hz * PWM_PERIOD_SEC;
 	if (theta > M_TWOPI) theta -= M_TWOPI;
 
 	float Ualpha = TEST_VOLTAGE_AMPLITUDE * cosf(theta);
 	float Ubeta = TEST_VOLTAGE_AMPLITUDE * sinf(theta);
 
 	SVPWM_Update(Ualpha, Ubeta);
-
 }
 
 
