@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;BLDC_FOC&apos; to &apos;BLDC_FOC_Old&apos;" description="Rename resource &apos;BLDC_FOC&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="/BLDC_FOC" name="BLDC_FOC_Old" stamp="1754326876867" updateReferences="true"/>
-</session>
