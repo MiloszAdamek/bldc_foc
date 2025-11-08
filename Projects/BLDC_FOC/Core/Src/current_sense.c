@@ -96,13 +96,13 @@ void CurrentSense_Process(){
 	adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_3);
 
 	// Przesunięcie z left-align -> 12-bit realne
-	uint16_t raw_a = adc_raw_phase_a >> ADC_LEFT_SHIFT;
-	uint16_t raw_b = adc_raw_phase_b >> ADC_LEFT_SHIFT;
-	uint16_t raw_c = adc_raw_phase_c >> ADC_LEFT_SHIFT;
+	uint16_t raw_a = adc_raw_phase_a;
+	uint16_t raw_b = adc_raw_phase_b;
+	uint16_t raw_c = adc_raw_phase_c;
 
-	uint16_t off_a = offset_a >> ADC_LEFT_SHIFT;
-	uint16_t off_b = offset_b >> ADC_LEFT_SHIFT;
-	uint16_t off_c = offset_c >> ADC_LEFT_SHIFT;
+	uint16_t off_a = offset_a;
+	uint16_t off_b = offset_b;
+	uint16_t off_c = offset_c;
 
 	// ADC -> napięcie
 	float voltage_a = ((float)(raw_a - off_a) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
@@ -139,9 +139,9 @@ void CurrentSense_ProcessDMA(){
     uint16_t raw_b = adc_dma_buf[1];
     uint16_t raw_c = adc_dma_buf[2];
 
-    uint16_t off_a = offset_a >> ADC_LEFT_SHIFT;
-    uint16_t off_b = offset_b >> ADC_LEFT_SHIFT;
-    uint16_t off_c = offset_c >> ADC_LEFT_SHIFT;
+    uint16_t off_a = offset_a;
+    uint16_t off_b = offset_b;
+    uint16_t off_c = offset_c;
 
     float voltage_a = ((float)(raw_a - off_a) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
     float voltage_b = ((float)(raw_b - off_b) * ADC_REF_VOLTAGE / ADC_RESOLUTION);

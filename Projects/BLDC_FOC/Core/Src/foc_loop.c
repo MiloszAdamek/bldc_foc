@@ -75,7 +75,6 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
         AS5048_Init(hspi);
 
         HAL_TIM_Base_Start(foc_htim);
-        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
         HAL_Delay(50);
 
@@ -84,10 +83,12 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
         SVPWM_Init(foc_htim); // Włączenie driverów i PWM
         FOC_AlignSensor();
 
-//        sensor_direction = -1;
+        sensor_direction = -1;
 
         HAL_TIM_Base_Stop(foc_htim);
         HAL_TIM_Base_Start_IT(foc_htim); // Włącza przerwanie od przepełnienia (Update Event)
+
+        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); // Start CH4 -> wyzwalanie ADC
 }
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
@@ -362,6 +363,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {	// koniec cyklu PWM
     if (htim->Instance == TIM1)
     {
+//    	CurrentSense_ProcessDMA();
+//    	CurrentSense_Read(&currents);
+//
 //    	SVPWM_Test_Run(40.0f);
     }
 }
