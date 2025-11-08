@@ -127,55 +127,23 @@ int main(void)
 //  TestMode_Init(&hspi3);
 //  Test_AS5048AStability();
 //  Test_AS5048AStabilityDMA();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-//	HAL_Delay(1); // Utrzymuj stały krok czasowy
-
-//	if (HAL_GetTick() - lastPrint >= 1000)
-//	{
-//	  printf("\n\n\n==============================");
-//	  printf("\n       START WHILE\n");
-//	  printf("==============================\n");
-//
-////	  CurrentSense_Read(&currents);
-////	  CurrentSense_GetRaw(&raw_currents);
-////
-////	  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-////			 currents.a, currents.b, currents.c);
-////
-////	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-////			 raw_currents.a, raw_currents.b, raw_currents.c);
-//
-//
-//	  const float angle = AS5048_Get_Angle_Deg();
-//	  if (angle >= 0) {
-//		  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
-//	  } else {
-//		  printf("[ANGLE] Błąd odczytu kąta\n");
-//	  }
-//
-//	  lastPrint = HAL_GetTick();
-//
-//	  printf("\n==============================");
-//	  printf("\n        STOP WHILE\n");
-//	  printf("==============================\n");
+//	if (adc_data_ready){
+//		FOC_Update();
 //	}
-
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 
-	if(foc_update_ready){
-		foc_update_ready = false;
+	if (adc_data_ready) {
 		FOC_Update();
 	}
-
   }
   /* USER CODE END 3 */
 }

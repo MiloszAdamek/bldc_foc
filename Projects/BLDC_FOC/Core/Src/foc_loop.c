@@ -14,6 +14,8 @@ static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT
 static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT_IQ, .integral = 0.0f };
 static abc_current_t currents;
 
+volatile bool svpwm_test_active = false;
+
 volatile dq_ref_t i_ref = {0.0f, 0.0f};
 
 // RAMP
@@ -79,16 +81,13 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
 
         // Kalibracja przed aktywowaniem drivera PWM
         CurrentSense_Init(hadc);
-
         SVPWM_Init(foc_htim); // Włączenie driverów i PWM
         FOC_AlignSensor();
-        sensor_direction = -1;
+
+//        sensor_direction = -1;
 
         HAL_TIM_Base_Stop(foc_htim);
-        HAL_TIM_Base_Start_IT(foc_htim);
-
-        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
-        HAL_ADCEx_InjectedStart_IT(hadc);
+        HAL_TIM_Base_Start_IT(foc_htim); // Włącza przerwanie od przepełnienia (Update Event)
 }
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
@@ -305,6 +304,13 @@ void FOC_SetIqTarget(float new_target)
 
 void FOC_Update()
 {
+
+    if (!adc_data_ready) {return;}
+	adc_data_ready = false;
+
+	CurrentSense_ProcessDMA();
+	CurrentSense_Read(&currents);
+
     float ialpha, ibeta;
     float id, iq;
     float vd, vq;
@@ -340,31 +346,35 @@ void FOC_Update()
 }
 
 // Cała pętla FOC + pomiar prądu
-void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    if (hadc->Instance == ADC1)
+//void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+//{
+//    if (hadc->Instance == ADC1)
+//    {
+//    	CurrentSense_Process(hadc);
+//        CurrentSense_Read(&currents);
+////        printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n", currents.a, currents.b, currents.c);
+//        foc_update_ready = true;
+////        SVPWM_Test_Run(40.0f);
+//    }
+//}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{	// koniec cyklu PWM
+    if (htim->Instance == TIM1)
     {
-    	CurrentSense_Process(hadc);
-        CurrentSense_Read(&currents);
-//        printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n", currents.a, currents.b, currents.c);
-        foc_update_ready = true;
-//        SVPWM_Test_Run(40.0f);
+//    	SVPWM_Test_Run(40.0f);
     }
 }
 
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-//{
+
+// Przerwanie od OC4 nie zadziała, bo jest używane do TRGO2
+//void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
+//{	// środek cyklu PWM
 //    if (htim->Instance == TIM1)
 //    {
-//        if (spi_ready)
-//        {
-//            spi_ready = false;
-//            AS5048_ReadAngleDMA();   // wystartuj DMA
-//        }
+//        FOC_Update();
 //    }
-//
 //}
-
 
 
 

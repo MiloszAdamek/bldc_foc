@@ -9,6 +9,8 @@
 #define INC_CURRENT_SENSE_H_
 
 #include "stm32g4xx_hal.h"
+#include <stdio.h>
+#include <stdbool.h>
 
 typedef struct {
     float a;
@@ -21,6 +23,8 @@ typedef struct {
     uint16_t b;
     uint16_t c;
 } abc_raw_t;
+
+extern volatile bool adc_data_ready;
 
 // Inicjalizacja pomiaru prądów
 void CurrentSense_Init(ADC_HandleTypeDef *hadc);
