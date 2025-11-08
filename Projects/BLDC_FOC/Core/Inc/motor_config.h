@@ -11,6 +11,9 @@
 #include "stm32g4xx_hal.h"
 #include <math.h>
 
+#define ENABLE_SERIAL_DEBUGGING
+//#define TEST_MODE
+
 /* =========================================================================
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
  * ========================================================================= */
@@ -51,14 +54,11 @@
 
 #define PI_KP_ID              5.0f
 #define PI_KI_ID              1000.0f
-#define PI_LIMIT_ID       	  100.0f
+#define PI_LIMIT_ID       	  500.0f
 
 #define PI_KP_IQ              5.0f
 #define PI_KI_IQ              1000.0f
-#define PI_LIMIT_IQ       	  100.0f
-
-#define TWO_PI                6.28318530718f
-#define SQRT3_2               0.86602540378f
+#define PI_LIMIT_IQ       	  500.0f
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)

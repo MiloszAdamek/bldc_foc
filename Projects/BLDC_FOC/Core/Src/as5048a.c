@@ -7,6 +7,7 @@
 
 #include "as5048a.h"
 #include <stdio.h>
+#include "motor_config.h"
 
 static SPI_HandleTypeDef* as5048_hspi;
 
@@ -15,7 +16,11 @@ volatile bool spi_ready = true;
 static uint8_t spi_tx_buf[2];
 static uint8_t spi_rx_buf[2];
 
-static volatile AS5048_ReadResult raw_angle;
+#ifdef TEST_MODE
+	volatile AS5048_ReadResult raw_angle;
+#else
+	static volatile AS5048_ReadResult raw_angle;
+#endif
 
 static inline void AS5048_CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
 static inline void AS5048_CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
@@ -205,33 +210,36 @@ float AS5048_GetAngleRad(void){
 
 void AS5048_ReadAngleDMA(void)
 {
-    if (!spi_ready) return; // trwa poprzedni transfer
+	if (!spi_ready) return; // trwa poprzedni transfer
 
-    spi_ready = false;
-    uint16_t cmd = AS_READ | AS_ANGLE;
-    cmd  = AS5048_AddParity(cmd);
+	spi_ready = false;
+	uint16_t cmd = AS_READ | AS_ANGLE;
+	cmd  = AS5048_AddParity(cmd);
 
-    spi_tx_buf[0] = (uint8_t)(cmd >> 8);
-    spi_tx_buf[1] = (uint8_t)(cmd & 0xFF);
+	spi_tx_buf[0] = (uint8_t)(cmd >> 8);
+	spi_tx_buf[1] = (uint8_t)(cmd & 0xFF);
 
-    AS5048_CS_LOW();
-    HAL_SPI_TransmitReceive_DMA(as5048_hspi, spi_tx_buf, spi_rx_buf, 2);
+	AS5048_CS_LOW();
+	HAL_SPI_TransmitReceive_DMA(as5048_hspi, spi_tx_buf, spi_rx_buf, 2);
 }
 
-/* --- Callback wywoływany po zakończeniu transmisji po DMA --- */
+///* --- Callback wywoływany po zakończeniu transmisji po DMA --- */
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    if (hspi == as5048_hspi)
-    {
-        /* zwolnij CS i oznacz transfer zakończony */
-        AS5048_CS_HIGH();
-        spi_ready = true;
+	if (hspi == as5048_hspi)
+	{
+	AS5048_CS_HIGH();
+	uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
+	spi_ready = true;
 
-        /* zdekoduj dane */
-        raw_angle.position = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
-        raw_angle.position &= AS_ANGLE; // 14 bitów właściwych danych
-        raw_angle.status = AS5048_OK;
-    }
+		if (frame & AS_ERROR_BIT) {
+//			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
+			raw_angle.status = AS5048_ERR_FLAG;
+		} else {
+			raw_angle.position = frame & AS_ANGLE;
+			raw_angle.status = AS5048_OK;
+		}
+	}
 }
 
 float AS5048_GetMechanicalAngle(void) {return (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;}

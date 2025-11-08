@@ -31,6 +31,8 @@
 #include "current_sense.h"
 #include "foc_loop.h"
 #include "as5048a.h"
+#include "tests.h"
+#include "motor_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,7 +42,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define ENABLE_SERIAL_DEBUGGING
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -121,6 +123,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   FOC_Init(&hadc1, &htim1, &hspi3);
   FOC_SetIqTarget(0.5f);
+
+//  TestMode_Init(&hspi3);
+//  Test_AS5048AStability();
+//  Test_AS5048AStabilityDMA();
   /* USER CODE END 2 */
 
   /* Infinite loop */

@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "delay_us.h"
 #include "math.h"
+#include "motor_config.h"
 
 #define AS_WRITE            0x0000  // bit14=0 -> zapis
 #define AS_READ             0x4000  // bit14=1 -> odczyt
@@ -55,6 +56,10 @@ typedef struct {
     uint16_t position;
     AS5048_ErrorFlags errorFlags;
 } AS5048_ReadResult;
+
+#ifdef TEST_MODE
+	extern volatile AS5048_ReadResult raw_angle;
+#endif
 
 /**
  * @brief Get error details
