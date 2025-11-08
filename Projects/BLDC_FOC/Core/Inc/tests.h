@@ -14,11 +14,11 @@
 
 // SPI + encoder tests
 
+#ifdef TEST_MODE
+
 void TestMode_Init(SPI_HandleTypeDef *hspi){
 	AS5048_Init(hspi);
 }
-
-#ifdef TEST_MODE
 
 void Test_AS5048AStability(void)
 {

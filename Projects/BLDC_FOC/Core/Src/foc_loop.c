@@ -344,7 +344,7 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        CurrentSense_Measurement(hadc);
+    	CurrentSense_Process(hadc);
         CurrentSense_Read(&currents);
 //        printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n", currents.a, currents.b, currents.c);
         foc_update_ready = true;

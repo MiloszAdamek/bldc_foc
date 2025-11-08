@@ -5,13 +5,6 @@
  *      Author: Miloush
  */
 
-/*
- * current_sense.c
- *
- *  Created on: Apr 1, 2025
- *      Author: Miloush
- */
-
 #include "current_sense.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -36,9 +29,10 @@ static uint16_t offset_a = 0;
 static uint16_t offset_b = 0;
 static uint16_t offset_c = 0;
 
-static bool is_calibrated = false;
+volatile bool is_calibrated = false;
+volatile bool adc_data_ready = false;
 
-static ADC_HandleTypeDef *hadc_local = NULL;
+uint16_t adc_dma_buf[3];
 
 static void CurrentSense_CalibrateOffset(void)
 {
@@ -85,14 +79,13 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
 	}
 }
 
+void CurrentSense_Process(){
 
-void CurrentSense_Measurement(ADC_HandleTypeDef* hadc){
-
-    if (hadc->Instance == ADC1 && is_calibrated)
+    if (is_calibrated)
     {
-        adc_raw_phase_a = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_1);
-        adc_raw_phase_b = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_2);
-        adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(hadc, ADC_INJECTED_RANK_3);
+        adc_raw_phase_a = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_1);
+        adc_raw_phase_b = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_2);
+        adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_3);
 
         // Przesunięcie z left-align -> 12-bit realne
         uint16_t raw_a = adc_raw_phase_a >> ADC_LEFT_SHIFT;
@@ -113,7 +106,6 @@ void CurrentSense_Measurement(ADC_HandleTypeDef* hadc){
         current_b = voltage_b / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
         current_c = voltage_c / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
     }
-
 }
 
 void CurrentSense_Read(abc_current_t *currents)
@@ -128,4 +120,34 @@ void CurrentSense_GetRaw(abc_raw_t *raw)
     raw->a = adc_raw_phase_a >> ADC_LEFT_SHIFT;
     raw->b = adc_raw_phase_b >> ADC_LEFT_SHIFT;
     raw->c = adc_raw_phase_c >> ADC_LEFT_SHIFT;
+}
+
+// FUNKCJE NIEBLOKUJĄCE - DMA
+
+void CurrentSense_ProcessDMA(){
+
+    if (!adc_data_ready || !is_calibrated) return;
+    adc_data_ready = false;
+
+    uint16_t raw_a = adc_dma_buf[0];
+    uint16_t raw_b = adc_dma_buf[1];
+    uint16_t raw_c = adc_dma_buf[2];
+
+    uint16_t off_a = offset_a >> ADC_LEFT_SHIFT;
+    uint16_t off_b = offset_b >> ADC_LEFT_SHIFT;
+    uint16_t off_c = offset_c >> ADC_LEFT_SHIFT;
+
+    float voltage_a = ((float)(raw_a - off_a) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
+    float voltage_b = ((float)(raw_b - off_b) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
+    float voltage_c = ((float)(raw_c - off_c) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
+
+    current_a = voltage_a / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+    current_b = voltage_b / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+    current_c = voltage_c / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+};
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == hadc_local)
+        adc_data_ready = true;
 }
