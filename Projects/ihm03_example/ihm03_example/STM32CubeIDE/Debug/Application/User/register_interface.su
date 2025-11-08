@@ -1,7 +1,0 @@
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:32:9:RI_SetRegisterGlobal	4	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:166:9:RI_SetRegisterMotor1	24	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:615:9:RI_GetRegisterGlobal	8	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:760:11:RI_GetRegisterMotor1	96	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:1346:9:RI_MovString	4	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:1372:9:RI_GetIDSize	0	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/register_interface.c:1407:16:RI_GetPtrReg	0	static

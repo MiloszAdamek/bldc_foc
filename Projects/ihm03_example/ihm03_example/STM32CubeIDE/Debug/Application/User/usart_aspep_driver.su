@@ -1,6 +1,0 @@
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:44:6:UASPEP_INIT	8	static,ignoring_inline_asm
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:56:6:UASPEP_TX_INIT	4	static,ignoring_inline_asm
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:93:6:UASPEP_RX_INIT	4	static,ignoring_inline_asm
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:130:6:UASPEP_CFG_TRANSMISSION	4	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:153:6:UASPEP_CFG_RECEPTION	8	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/usart_aspep_driver.c:169:6:UASPEP_IDLE_ENABLE	0	static,ignoring_inline_asm

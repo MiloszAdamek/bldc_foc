@@ -1,7 +1,0 @@
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:64:16:SPD_GetMecAngle	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:78:16:SPD_GetAvrgMecSpeedUnit	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:96:16:SPD_GetElSpeedDpp	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:132:13:SPD_IsMecSpeedReliable	8
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:251:16:SPD_GetS16Speed	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:281:16:SPD_GetElToMecRatio	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/MCSDK_v6.3.2-Full/MotorControl/MCSDK/MCLib/Any/Src/speed_pos_fdbk.c:299:13:SPD_SetElToMecRatio	1

@@ -1,6 +1,0 @@
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_math.c:58:20:MCM_Clarke	16	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_math.c:299:24:MCM_Trig_Functions	8	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_math.c:130:13:MCM_Park	32	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_math.c:245:20:MCM_Rev_Park	32	static
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_math.c:343:16:MCM_Sqrt	0	static,ignoring_inline_asm
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_math.c:378:17:MCM_floatToIntBit	8	static

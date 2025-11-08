@@ -1,7 +1,0 @@
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:479:13:FOC_Clear	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:81:13:FOC_Init	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:155:6:TSK_MF_StopProcessing	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:515:13:FOC_InitAdditionalMethods	1
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:538:13:FOC_CalcCurrRef	2
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:173:13:TSK_MediumFrequencyTaskM1	31
-E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/ihm03_example/ihm03_example/Src/mc_tasks_foc.c:593:16:FOC_HighFrequencyTask	7
