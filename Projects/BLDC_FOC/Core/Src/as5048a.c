@@ -23,6 +23,8 @@ static uint8_t spi_rx_buf[2];
 	static volatile AS5048_ReadResult raw_angle;
 #endif
 
+volatile float theta_el_last = 0.0f;
+
 static inline void AS5048_CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
 static inline void AS5048_CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
 
@@ -243,7 +245,9 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.position = frame & AS_ANGLE;
 			raw_angle.status = AS5048_OK;
 		}
-		spi_angle_ready = true;
+
+        float mech = ((float)raw_angle.position / AS5048_RESOLUTION) * M_TWOPI;
+        theta_el_last = el_from_mech(mech); // użyj offsetu i direction
 	}
 }
 

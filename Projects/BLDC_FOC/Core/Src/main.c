@@ -171,11 +171,17 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if (foc_data_ready && spi_angle_ready){
-		foc_data_ready = false;
-		spi_angle_ready = false;
-		FOC_Update(); // masz komplet danych: prądy + kąt }
-	  }
+//	  if (foc_data_ready && spi_angle_ready){
+//		foc_data_ready = false;
+//		spi_angle_ready = false;
+//		FOC_Update(); // masz komplet danych: prądy + kąt }
+//	  }
+
+	    if (HAL_GetTick() - lastPrint > 100) {
+	        printf("Id=%.3f  Iq=%.3f  Iq_ref=%.3f  Vd=%.2f  Vq=%.2f\n",
+	               debug_id, debug_iq, debug_iq_ref, debug_vd, debug_vq);
+	        lastPrint = HAL_GetTick();
+	    }
 
   }
   /* USER CODE END 3 */

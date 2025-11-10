@@ -70,31 +70,69 @@ float pi_control(PI_Controller *pi, float error)
     return u;
 }
 
+//void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
+//{
+//		printf("FOC: Init...\n");
+//		foc_htim = htim;
+//	    foc_hadc = hadc;
+//
+//        AS5048_Init(hspi);
+//
+//        HAL_TIM_Base_Start(foc_htim);
+//        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+//
+//        HAL_Delay(50);
+//
+//        // Kalibracja przed aktywowaniem drivera PWM
+//        CurrentSense_Init(hadc);
+//
+//        SVPWM_Init(foc_htim); // Włączenie driverów i PWM
+//        FOC_AlignSensor();
+//
+//        HAL_TIM_Base_Stop(foc_htim);
+//        HAL_TIM_Base_Start_IT(foc_htim);
+//
+//        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
+//        HAL_ADCEx_InjectedStart_IT(hadc);
+//}
+
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
 {
-		printf("FOC: Init...\n");
-		foc_htim = htim;
-	    foc_hadc = hadc;
 
-        AS5048_Init(hspi);
+	printf("FOC: Init...\n");
+	foc_htim = htim;
+	foc_hadc = hadc;
 
-        HAL_TIM_Base_Start(foc_htim);
-        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+	AS5048_Init(hspi);
 
-        HAL_Delay(50);
+	HAL_TIM_Base_Start(foc_htim);
+	HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
-        // Kalibracja przed aktywowaniem drivera PWM
-        CurrentSense_Init(hadc);
+	HAL_Delay(50);
 
-        SVPWM_Init(foc_htim); // Włączenie driverów i PWM
-        FOC_AlignSensor();
+	// Kalibracja przed aktywowaniem drivera PWM
+	CurrentSense_Init(hadc);
 
-        HAL_TIM_Base_Stop(foc_htim);
-        HAL_TIM_Base_Start_IT(foc_htim);
+    SVPWM_Init(foc_htim);
+    FOC_AlignSensor();
+//    sensor_direction = - sensor_direction;
 
-        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
-        HAL_ADCEx_InjectedStart_IT(hadc);
+    // *** Priming cache kąta (blokująco 1 raz jest najprościej/bezpiecznie) ***
+    float mech0 = AS5048_GetAngleRad();  // blokujący read
+    if (mech0 >= 0.0f) {
+        theta_el_last = el_from_mech(mech0);
+    }
+
+    HAL_TIM_Base_Stop(foc_htim);
+    HAL_TIM_Base_Start_IT(foc_htim);
+
+    HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
+    HAL_ADCEx_InjectedStart_IT(hadc);
+
+    // *** Od razu wystartuj pierwszy DMA na następny cykl ***
+    if (spi_ready) AS5048_ReadAngleDMA();
 }
+
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     // --- Krok 1: Ograniczenie wektora napięcia ---
@@ -151,15 +189,17 @@ void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_3, pwm_c);
 }
 
-/**
- * @brief Przeprowadza pełną procedurę kalibracji sensora.
- * @note  Ta funkcja jest blokująca i używa HAL_Delay(). Powinna być wywoływana tylko raz, podczas inicjalizacji.
- * @retval None. Wyniki są zapisywane w globalnych zmiennych `sensor_direction` i `zero_electric_angle`.
- */
-
 static float normalize_angle(float angle) {
     float result = fmodf(angle, M_TWOPI);
-    return result >= 0 ? result : result + M_TWOPI;
+    return result >= 0.0f ? result : result + M_TWOPI;
+}
+
+inline float mech_from_raw(uint16_t raw14){
+    return ((float)raw14 / AS5048_RESOLUTION) * M_TWOPI;
+}
+
+inline float el_from_mech(float mech){
+    return normalize_angle((float)(sensor_direction * MOTOR_POLE_PAIRS) * mech - zero_electric_angle);
 }
 
 // Funkcja pomocnicza do obliczania kąta elektrycznego BEZ offsetu
@@ -170,9 +210,6 @@ static float FOC_GetElecticalAngle_without_offset(float mechanical_angle, int di
 
 // --- Funkcja do obliczania kąta elektrycznego (do użycia w pętli FOC) ---
 static float FOC_GetElectricalAngle() {
-
-//	if (spi_ready) AS5048_ReadAngleDMA();
-
     float mechanical_angle = AS5048_GetMechanicalAngle();
     if (mechanical_angle < 0.0f) return 0.0f;
 
@@ -203,7 +240,7 @@ void FOC_AlignSensor() {
     // Obrót "w przód" o jeden obrót elektryczny
     for (int i = 0; i <= 500; i++) {
         float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
-        FOC_SetPhaseVoltage(VOLTAGE_SENSOR_ALIGN, 0, angle);
+        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
         HAL_Delay(2);
     }
     float mid_angle = AS5048_GetAngleRad();
@@ -213,7 +250,7 @@ void FOC_AlignSensor() {
         // Obrót "w tył"
         for (int i = 500; i >= 0; i--) {
             float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
-            FOC_SetPhaseVoltage(VOLTAGE_SENSOR_ALIGN, 0, angle);
+            FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
             HAL_Delay(2);
         }
         float end_angle = AS5048_GetAngleRad();
@@ -254,7 +291,7 @@ void FOC_AlignSensor() {
     if (exit_flag) {
         printf("\nKrok 2: Wyrównywanie do zera elektrycznego...\n");
         // Ustaw wirnik w znanej pozycji elektrycznej (_3PI_2)
-        FOC_SetPhaseVoltage(VOLTAGE_SENSOR_ALIGN, 0, _3PI_2);
+        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
         HAL_Delay(700);
 
         // Odczytaj kąt mechaniczny z sensora
@@ -268,7 +305,10 @@ void FOC_AlignSensor() {
             // Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
             // Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.
             // Zróbmy to tak samo.
-            zero_electric_angle = normalize_angle(calculated_el_angle + _3PI_2);
+
+            zero_electric_angle = normalize_angle(calculated_el_angle - _3PI_2);
+//            zero_electric_angle = calculated_el_angle;
+//            zero_electric_angle = calculated_el_angle - M_PI_2;
 
             printf("  Wynik: Znaleziony offset ELEKTRYCZNY: %.3f rad\n", zero_electric_angle);
         }
@@ -282,6 +322,115 @@ void FOC_AlignSensor() {
         printf("--- Kalibracja ZAKONCZONA BLEDEM! ---\n\n");
     }
 }
+
+//void FOC_AlignSensor(void)
+//{
+//    const float V_ALIGN = 3.0f;
+//    const float t_align = 500.0f;
+//
+//    printf("FOC Alignment start\n");
+//
+//    // 1) Wymuszenie osi d
+//    FOC_SetPhaseVoltage(V_ALIGN, 0.0f, 0.0f);
+//    HAL_Delay(t_align);
+//    float theta_mech_0 = AS5048_GetAngleRad();
+//
+//    // 2) Obrót pola o +90° elektrycznie
+//    FOC_SetPhaseVoltage(V_ALIGN, 0.0f, M_PI_2);
+//    HAL_Delay(t_align);
+//    float theta_mech_90 = AS5048_GetAngleRad();
+//
+//    // 3) Kierunek
+//    sensor_direction = (theta_mech_90 > theta_mech_0) ? +1 : -1;
+//
+//    // 4) Offset elektryczny
+//    float mechanical_now = AS5048_GetAngleRad();
+//    float el_now = sensor_direction * MOTOR_POLE_PAIRS * mechanical_now;
+//    zero_electric_angle = normalize_angle(el_now - M_PI_2);
+//
+//    // 5) Wyłączenie pola
+//    FOC_SetPhaseVoltage(0, 0, 0);
+//
+//    printf("Direction: %d, Zero_electric_angle = %.3f rad\n",
+//           sensor_direction, zero_electric_angle);
+//}
+
+//// --- pomocnicze ---
+//static inline float wrap_pi(float x){  // -> (-pi, pi]
+//    x = fmodf(x + M_PI, M_TWOPI);
+//    return (x < 0) ? x + M_TWOPI - M_PI : x - M_PI;
+//}
+//static inline float wrap_2pi(float x){ // -> [0, 2pi)
+//    x = fmodf(x, M_TWOPI);
+//    return (x < 0) ? x + M_TWOPI : x;
+//}
+//
+///**
+// * @brief  Procedura kalibracji czujnika kąta (FOC Alignment)
+// * @note   Wymusza pole magnetyczne w osi 'd' pod dwoma różnymi kątami elektrycznymi,
+// * aby wyznaczyć kierunek (sensor_direction) i offset (zero_electric_angle).
+// */
+//void FOC_AlignSensor(void)
+//{
+//    const float V_ALIGN = 2.5f;     // Napięcie kalibracyjne [V] (oś d)
+//    const uint32_t T_MS = 500;      // Czas na ustalenie pozycji [ms]
+//
+//    printf("FOC Alignment start...\n");
+//
+//    // 1) Zdefiniuj elektryczny kąt referencyjny
+//    const float theta_ref_a = 0.0f;         // Cel: oś d (alfa)
+//    const float theta_ref_b = M_PI_2;       // Cel: oś q (beta), +90° elektrycznie
+//
+//    // 2) Wymuś pole w osi 'd' (Ud = V_ALIGN, Uq = 0) dla kąta 0 i zmierz pozycję mech_a
+//    //    Funkcja: FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el)
+//    FOC_SetPhaseVoltage(0.0f, V_ALIGN, theta_ref_a); // POPRAWKA: (Uq=0, Ud=V_ALIGN)
+//    HAL_Delay(T_MS);
+//    float mech_a = AS5048_GetAngleRad();
+//    if (mech_a < 0.0f) {
+//        printf("Alignment FAILED: Błąd odczytu enkodera (krok 1).\n");
+//        return;
+//    }
+//
+//    // 3) Wymuś pole w osi 'd' (Ud = V_ALIGN, Uq = 0) dla kąta +90° i zmierz pozycję mech_b
+//    FOC_SetPhaseVoltage(0.0f, V_ALIGN, theta_ref_b); // POPRAWKA: (Uq=0, Ud=V_ALIGN)
+//    HAL_Delay(T_MS);
+//    float mech_b = AS5048_GetAngleRad();
+//     if (mech_b < 0.0f) {
+//        printf("Alignment FAILED: Błąd odczytu enkodera (krok 2).\n");
+//        return;
+//    }
+//
+//    // 4) Wybór kierunku, który najlepiej pasuje do +90° elektrycznego
+//    float best_err = 1e9f;
+//    int best_dir = +1;
+//    for (int dir_try = -1; dir_try <= 1; dir_try += 2) {
+//        float el_a = (float)dir_try * MOTOR_POLE_PAIRS * mech_a;
+//        float el_b = (float)dir_try * MOTOR_POLE_PAIRS * mech_b;
+//        float delta_el = wrap_pi(el_b - el_a);          // zmiana elektryczna z czujnika
+//        float err = fabsf(wrap_pi(delta_el - (theta_ref_b - theta_ref_a))); // różnica do +90°
+//        if (err < best_err) { best_err = err; best_dir = dir_try; }
+//    }
+//    sensor_direction = best_dir;
+//
+//    // 5) Jednoznaczny offset: el(mech_a) ma odpowiadać theta_ref_a
+//    //    el = dir * pp * mech - zero_electric_angle  => zero = el(mech_a) - theta_ref_a
+//    float el_a_best = (float)sensor_direction * MOTOR_POLE_PAIRS * mech_a;
+//    zero_electric_angle = wrap_2pi(el_a_best - theta_ref_a);
+//
+//    // 6) Porządek
+//    FOC_SetPhaseVoltage(0, 0, 0);
+//    printf("Alignment OK: dir=%d, zero_el=%.3f rad, err=%.3f rad\n",
+//           sensor_direction, zero_electric_angle, best_err);
+//
+//    // (Fragment post-check z oryginalnego kodu - możesz go zostawić lub usunąć)
+//    // i_ref.d = 0; i_ref.q = 0.5f;
+//    // uint32_t t0 = HAL_GetTick();
+//    // while (HAL_GetTick() - t0 < 1000) ; // ISR FOC zbiera dane
+//    // printf("Post-check: Id=%.3f Iq=%.3f\n", debug_id, debug_iq);
+//}
+
+
+
 
 void FOC_LinearRamp()
 {
@@ -348,33 +497,73 @@ void FOC_Update()
     SVPWM_Update(valpha, vbeta);
 }
 
+void FOC_Update_WithAngle(float theta_el)
+{
+    float ialpha, ibeta;
+    float id, iq;
+    float vd, vq;
+    float valpha, vbeta;
+
+    float sin_theta = sinf(theta_el);
+    float cos_theta = cosf(theta_el);
+
+    // Clarke
+    ClarkeTransform(currents.a, currents.b, &ialpha, &ibeta);
+
+    // Park
+    ParkTransformTrig(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
+
+    // PI
+    vd = pi_control(&pi_id, i_ref.d - id);
+    vq = pi_control(&pi_iq, i_ref.q - iq);
+
+    debug_id = id;
+    debug_iq = iq;
+    debug_id_ref = i_ref.d;
+    debug_iq_ref = i_ref.q;
+    debug_vd = vd;
+    debug_vq = vq;
+
+    // InvPark
+    InvParkTransformTrig(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
+
+    // SVPWM
+    SVPWM_Update(valpha, vbeta);
+}
+
 // Cała pętla FOC + pomiar prądu
+//void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+//{
+//    if (hadc->Instance == ADC1)
+//    {
+//    	CurrentSense_Process(hadc);
+//        CurrentSense_Read(&currents);
+//        if (spi_ready){
+//        	AS5048_ReadAngleDMA();
+//        }
+//        foc_data_ready = true;
+////        SVPWM_Test_Run(40.0f)
+//    }
+//}
+
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1)
     {
-    	CurrentSense_Process(hadc);
+        // 1) Prądy z TEGO cyklu
+        CurrentSense_Process(hadc);
         CurrentSense_Read(&currents);
-        if (spi_ready){
-        	AS5048_ReadAngleDMA();
+
+        // 2) Użyj KĄTA z POPRZEDNIEGO cyklu (theta_el_last) – deterministycznie
+        float theta = theta_el_last;
+        FOC_Update_WithAngle(theta);
+
+        // 3) Na końcu – wystartuj NOWY transfer SPI na NASTĘPNY cykl
+        if (spi_ready) {
+            AS5048_ReadAngleDMA();
         }
-        foc_data_ready = true;
-//        SVPWM_Test_Run(40.0f)
     }
 }
-
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-//{
-//    if (htim->Instance == TIM1)
-//    {
-//        if (spi_ready)
-//        {
-//            spi_ready = false;
-//            AS5048_ReadAngleDMA();   // wystartuj DMA
-//        }
-//    }
-//
-//}
 
 
 

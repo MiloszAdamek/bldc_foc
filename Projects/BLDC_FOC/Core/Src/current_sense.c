@@ -89,9 +89,9 @@ void CurrentSense_Process(){
         float voltage_c = ((float)(adc_raw_phase_c - offset_c) * ADC_REF_VOLTAGE / ADC_RESOLUTION);
 
         // Napięcie -> prąd
-        current_a = voltage_a / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
-        current_b = voltage_b / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
-        current_c = voltage_c / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+        current_a = - voltage_a / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+        current_b = - voltage_b / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+        current_c = - voltage_c / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
     }
 }
 

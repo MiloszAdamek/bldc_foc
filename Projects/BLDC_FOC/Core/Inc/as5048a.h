@@ -69,6 +69,8 @@ AS5048_ErrorFlags AS5048_GetErrorDetails(void);
 
 void AS5048_GetRawPosition(void);
 
+extern float el_from_mech(float mech);
+
 /**
  * @brief Convert raw angle to degrees
  * @return float, -1.0f when raw.status != AS5048_OK

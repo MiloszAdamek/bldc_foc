@@ -38,6 +38,17 @@ extern volatile bool ramp_active;
 extern volatile bool spi_angle_ready;
 extern volatile bool foc_data_ready;
 
+extern volatile float theta_el_last;
+extern float el_from_mech(float mech);
+
+// Debug
+extern volatile float debug_id;
+extern volatile float debug_iq;
+extern volatile float debug_id_ref;
+extern volatile float debug_iq_ref;
+extern volatile float debug_vd;
+extern volatile float debug_vq;
+
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi);
 
 // Główna pętla FOC
