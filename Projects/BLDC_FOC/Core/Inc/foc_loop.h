@@ -33,28 +33,7 @@ typedef struct {
     float q;
 } dq_ref_t;
 
-extern volatile float theta_el;
-extern volatile AS5048_ReadResult raw;
-extern volatile float encoder_offset;
-extern volatile int encoder_direction;
-
-// Debug global variables
-extern volatile float debug_angle_deg;
-extern volatile float debug_theta_el;
-extern volatile float debug_ia;
-extern volatile float debug_ib;
-extern volatile float debug_ic;
-extern volatile uint16_t raw_copy;
-
 // Flags
-extern volatile bool currents_ready;
-extern volatile bool encoder_ready;
-extern volatile bool encoder_trigger;
-extern volatile bool encoder_calibrated;
-extern volatile bool foc_update_ready;
-extern volatile bool ramp_active;
-
-// Nowe flagi
 extern volatile bool ramp_active;
 extern volatile bool spi_angle_ready;
 extern volatile bool foc_data_ready;

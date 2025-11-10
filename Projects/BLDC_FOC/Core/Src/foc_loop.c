@@ -10,6 +10,9 @@
 #include "math.h"
 #include "main.h"
 
+static TIM_HandleTypeDef* foc_htim;
+static ADC_HandleTypeDef* foc_hadc;
+
 static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT_ID, .integral = 0.0f };
 static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT_IQ, .integral = 0.0f };
 static abc_current_t currents;
@@ -22,37 +25,14 @@ static const float iq_step = 0.001f; // przyrost na 1 krok (ok. 20kHz pętla -> 
 static const float iq_threshold = 0.05f;
 static float iq_current;
 
-// ENCODER
-volatile AS5048_ReadResult raw = {0};
-volatile float theta_el = 0.0f;
-
 // FLAGS
-volatile bool currents_ready = false;
-volatile bool encoder_ready = false;
-volatile bool encoder_trigger = false;
-volatile bool encoder_calibrated = false;
-volatile bool foc_update_ready = false;
-
-
-// Nowe, potrzebne flagi
 volatile bool ramp_active = false;
 volatile bool spi_angle_ready = false;
 volatile bool foc_data_ready = false;
 
-
-// DEBUG
-volatile float debug_angle_deg = 0.0f;
-volatile float debug_theta_el = 0.0f;
-volatile float debug_ia = 0.0f, debug_ib = 0.0f, debug_ic = 0.0f;
-volatile uint16_t raw_copy = 0;
-
-static TIM_HandleTypeDef* foc_htim;
-static ADC_HandleTypeDef* foc_hadc;
-
-// Parametry odczytane podczas kalibracji
+// ENCODER - calibration
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
 static float zero_electric_angle = 0.0f;
-
 static float VOLTAGE_SENSOR_ALIGN = 8.0f;
 
 static inline float pi_control(PI_Controller *pi, float error)
