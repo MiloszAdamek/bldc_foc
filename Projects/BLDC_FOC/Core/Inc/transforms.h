@@ -12,7 +12,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define ONE_OVER_SQRT_3 0.57735026919f;
+#define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
 
 
 // Clarke transform: 3 fazy → αβ (z pomiarów Ia, Ib)

@@ -22,7 +22,7 @@ volatile dq_ref_t i_ref = {0.0f, 0.0f};
 // RAMP
 volatile dq_ref_t ramp_i_ref;
 static const float iq_step = 0.001f; // przyrost na 1 krok (ok. 20kHz pętla -> ~50ms czas)
-static const float iq_threshold = 0.05f;
+static float iq_threshold = 0.05f;
 static float iq_current;
 
 // FLAGS
@@ -33,21 +33,41 @@ volatile bool foc_data_ready = false;
 // ENCODER - calibration
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
 static float zero_electric_angle = 0.0f;
-static float VOLTAGE_SENSOR_ALIGN = 8.0f;
+static float VOLTAGE_SENSOR_ALIGN = 4.0f;
 
-static inline float pi_control(PI_Controller *pi, float error)
+// Debug - cubemonitor
+volatile float debug_id = 0.0f;
+volatile float debug_iq = 0.0f;
+volatile float debug_id_ref = 0.0f;
+volatile float debug_iq_ref = 0.0f;
+volatile float debug_vd = 0.0f;
+volatile float debug_vq = 0.0f;
+
+//static inline float pi_control(PI_Controller *pi, float error)
+//{
+//    pi->integral += error * pi->ki * PWM_PERIOD_SEC; // Ts = 50 us
+//
+//    if (pi->integral > pi->limit) pi->integral = pi->limit;
+//    else if (pi->integral < -pi->limit) pi->integral = -pi->limit;
+//
+//    float output = pi->kp * error + pi->integral;
+//
+//    if (output > pi->limit) output = pi->limit;
+//    else if (output < -pi->limit) output = -pi->limit;
+//
+//    return output;
+//}
+
+float pi_control(PI_Controller *pi, float error)
 {
-    pi->integral += error * pi->ki * PWM_PERIOD_SEC; // Ts = 50 us
+    float u_p = pi->kp * error;
+    pi->integral += pi->ki * error * PWM_PERIOD_SEC;
 
-    if (pi->integral > pi->limit) pi->integral = pi->limit;
-    else if (pi->integral < -pi->limit) pi->integral = -pi->limit;
+    float u = u_p + pi->integral;
+    if (u > pi->limit) { u = pi->limit; pi->integral = u - u_p; }
+    else if (u < -pi->limit) { u = -pi->limit; pi->integral = u - u_p; }
 
-    float output = pi->kp * error + pi->integral;
-
-    if (output > pi->limit) output = pi->limit;
-    else if (output < -pi->limit) output = -pi->limit;
-
-    return output;
+    return u;
 }
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
@@ -68,7 +88,6 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
 
         SVPWM_Init(foc_htim); // Włączenie driverów i PWM
         FOC_AlignSensor();
-        sensor_direction = -1;
 
         HAL_TIM_Base_Stop(foc_htim);
         HAL_TIM_Base_Start_IT(foc_htim);
@@ -212,7 +231,7 @@ void FOC_AlignSensor() {
                 exit_flag = 0;
             } else {
                 // Ta logika jest trochę inna niż w Twoim wklejonym kodzie, ale bardziej intuicyjna
-                sensor_direction = (moved > 0) ? 1 : -1;
+            	sensor_direction = (moved > 0) ? -1 : 1;
                 if (sensor_direction == 1) {
                        printf("  Wynik: Kierunek sensora: 1 (CW - zgodny z ruchem wskazowek zegara)\n");
                    } else {
@@ -249,7 +268,7 @@ void FOC_AlignSensor() {
             // Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
             // Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.
             // Zróbmy to tak samo.
-            zero_electric_angle = calculated_el_angle;
+            zero_electric_angle = normalize_angle(calculated_el_angle + _3PI_2);
 
             printf("  Wynik: Znaleziony offset ELEKTRYCZNY: %.3f rad\n", zero_electric_angle);
         }
@@ -286,6 +305,7 @@ void FOC_LinearRamp()
 void FOC_SetIqTarget(float new_target)
 {
 	i_ref.q = new_target;
+	iq_threshold = new_target / 2;
     ramp_active = true;
 }
 
@@ -314,14 +334,17 @@ void FOC_Update()
     vd = pi_control(&pi_id, i_ref.d - id);
     vq = pi_control(&pi_iq, i_ref.q - iq);
 
-//    printf("vd=%.3f vq=%.3f\n", vd, vq);
+    debug_id = id;
+    debug_iq = iq;
+    debug_id_ref = i_ref.d;
+    debug_iq_ref = i_ref.q;
+    debug_vd = vd;
+    debug_vq = vq;
 
     // 4. Inverse Park – dq → αβ
     InvParkTransformTrig(vd, vq, &sin_theta_el, &cos_theta_el, &valpha, &vbeta);
 
     // 5. SVPWM
-//    printf("valpha=%.3f vbeta=%.3f\n", valpha, vbeta);
-
     SVPWM_Update(valpha, vbeta);
 }
 
@@ -332,7 +355,6 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     {
     	CurrentSense_Process(hadc);
         CurrentSense_Read(&currents);
-//        printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n", currents.a, currents.b, currents.c);
         if (spi_ready){
         	AS5048_ReadAngleDMA();
         }
