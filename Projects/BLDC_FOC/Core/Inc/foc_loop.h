@@ -52,7 +52,7 @@ extern volatile float debug_vq;
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi);
 
 // Główna pętla FOC
-void FOC_Update();
+void FOC_Update(float theta_el);
 
 void FOC_SetIqTarget(float new_target);
 

@@ -28,7 +28,7 @@
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        12.0f
-#define VOLTAGE_LIMIT         10.0f
+#define VOLTAGE_LIMIT         8.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define SHUNT_RESISTOR        0.33f // Ohm
@@ -50,13 +50,13 @@
 
 #define DEFAULT_IQ_TARGET     0.5f             // A – moment zadany przy starcie
 
-#define PI_KP_ID              5.0f
-#define PI_KI_ID              500.0f
-#define PI_LIMIT_ID       	  VOLTAGE_LIMIT
+#define PI_KP_ID 5.0f
+#define PI_KI_ID 1000.0f
+#define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_IQ              0.5f
-#define PI_KI_IQ              150.0f
-#define PI_LIMIT_IQ       	  (VOLTAGE_SUPPLY / M_SQRT3)
+#define PI_KP_IQ 5.0f
+#define PI_KI_IQ 1000.0f
+#define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)
