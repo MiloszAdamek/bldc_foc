@@ -212,7 +212,6 @@ float AS5048_GetAngleRad(void){
 }
 
 // Transmisja przez DMA
-
 void AS5048_ReadAngleDMA(void)
 {
 	if (!spi_ready) return; // trwa poprzedni transfer
@@ -228,7 +227,7 @@ void AS5048_ReadAngleDMA(void)
 	HAL_SPI_TransmitReceive_DMA(as5048_hspi, spi_tx_buf, spi_rx_buf, 2);
 }
 
-///* --- Callback wywoływany po zakończeniu transmisji po DMA --- */
+// Callback wywoływany po zakończeniu transmisji po DMA
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi == as5048_hspi)

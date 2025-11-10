@@ -53,13 +53,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#ifdef ENABLE_SERIAL_DEBUGGING
-	abc_current_t currents;
-	abc_raw_t raw_currents;
-	uint32_t lastPrint = 0;
-#endif
 
-volatile dq_ref_t current_ref = {0.0f, 1.0f};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,56 +127,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-//	HAL_Delay(1); // Utrzymuj stały krok czasowy
-
-//	if (HAL_GetTick() - lastPrint >= 1000)
-//	{
-//	  printf("\n\n\n==============================");
-//	  printf("\n       START WHILE\n");
-//	  printf("==============================\n");
-//
-////	  CurrentSense_Read(&currents);
-////	  CurrentSense_GetRaw(&raw_currents);
-////
-////	  printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n",
-////			 currents.a, currents.b, currents.c);
-////
-////	  printf("Ia_raw: %u, Ib_raw: %u, Ic_raw: %u\r\n",
-////			 raw_currents.a, raw_currents.b, raw_currents.c);
-//
-//
-//	  const float angle = AS5048_Get_Angle_Deg();
-//	  if (angle >= 0) {
-//		  printf("[ANGLE] Kąt: %.2f°\n\n", angle);
-//	  } else {
-//		  printf("[ANGLE] Błąd odczytu kąta\n");
-//	  }
-//
-//	  lastPrint = HAL_GetTick();
-//
-//	  printf("\n==============================");
-//	  printf("\n        STOP WHILE\n");
-//	  printf("==============================\n");
-//	}
-
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-//	  if (foc_data_ready && spi_angle_ready){
-//		foc_data_ready = false;
-//		spi_angle_ready = false;
-//		FOC_Update(); // masz komplet danych: prądy + kąt }
-//	  }
-
-//	if (HAL_GetTick() - lastPrint > 100) {
-//		printf("Id=%.3f  Iq=%.3f  Iq_ref=%.3f  Vd=%.2f  Vq=%.2f\n",
-//			   debug_id, debug_iq, debug_iq_ref, debug_vd, debug_vq);
-//		lastPrint = HAL_GetTick();
-//	}
-
   }
   /* USER CODE END 3 */
 }

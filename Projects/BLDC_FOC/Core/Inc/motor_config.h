@@ -38,8 +38,11 @@
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
  * ========================================================================= */
 
-#define MOTOR_POLE_PAIRS      7                // liczba par biegunów silnika
-#define ENCODER_RESOLUTION    16384.0f         // enkoder AS5048A (14 bit)
+#define MOTOR_POLE_PAIRS      	7           // liczba par biegunów silnika
+#define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
+#define MOTOR_VELOCITY_CONSTANT 168		    // Kv
+
+#define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
 #define SENSOR_DIRECTION_CW   1
 #define SENSOR_DIRECTION_CCW -1

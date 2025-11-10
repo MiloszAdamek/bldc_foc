@@ -56,6 +56,8 @@ void FOC_Update(float theta_el);
 
 void FOC_SetIqTarget(float new_target);
 
+void FOC_SetTorqueTarget(float torque_mNm);
+
 // Kalibracja enkodera
 void FOC_AlignSensor();
 

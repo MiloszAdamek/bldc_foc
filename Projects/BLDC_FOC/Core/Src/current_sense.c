@@ -12,7 +12,7 @@
 #include "motor_config.h"
 
 #define ADC_REF_VOLTAGE   3.3f       // Vref zasilania ADC
-#define ADC_RESOLUTION    4096.0f    // dla 12-bit ADC
+#define ADC_RESOLUTION    4096.0f    // 12-bit ADC
 
 static ADC_HandleTypeDef *hadc_local;
 
@@ -69,9 +69,6 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
 	    CurrentSense_CalibrateOffset();
 
 	    HAL_ADCEx_InjectedStop(hadc_local);
-
-	    // Tryb wyzwalany przez TIM1, z przerwaniem
-//	    HAL_ADCEx_InjectedStart_IT(hadc_local);
 	}
 }
 

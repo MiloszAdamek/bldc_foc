@@ -21,8 +21,7 @@ volatile dq_ref_t i_ref = {0.0f, 0.0f};
 
 // RAMP
 volatile dq_ref_t ramp_i_ref;
-static const float iq_step = 0.001f; // przyrost na 1 krok (ok. 20kHz pętla -> ~50ms czas)
-static float iq_threshold = 0.05f;
+static const float iq_step = 0.0001f; // przyrost prądu na 1 krok
 static float iq_current;
 
 // FLAGS
@@ -70,35 +69,8 @@ float pi_control(PI_Controller *pi, float error)
     return u;
 }
 
-//void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
-//{
-//		printf("FOC: Init...\n");
-//		foc_htim = htim;
-//	    foc_hadc = hadc;
-//
-//        AS5048_Init(hspi);
-//
-//        HAL_TIM_Base_Start(foc_htim);
-//        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
-//
-//        HAL_Delay(50);
-//
-//        // Kalibracja przed aktywowaniem drivera PWM
-//        CurrentSense_Init(hadc);
-//
-//        SVPWM_Init(foc_htim); // Włączenie driverów i PWM
-//        FOC_AlignSensor();
-//
-//        HAL_TIM_Base_Stop(foc_htim);
-//        HAL_TIM_Base_Start_IT(foc_htim);
-//
-//        HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
-//        HAL_ADCEx_InjectedStart_IT(hadc);
-//}
-
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
 {
-
 	printf("FOC: Init...\n");
 	foc_htim = htim;
 	foc_hadc = hadc;
@@ -110,15 +82,13 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
 
 	HAL_Delay(50);
 
-	// Kalibracja przed aktywowaniem drivera PWM
 	CurrentSense_Init(hadc);
 
     SVPWM_Init(foc_htim);
     FOC_AlignSensor();
-//    sensor_direction = - sensor_direction;
 
-    // *** Priming cache kąta (blokująco 1 raz jest najprościej/bezpiecznie) ***
-    float mech0 = AS5048_GetAngleRad();  // blokujący read
+    // Cache kąta
+    float mech0 = AS5048_GetAngleRad();
     if (mech0 >= 0.0f) {
         theta_el_last = el_from_mech(mech0);
     }
@@ -129,7 +99,7 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
     HAL_ADCEx_InjectedStart_IT(hadc);
 
-    // *** Od razu wystartuj pierwszy DMA na następny cykl ***
+    // Uruchomienie DMA dla SPI
     if (spi_ready) AS5048_ReadAngleDMA();
 }
 
@@ -202,34 +172,11 @@ inline float el_from_mech(float mech){
     return normalize_angle((float)(sensor_direction * MOTOR_POLE_PAIRS) * mech - zero_electric_angle);
 }
 
-// Funkcja pomocnicza do obliczania kąta elektrycznego BEZ offsetu
-// (potrzebna w kalibracji)
-static float FOC_GetElecticalAngle_without_offset(float mechanical_angle, int direction, int pole_pairs) {
+// Funkcja pomocnicza do obliczania kąta elektrycznego BEZ offsetu(potrzebna w kalibracji)
+static float FOC_GetElecticalAngle_NoOffset(float mechanical_angle, int direction, int pole_pairs) {
     return normalize_angle((float)direction * pole_pairs * mechanical_angle);
 }
 
-// --- Funkcja do obliczania kąta elektrycznego (do użycia w pętli FOC) ---
-static float FOC_GetElectricalAngle() {
-    float mechanical_angle = AS5048_GetMechanicalAngle();
-    if (mechanical_angle < 0.0f) return 0.0f;
-
-    float electrical_angle = (float)(sensor_direction * MOTOR_POLE_PAIRS) * mechanical_angle - zero_electric_angle;
-
-    return normalize_angle(electrical_angle);
-}
-
-static void FOC_GetSinCosTheta(float *sin_theta_el, float *cos_theta_el){
-	float theta_el = FOC_GetElectricalAngle();
-	*cos_theta_el = cosf(theta_el);
-	*sin_theta_el = sinf(theta_el);
-}
-
-// --- Implementacje funkcji publicznych ---
-// FOC_Init i FOC_SetPhaseVoltage z poprzednich odpowiedzi są OK, zostawiamy je.
-
-// ============================================================================
-// ===      FINALNA IMPLEMENTACJA FOC_AlignSensor (W STYLU SIMPLEFOC)       ===
-// ============================================================================
 void FOC_AlignSensor() {
     printf("\n--- Rozpoczynam procedure kalibracji (metoda SimpleFOC) ---\n");
     int exit_flag = 1;
@@ -300,7 +247,7 @@ void FOC_AlignSensor() {
             exit_flag = 0;
         } else {
             // Oblicz kąt elektryczny, jaki wynika z tego pomiaru (bez offsetu)
-            float calculated_el_angle = FOC_GetElecticalAngle_without_offset(mechanical_angle_at_known_el_pos, sensor_direction, MOTOR_POLE_PAIRS);
+            float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos, sensor_direction, MOTOR_POLE_PAIRS);
 
             // Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
             // Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.
@@ -325,17 +272,26 @@ void FOC_AlignSensor() {
 
 void FOC_LinearRamp()
 {
-	// TODO: Rampa powinna być aktywna tylko gdy silnik stoi, a nie po każdej zmianie Iq - maszyna stanów
-    if (ramp_active) {
-        if (iq_current < i_ref.q) {
+    if (ramp_active)
+    {
+        if (iq_current < i_ref.q)
+        {
             iq_current += iq_step;
-            if (iq_current >= (i_ref.q - iq_threshold)) {
+            if (iq_current > i_ref.q) {
                 iq_current = i_ref.q;
-                ramp_active = false;  // osiągnięto próg — wyłącz rampę
-                printf("Rampa zakonczona, iq = %.3f A\n", iq_current);
+                ramp_active = false; // Zakończ rampę
             }
-        } else {
-            iq_current = i_ref.q;
+        }
+        else if (iq_current > i_ref.q)
+        {
+            iq_current -= iq_step;
+            if (iq_current < i_ref.q) {
+                iq_current = i_ref.q;
+                ramp_active = false; // Zakończ rampę
+            }
+        }
+        else
+        {
             ramp_active = false;
         }
     }
@@ -345,8 +301,14 @@ void FOC_LinearRamp()
 void FOC_SetIqTarget(float new_target)
 {
 	i_ref.q = new_target;
-	iq_threshold = new_target / 2;
     ramp_active = true;
+}
+
+void FOC_SetTorqueTarget(float torque_mNm)
+{
+    // Iq = (T_mNm / 1000) / Kt
+    float target_iq = (torque_mNm / 1000.0f) / MOTOR_TORQUE_CONSTANT;
+    FOC_SetIqTarget(target_iq);
 }
 
 void FOC_Update(float theta_el)
@@ -355,6 +317,14 @@ void FOC_Update(float theta_el)
     float id, iq;
     float vd, vq;
     float valpha, vbeta;
+    float target_iq; // Lokalna zmienna dla celu PI
+
+	if (ramp_active) {
+		FOC_LinearRamp();
+		target_iq = ramp_i_ref.q; // Użyj wyjścia z rampy
+	} else {
+		target_iq = i_ref.q; // Użyj globalnego celu
+	}
 
     float sin_theta = sinf(theta_el);
     float cos_theta = cosf(theta_el);
@@ -367,7 +337,7 @@ void FOC_Update(float theta_el)
 
     // PI
     vd = pi_control(&pi_id, i_ref.d - id);
-    vq = pi_control(&pi_iq, i_ref.q - iq);
+    vq = pi_control(&pi_iq, target_iq - iq);
 
     debug_id = id;
     debug_iq = iq;
@@ -382,21 +352,6 @@ void FOC_Update(float theta_el)
     // SVPWM
     SVPWM_Update(valpha, vbeta);
 }
-
-// Cała pętla FOC + pomiar prądu
-//void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
-//{
-//    if (hadc->Instance == ADC1)
-//    {
-//    	CurrentSense_Process(hadc);
-//        CurrentSense_Read(&currents);
-//        if (spi_ready){
-//        	AS5048_ReadAngleDMA();
-//        }
-//        foc_data_ready = true;
-////        SVPWM_Test_Run(40.0f)
-//    }
-//}
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
