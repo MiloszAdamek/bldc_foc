@@ -171,10 +171,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	if(foc_update_ready){
-		foc_update_ready = false;
-		FOC_Update();
-	}
+	  if (foc_data_ready && spi_angle_ready){
+		foc_data_ready = false;
+		spi_angle_ready = false;
+		FOC_Update(); // masz komplet danych: prądy + kąt }
+	  }
 
   }
   /* USER CODE END 3 */

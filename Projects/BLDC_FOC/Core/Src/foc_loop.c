@@ -32,7 +32,13 @@ volatile bool encoder_ready = false;
 volatile bool encoder_trigger = false;
 volatile bool encoder_calibrated = false;
 volatile bool foc_update_ready = false;
+
+
+// Nowe, potrzebne flagi
 volatile bool ramp_active = false;
+volatile bool spi_angle_ready = false;
+volatile bool foc_data_ready = false;
+
 
 // DEBUG
 volatile float debug_angle_deg = 0.0f;
@@ -166,7 +172,7 @@ static float FOC_GetElecticalAngle_without_offset(float mechanical_angle, int di
 // --- Funkcja do obliczania kąta elektrycznego (do użycia w pętli FOC) ---
 static float FOC_GetElectricalAngle() {
 
-	if (spi_ready) AS5048_ReadAngleDMA();
+//	if (spi_ready) AS5048_ReadAngleDMA();
 
     float mechanical_angle = AS5048_GetMechanicalAngle();
     if (mechanical_angle < 0.0f) return 0.0f;
@@ -347,8 +353,11 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     	CurrentSense_Process(hadc);
         CurrentSense_Read(&currents);
 //        printf("\nIa: %.3f A, Ib: %.3f A, Ic: %.3f A\r\n", currents.a, currents.b, currents.c);
-        foc_update_ready = true;
-//        SVPWM_Test_Run(40.0f);
+        if (spi_ready){
+        	AS5048_ReadAngleDMA();
+        }
+        foc_data_ready = true;
+//        SVPWM_Test_Run(40.0f)
     }
 }
 

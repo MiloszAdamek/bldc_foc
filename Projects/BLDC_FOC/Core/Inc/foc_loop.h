@@ -54,6 +54,11 @@ extern volatile bool encoder_calibrated;
 extern volatile bool foc_update_ready;
 extern volatile bool ramp_active;
 
+// Nowe flagi
+extern volatile bool ramp_active;
+extern volatile bool spi_angle_ready;
+extern volatile bool foc_data_ready;
+
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi);
 
 // Główna pętla FOC

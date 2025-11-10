@@ -7,11 +7,12 @@
 
 #include "as5048a.h"
 #include <stdio.h>
+#include "foc_loop.h"
 #include "motor_config.h"
 
 static SPI_HandleTypeDef* as5048_hspi;
 
-volatile bool spi_ready = true;
+volatile bool spi_ready = false;
 
 static uint8_t spi_tx_buf[2];
 static uint8_t spi_rx_buf[2];
@@ -29,6 +30,8 @@ void AS5048_Init(SPI_HandleTypeDef *hspi){
 	as5048_hspi = hspi;
 	DWT_Init();
 	AS5048_CS_HIGH();
+	spi_ready = true;
+
 }
 
 static uint16_t AS5048_AddParity(uint16_t cmd)
@@ -228,9 +231,10 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	if (hspi == as5048_hspi)
 	{
-	AS5048_CS_HIGH();
-	uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
-	spi_ready = true;
+		AS5048_CS_HIGH();
+		uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
+
+		spi_ready = true;
 
 		if (frame & AS_ERROR_BIT) {
 //			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
@@ -239,6 +243,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.position = frame & AS_ANGLE;
 			raw_angle.status = AS5048_OK;
 		}
+		spi_angle_ready = true;
 	}
 }
 

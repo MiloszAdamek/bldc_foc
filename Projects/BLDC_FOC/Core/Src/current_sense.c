@@ -146,8 +146,8 @@ void CurrentSense_ProcessDMA(){
     current_c = voltage_c / (SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
 };
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
-{
-    if (hadc == hadc_local)
-        adc_data_ready = true;
-}
+//void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+//{
+//    if (hadc == hadc_local)
+//        adc_data_ready = true;
+//}
