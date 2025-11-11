@@ -30,11 +30,11 @@ static float iq_current;
 volatile bool ramp_active = false;
 volatile bool spi_angle_ready = false;
 volatile bool foc_data_ready = false;
+volatile bool sensor_aligned = false;
 
 // ENCODER - calibration
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
 static float zero_electric_angle = 0.0f;
-static float VOLTAGE_SENSOR_ALIGN = 4.0f;
 
 // Debug - cubemonitor
 volatile float debug_id = 0.0f;
@@ -62,17 +62,13 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     SVPWM_Init(foc_htim);
     FOC_AlignSensor();
 
-    // Cache kąta
+    // Odczyt kąta przed uruchomieniem pętli FOC
     float mech0 = AS5048_GetAngleRad();
     if (mech0 >= 0.0f) {
         theta_el_last = FOC_GetElecticalAngle(mech0);
     }
 
     HAL_TIM_Base_Stop(foc_htim);
-    HAL_TIM_Base_Start_IT(foc_htim);
-
-    HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
-    HAL_ADCEx_InjectedStart_IT(hadc);
 
     // Uruchomienie DMA dla SPI
     if (spi_ready) AS5048_ReadAngleDMA();
@@ -142,97 +138,102 @@ static float FOC_GetElecticalAngle_NoOffset(float mechanical_angle) {
     return normalize_angle((float)sensor_direction * MOTOR_POLE_PAIRS * mechanical_angle);
 }
 
-void FOC_AlignSensor() {
-    printf("\n--- Rozpoczynam procedure kalibracji (metoda SimpleFOC) ---\n");
-    int exit_flag = 1;
+bool FOC_AlignSensor() {
 
-    // --- KROK 1: Wykrywanie kierunku metodą "przód-tył" ---
-    printf("Krok 1: Wykrywanie kierunku...\n");
+	if(!sensor_aligned){
+		printf("\n--- Rozpoczynam procedure kalibracji (metoda SimpleFOC) ---\n");
 
-    // Obrót "w przód" o jeden obrót elektryczny
-    for (int i = 0; i <= 500; i++) {
-        float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
-        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
-        HAL_Delay(2);
-    }
-    float mid_angle = AS5048_GetAngleRad();
-    if (mid_angle < 0.0f) { exit_flag = 0; }
+		int exit_flag = 1;
 
-    if (exit_flag) {
-        // Obrót "w tył"
-        for (int i = 500; i >= 0; i--) {
-            float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
-            FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
-            HAL_Delay(2);
-        }
-        float end_angle = AS5048_GetAngleRad();
-        if (end_angle < 0.0f) { exit_flag = 0; }
+		// --- KROK 1: Wykrywanie kierunku metodą "przód-tył" ---
+		printf("Krok 1: Wykrywanie kierunku...\n");
 
-        if (exit_flag) {
-            // Analiza ruchu
-            float moved = mid_angle - end_angle;
-            // W kodzie SimpleFOC jest proste porównanie, ale normalizacja jest bezpieczniejsza
-            if (moved < - M_PI) moved += M_TWOPI;
-            if (moved > M_PI)  moved -= M_TWOPI;
+		// Obrót "w przód" o jeden obrót elektryczny
+		for (int i = 0; i <= 500; i++) {
+			float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
+			FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
+			HAL_Delay(2);
+		}
+		float mid_angle = AS5048_GetAngleRad();
+		if (mid_angle < 0.0f) { exit_flag = 0; }
 
-            if (fabs(moved) < 0.1f) {
-                printf("  BLAD: Silnik sie nie poruszyl!\n");
-                exit_flag = 0;
-            } else {
-                // Ta logika jest trochę inna niż w Twoim wklejonym kodzie, ale bardziej intuicyjna
-            	sensor_direction = (moved > 0) ? -1 : 1;
-                if (sensor_direction == 1) {
-                       printf("  Wynik: Kierunek sensora: 1 (CW - zgodny z ruchem wskazowek zegara)\n");
-                   } else {
-                       printf("  Wynik: Kierunek sensora: -1 (CCW - przeciwny do ruchu wskazowek zegara)\n");
-                   }
+		if (exit_flag) {
+			// Obrót "w tył"
+			for (int i = 500; i >= 0; i--) {
+				float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
+				FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
+				HAL_Delay(2);
+			}
+			float end_angle = AS5048_GetAngleRad();
+			if (end_angle < 0.0f) { exit_flag = 0; }
 
-                // Weryfikacja par biegunów
-                float expected_movement = M_TWOPI / MOTOR_POLE_PAIRS;
-                if (fabs(fabs(moved) - expected_movement) > 0.5f) {
-                    printf("  OSTRZEZENIE: Sprawdzenie par biegunow nie powiodlo sie!\n");
-                    // exit_flag = 0; // Możesz zdecydować, czy to ma być błąd krytyczny
-                } else {
-                    printf("  Wynik: Sprawdzenie par biegunow: OK!\n");
-                }
-            }
-        }
-    }
+			if (exit_flag) {
+				// Analiza ruchu
+				float moved = mid_angle - end_angle;
+				// W kodzie SimpleFOC jest proste porównanie, ale normalizacja jest bezpieczniejsza
+				if (moved < - M_PI) moved += M_TWOPI;
+				if (moved > M_PI)  moved -= M_TWOPI;
 
-    // --- KROK 2: Znalezienie zerowego kąta elektrycznego ---
-    if (exit_flag) {
-        printf("\nKrok 2: Wyrównywanie do zera elektrycznego...\n");
-        // Ustaw wirnik w znanej pozycji elektrycznej (_3PI_2)
-        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
-        HAL_Delay(700);
+				if (fabs(moved) < 0.1f) {
+					printf("  BLAD: Silnik sie nie poruszyl!\n");
+					exit_flag = 0;
+				} else {
+					// Ta logika jest trochę inna niż w Twoim wklejonym kodzie, ale bardziej intuicyjna
+					sensor_direction = (moved > 0) ? -1 : 1;
+					if (sensor_direction == 1) {
+						   printf("  Wynik: Kierunek sensora: 1 (CW - zgodny z ruchem wskazowek zegara)\n");
+					   } else {
+						   printf("  Wynik: Kierunek sensora: -1 (CCW - przeciwny do ruchu wskazowek zegara)\n");
+					   }
 
-        // Odczytaj kąt mechaniczny z sensora
-        float mechanical_angle_at_known_el_pos = AS5048_GetAngleRad();
-        if (mechanical_angle_at_known_el_pos < 0.0f) {
-            exit_flag = 0;
-        } else {
-            // Oblicz kąt elektryczny, jaki wynika z tego pomiaru (bez offsetu)
-            float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos);
+					// Weryfikacja par biegunów
+					float expected_movement = M_TWOPI / MOTOR_POLE_PAIRS;
+					if (fabs(fabs(moved) - expected_movement) > 0.5f) {
+						printf("  OSTRZEZENIE: Sprawdzenie par biegunow nie powiodlo sie!\n");
+						// exit_flag = 0; // Możesz zdecydować, czy to ma być błąd krytyczny
+					} else {
+						printf("  Wynik: Sprawdzenie par biegunow: OK!\n");
+					}
+				}
+			}
+		}
 
-            // Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
-            // Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.
-            // Zróbmy to tak samo.
+		// --- KROK 2: Znalezienie zerowego kąta elektrycznego ---
+		if (exit_flag) {
+			printf("\nKrok 2: Wyrównywanie do zera elektrycznego...\n");
+			// Ustaw wirnik w znanej pozycji elektrycznej (_3PI_2)
+			FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
+			HAL_Delay(700);
 
-            zero_electric_angle = normalize_angle(calculated_el_angle - _3PI_2);
-//            zero_electric_angle = calculated_el_angle;
-//            zero_electric_angle = calculated_el_angle - M_PI_2;
+			// Odczytaj kąt mechaniczny z sensora
+			float mechanical_angle_at_known_el_pos = AS5048_GetAngleRad();
+			if (mechanical_angle_at_known_el_pos < 0.0f) {
+				exit_flag = 0;
+			} else {
+				// Oblicz kąt elektryczny, jaki wynika z tego pomiaru (bez offsetu)
+				float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos);
 
-            printf("  Wynik: Znaleziony offset ELEKTRYCZNY: %.3f rad\n", zero_electric_angle);
-        }
-    }
+				// Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
+				// Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.
+				// Zróbmy to tak samo.
 
-    // Zakończenie
-    FOC_SetPhaseVoltage(0, 0, 0);
-    if (exit_flag) {
-        printf("--- Kalibracja zakonczona POMYSLNIE! ---\n\n");
-    } else {
-        printf("--- Kalibracja ZAKONCZONA BLEDEM! ---\n\n");
-    }
+				zero_electric_angle = normalize_angle(calculated_el_angle - _3PI_2);
+
+				printf("  Wynik: Znaleziony offset ELEKTRYCZNY: %.3f rad\n", zero_electric_angle);
+			}
+		}
+
+		// Zakończenie
+		FOC_SetPhaseVoltage(0, 0, 0);
+		if (exit_flag) {
+			printf("--- Kalibracja zakonczona POMYSLNIE! ---\n\n");
+			sensor_aligned = true;
+		} else {
+			printf("--- Kalibracja ZAKONCZONA BLEDEM! ---\n\n");
+			sensor_aligned = false;
+		}
+	}
+	return sensor_aligned;
 }
 
 void FOC_LinearRamp()
@@ -263,11 +264,22 @@ void FOC_LinearRamp()
     ramp_i_ref.q = iq_current;
 }
 
-void FOC_SetIqTarget(float new_target)
+void FOC_SetIqTarget_Ramp(float new_target)
 {
 	i_ref.q = new_target;
     ramp_active = true;
 }
+
+void FOC_SetIqTarget(float new_target)
+{
+	i_ref.q = new_target;
+	ramp_active = false; // Wymuś wyłączenie rampy
+
+	// Zsynchronizuj stan rampy, aby uniknąć nagłego skoku
+	iq_current = new_target;
+	ramp_i_ref.q = new_target;
+}
+
 
 void FOC_SetTorqueTarget(float torque_mNm)
 {
@@ -288,7 +300,7 @@ void FOC_Update(float theta_el)
 		FOC_LinearRamp();
 		target_iq = ramp_i_ref.q; // Użyj wyjścia z rampy
 	} else {
-		target_iq = i_ref.q; // Użyj globalnego celu
+		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
 	}
 
     float sin_theta = sinf(theta_el);
@@ -307,7 +319,7 @@ void FOC_Update(float theta_el)
     debug_id = id;
     debug_iq = iq;
     debug_id_ref = i_ref.d;
-    debug_iq_ref = i_ref.q;
+    debug_iq_ref = target_iq;
     debug_vd = vd;
     debug_vq = vq;
 
@@ -316,6 +328,36 @@ void FOC_Update(float theta_el)
 
     // SVPWM
     SVPWM_Update(valpha, vbeta);
+}
+
+void FOC_Stop(){
+	// TODO: w trybie 6PWM trzeba wyłączyć wszystkie kanały + __HAL_TIM_MOE_DISABLE(foc_htim);
+    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_3);
+
+    HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
+
+    HAL_ADCEx_InjectedStop(foc_hadc);
+}
+
+void FOC_Start(){
+
+    HAL_TIM_Base_Start_IT(foc_htim);
+    HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
+	HAL_ADCEx_InjectedStart_IT(foc_hadc);
+
+	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_3);
+
+	HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
 }
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)

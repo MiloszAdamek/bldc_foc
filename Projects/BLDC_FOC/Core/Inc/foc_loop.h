@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include "math.h"
 
-#define _PI_2 1.57079632679f
 #define _3PI_2 4.71238898038f
 #define _SQRT3_2 0.86602540378f
 
@@ -29,6 +28,7 @@ typedef struct {
 extern volatile bool ramp_active;
 extern volatile bool spi_angle_ready;
 extern volatile bool foc_data_ready;
+extern volatile bool sensor_aligned;
 
 extern volatile float theta_el_last;
 extern float FOC_GetElecticalAngle(float mech);
@@ -43,16 +43,18 @@ extern volatile float debug_vq;
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi);
 
-// Główna pętla FOC
-void FOC_Update(float theta_el);
+void FOC_Update(float theta_el); // Główna pętla FOC
 
 void FOC_SetIqTarget(float new_target);
 
+void FOC_SetIqTarget_Ramp(float new_target);
+
 void FOC_SetTorqueTarget(float torque_mNm);
 
-// Kalibracja enkodera
-void FOC_AlignSensor();
+bool FOC_AlignSensor(); // Kalibracja enkodera
 
-void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el);
+void FOC_Stop(); // Zatrzymanie PWM, wyłączenie driverów, zatrzymanie ADC
+
+void FOC_Start();
 
 #endif /* INC_FOC_LOOP_H_ */

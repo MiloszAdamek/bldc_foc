@@ -33,6 +33,9 @@
 #define SHUNT_RESISTOR        0.33f // Ohm
 #define CURRENT_SENSE_GAIN    1.528f
 
+#define FSM_LOOP_HZ			  1000.0f
+#define FSM_PERIOD_SEC		  (1.0f / FSM_LOOP_HZ)
+
 /* =========================================================================
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
  * ========================================================================= */
@@ -41,6 +44,7 @@
 #define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
 #define MOTOR_VELOCITY_CONSTANT 168		    // Kv
 
+#define VOLTAGE_SENSOR_ALIGN  	4.0f
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
 #define SENSOR_DIRECTION_CW   1
@@ -64,8 +68,8 @@
 #define PI_KI_ID 1000.0f
 #define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_V 5.0f
-#define PI_KI_V 1000.0f
+#define PI_KP_V 0.07f
+#define PI_KI_V 0.03f
 #define PI_LIMIT_V (MOTOR_VELOCITY_CONSTANT * VOLTAGE_LIMIT)
 
 #ifdef ENABLE_SERIAL_DEBUGGING

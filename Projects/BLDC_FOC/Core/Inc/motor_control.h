@@ -8,6 +8,8 @@
 #ifndef INC_MOTOR_CONTROL_H_
 #define INC_MOTOR_CONTROL_H_
 
+#include "tim.h"
+
 typedef enum {
     STATE_IDLE,         	// Czeka na polecenia, PWM wyłączone
     STATE_ALIGNMENT,    	// Trwa kalibracja (FOC_AlignSensor)
@@ -18,12 +20,18 @@ typedef enum {
 
 extern volatile MotorState_t g_motor_state;
 
-void MotorControl_SetMode_Speed(float rpm);
+void MotorControl_Init(TIM_HandleTypeDef* control_htim, TIM_HandleTypeDef* commander_htim);
 
-void MotorControl_SetMode_Torque(float iq);
+void MotorControl_SetSpeed(float rpm);
+
+void MotorControl_SetTorque(float iq);
+
+float MotorControl_GetActualSpeed();
 
 void MotorControl_Start(void);
 
 void MotorControl_Stop(void);
+
+void MotorControl_Reboot(void);
 
 #endif /* INC_MOTOR_CONTROL_H_ */

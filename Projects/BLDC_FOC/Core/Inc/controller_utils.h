@@ -69,6 +69,10 @@ static inline void InvParkTransformTrig(float vd, float vq, float *sin_theta, fl
     *vbeta  = vd * (*sin_theta) + vq * (*cos_theta);
 }
 
-
+// Normalizuje kąt do zakresu (-PI, PI]
+static inline float wrap_pi(float x){
+    x = fmodf(x + M_PI, M_TWOPI);
+    return (x < 0) ? x + M_TWOPI - M_PI : x - M_PI;
+}
 
 #endif /* INC_CONTROLLER_UTILS_H_ */
