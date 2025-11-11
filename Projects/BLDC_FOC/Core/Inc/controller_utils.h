@@ -5,15 +5,30 @@
  *      Author: Miloush
  */
 
-#ifndef INC_TRANSFORMS_H_
-#define INC_TRANSFORMS_H_
+#ifndef INC_CONTROLLER_UTILS_H_
+#define INC_CONTROLLER_UTILS_H_
 
 #include "stm32g4xx_hal.h"
 #include <math.h>
 #include <stdint.h>
+#include "config.h"
 
 #define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
 
+// Parametry regulatorów PI
+typedef struct {
+    float kp;
+    float ki;
+    float integral;
+    float limit;
+} PI_Controller;
+
+float pi_control(PI_Controller *pi, float error);
+
+static inline float normalize_angle(float angle) {
+    float result = fmodf(angle, M_TWOPI);
+    return result >= 0.0f ? result : result + M_TWOPI;
+}
 
 // Clarke transform: 3 fazy → αβ (z pomiarów Ia, Ib)
 static inline void ClarkeTransform(float ia, float ib, float *ialpha, float *ibeta)
@@ -56,4 +71,4 @@ static inline void InvParkTransformTrig(float vd, float vq, float *sin_theta, fl
 
 
 
-#endif /* INC_TRANSFORMS_H_ */
+#endif /* INC_CONTROLLER_UTILS_H_ */

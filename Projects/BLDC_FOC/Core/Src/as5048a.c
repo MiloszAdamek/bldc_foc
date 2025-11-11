@@ -5,10 +5,10 @@
  *      Author: Miloush
  */
 
+#include <config.h>
 #include "as5048a.h"
 #include <stdio.h>
 #include "foc_loop.h"
-#include "motor_config.h"
 
 static SPI_HandleTypeDef* as5048_hspi;
 
@@ -246,7 +246,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 		}
 
         float mech = ((float)raw_angle.position / AS5048_RESOLUTION) * M_TWOPI;
-        theta_el_last = el_from_mech(mech); // użyj offsetu i direction
+        theta_el_last = FOC_GetElecticalAngle(mech); // użyj offsetu i direction
 	}
 }
 

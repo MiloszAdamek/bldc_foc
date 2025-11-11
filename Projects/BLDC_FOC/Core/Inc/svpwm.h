@@ -10,7 +10,6 @@
 
 #include "main.h"
 #include "stm32g4xx.h"
-#include "tim.h"
 
 extern volatile uint16_t debug_Ta;
 extern volatile uint16_t debug_Tb;

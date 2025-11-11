@@ -5,16 +5,18 @@
  *      Author: Miloush
  */
 
-#include "motor_config.h"
+#include <config.h>
 #include "foc_loop.h"
 #include "math.h"
 #include "main.h"
+#include "controller_utils.h"
 
 static TIM_HandleTypeDef* foc_htim;
 static ADC_HandleTypeDef* foc_hadc;
 
 static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT_ID, .integral = 0.0f };
 static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT_IQ, .integral = 0.0f };
+
 static abc_current_t currents;
 
 volatile dq_ref_t i_ref = {0.0f, 0.0f};
@@ -42,33 +44,6 @@ volatile float debug_iq_ref = 0.0f;
 volatile float debug_vd = 0.0f;
 volatile float debug_vq = 0.0f;
 
-//static inline float pi_control(PI_Controller *pi, float error)
-//{
-//    pi->integral += error * pi->ki * PWM_PERIOD_SEC; // Ts = 50 us
-//
-//    if (pi->integral > pi->limit) pi->integral = pi->limit;
-//    else if (pi->integral < -pi->limit) pi->integral = -pi->limit;
-//
-//    float output = pi->kp * error + pi->integral;
-//
-//    if (output > pi->limit) output = pi->limit;
-//    else if (output < -pi->limit) output = -pi->limit;
-//
-//    return output;
-//}
-
-float pi_control(PI_Controller *pi, float error)
-{
-    float u_p = pi->kp * error;
-    pi->integral += pi->ki * error * PWM_PERIOD_SEC;
-
-    float u = u_p + pi->integral;
-    if (u > pi->limit) { u = pi->limit; pi->integral = u - u_p; }
-    else if (u < -pi->limit) { u = -pi->limit; pi->integral = u - u_p; }
-
-    return u;
-}
-
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
 {
 	printf("FOC: Init...\n");
@@ -90,7 +65,7 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     // Cache kąta
     float mech0 = AS5048_GetAngleRad();
     if (mech0 >= 0.0f) {
-        theta_el_last = el_from_mech(mech0);
+        theta_el_last = FOC_GetElecticalAngle(mech0);
     }
 
     HAL_TIM_Base_Stop(foc_htim);
@@ -102,7 +77,6 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     // Uruchomienie DMA dla SPI
     if (spi_ready) AS5048_ReadAngleDMA();
 }
-
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     // --- Krok 1: Ograniczenie wektora napięcia ---
@@ -159,22 +133,13 @@ void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_3, pwm_c);
 }
 
-static float normalize_angle(float angle) {
-    float result = fmodf(angle, M_TWOPI);
-    return result >= 0.0f ? result : result + M_TWOPI;
-}
-
-inline float mech_from_raw(uint16_t raw14){
-    return ((float)raw14 / AS5048_RESOLUTION) * M_TWOPI;
-}
-
-inline float el_from_mech(float mech){
+inline float FOC_GetElecticalAngle(float mech){
     return normalize_angle((float)(sensor_direction * MOTOR_POLE_PAIRS) * mech - zero_electric_angle);
 }
 
 // Funkcja pomocnicza do obliczania kąta elektrycznego BEZ offsetu(potrzebna w kalibracji)
-static float FOC_GetElecticalAngle_NoOffset(float mechanical_angle, int direction, int pole_pairs) {
-    return normalize_angle((float)direction * pole_pairs * mechanical_angle);
+static float FOC_GetElecticalAngle_NoOffset(float mechanical_angle) {
+    return normalize_angle((float)sensor_direction * MOTOR_POLE_PAIRS * mechanical_angle);
 }
 
 void FOC_AlignSensor() {
@@ -247,7 +212,7 @@ void FOC_AlignSensor() {
             exit_flag = 0;
         } else {
             // Oblicz kąt elektryczny, jaki wynika z tego pomiaru (bez offsetu)
-            float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos, sensor_direction, MOTOR_POLE_PAIRS);
+            float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos);
 
             // Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
             // Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.

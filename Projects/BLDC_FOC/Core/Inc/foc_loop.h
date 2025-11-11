@@ -8,8 +8,8 @@
 #ifndef INC_FOC_LOOP_H_
 #define INC_FOC_LOOP_H_
 
+#include <controller_utils.h>
 #include "stm32g4xx_hal.h"
-#include "transforms.h"
 #include "svpwm.h"
 #include "current_sense.h"
 #include "as5048a.h"
@@ -19,14 +19,6 @@
 #define _PI_2 1.57079632679f
 #define _3PI_2 4.71238898038f
 #define _SQRT3_2 0.86602540378f
-
-// Ustawienia regulatorów PI
-typedef struct {
-    float kp;
-    float ki;
-    float integral;
-    float limit;
-} PI_Controller;
 
 typedef struct {
     float d;
@@ -39,7 +31,7 @@ extern volatile bool spi_angle_ready;
 extern volatile bool foc_data_ready;
 
 extern volatile float theta_el_last;
-extern float el_from_mech(float mech);
+extern float FOC_GetElecticalAngle(float mech);
 
 // Debug
 extern volatile float debug_id;

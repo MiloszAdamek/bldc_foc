@@ -5,7 +5,7 @@
  *      Author: Miloush
  */
 
-#include "motor_config.h"
+#include <config.h>
 #include "svpwm.h"
 #include "math.h"
 #include "main.h"

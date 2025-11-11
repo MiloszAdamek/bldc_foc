@@ -19,12 +19,11 @@
  * ========================================================================= */
 
 // Częstotliwość PWM i odpowiadający okres [s]
-#define PWM_FREQUENCY_HZ      20000.0f                     // 20 kHz
-#define PWM_PERIOD_SEC        (1.0f / PWM_FREQUENCY_HZ)
+#define PWM_FREQUENCY_HZ      20000.0f                     	// 20 kHz
+#define PWM_PERIOD_SEC        (1.0f / PWM_FREQUENCY_HZ)		// 50 us
 
 // Wartość ARR timera (dla 170 MHz taktowania i prescalera = 0)
 #define PWM_PERIOD_ARR        4249
-#define PWM_CENTER_ALIGNED    1                            // 1 = tak, 0 = edge
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        12.0f
@@ -60,6 +59,14 @@
 #define PI_KP_IQ 5.0f
 #define PI_KI_IQ 1000.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
+
+#define PI_KP_ID 5.0f
+#define PI_KI_ID 1000.0f
+#define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
+
+#define PI_KP_V 5.0f
+#define PI_KI_V 1000.0f
+#define PI_LIMIT_V (MOTOR_VELOCITY_CONSTANT * VOLTAGE_LIMIT)
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)

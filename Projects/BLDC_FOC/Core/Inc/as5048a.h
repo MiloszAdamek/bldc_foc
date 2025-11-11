@@ -8,12 +8,11 @@
 #ifndef INC_AS5048A_H_
 #define INC_AS5048A_H_
 
+#include <config.h>
 #include "main.h"
-#include "spi.h"
 #include <stdbool.h>
 #include "delay_us.h"
 #include "math.h"
-#include "motor_config.h"
 
 #define AS_WRITE            0x0000  // bit14=0 -> zapis
 #define AS_READ             0x4000  // bit14=1 -> odczyt

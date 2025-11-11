@@ -5,11 +5,11 @@
  *      Author: Miloush
  */
 
+#include <config.h>
 #include "current_sense.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include "main.h"
-#include "motor_config.h"
 
 #define ADC_REF_VOLTAGE   3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION    4096.0f    // 12-bit ADC
