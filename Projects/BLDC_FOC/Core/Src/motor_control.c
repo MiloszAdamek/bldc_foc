@@ -29,7 +29,7 @@ void MotorControl_Init(TIM_HandleTypeDef* control_htim, TIM_HandleTypeDef* comma
 }
 
 void MotorControl_SpeedController(float speed_error){
-    float iq_from_speed_pi = pi_control(&pi_speed, speed_error);
+    float iq_from_speed_pi = pi_control(&pi_speed, speed_error, FSM_PERIOD_SEC);
     // Wyjście z PI prędkości staje się wejściem do PI prądu
     FOC_SetIqTarget(iq_from_speed_pi);
 }

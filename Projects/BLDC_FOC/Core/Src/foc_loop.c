@@ -313,8 +313,8 @@ void FOC_Update(float theta_el)
     ParkTransformTrig(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
 
     // PI
-    vd = pi_control(&pi_id, i_ref.d - id);
-    vq = pi_control(&pi_iq, target_iq - iq);
+    vd = pi_control(&pi_id, i_ref.d - id, PWM_PERIOD_SEC);
+    vq = pi_control(&pi_iq, target_iq - iq, PWM_PERIOD_SEC);
 
     debug_id = id;
     debug_iq = iq;

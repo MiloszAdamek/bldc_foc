@@ -23,7 +23,7 @@ typedef struct {
     float limit;
 } PI_Controller;
 
-float pi_control(PI_Controller *pi, float error);
+float pi_control(PI_Controller *pi, float error, float dt);
 
 static inline float normalize_angle(float angle) {
     float result = fmodf(angle, M_TWOPI);
