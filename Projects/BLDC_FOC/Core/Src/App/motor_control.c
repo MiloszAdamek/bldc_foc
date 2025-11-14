@@ -8,14 +8,14 @@
 #include "App/motor_control.h"
 #include "App/config.h"
 #include "App/commander.h"
-#include "Foc/foc_loop.h"
+#include "FOC/foc_loop.h"
+#include "FOC/speed_control.h"
 #include "BSP/as5048a.h"
 
 static TIM_HandleTypeDef* ctrl_htim;
 static TIM_HandleTypeDef* cmd_htim;
 
 volatile MotorState_t g_motor_state = STATE_IDLE;
-static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f };
 static float target_speed_rpm = 0.0f;
 static float target_torque_iq = 0.0f;
 
@@ -41,9 +41,8 @@ void MotorControl_Run(void)
             break;
 
         case STATE_SPEED_CONTROL:
-            // Pętla regulacji prędkości
-//            float speed_error = target_speed_rpm - actual_speed_rpm;
-//            MotorControl_SpeedController(speed_error);
+        	float iq_cmd = SpeedController_Update(target_speed_rpm);
+        	FOC_SetIqTarget(iq_cmd);
             break;
 
         case STATE_FAULT:
@@ -77,7 +76,7 @@ void MotorControl_Stop(void) {
 
 void MotorControl_SetSpeed(float rpm) {
     target_speed_rpm = rpm;
-    pi_speed.integral = 0.0f; // Zerowanie przy przejsciu w tryb predkosci, by uniknac nagłego skoku
+    SpeedController_Reset();
     g_motor_state = STATE_SPEED_CONTROL;
 }
 

@@ -21,9 +21,10 @@ typedef struct {
     float ki;
     float integral;
     float limit;
+    float dt;
 } PI_Controller;
 
-float pi_control(PI_Controller *pi, float error, float dt);
+float pi_control(PI_Controller *pi, float error);
 
 static inline float normalize_angle(float angle) {
     float result = fmodf(angle, M_TWOPI);
@@ -73,6 +74,13 @@ static inline void InvParkTransformTrig(float vd, float vq, float *sin_theta, fl
 static inline float wrap_pi(float x){
     x = fmodf(x + M_PI, M_TWOPI);
     return (x < 0) ? x + M_TWOPI - M_PI : x - M_PI;
+}
+
+static inline float wrap_pi_dtheta(float x)
+{
+    if (x >  M_PI) x -= M_TWOPI;
+    if (x < -M_PI) x += M_TWOPI;
+    return x;
 }
 
 #endif /* INC_CONTROLLER_UTILS_H_ */

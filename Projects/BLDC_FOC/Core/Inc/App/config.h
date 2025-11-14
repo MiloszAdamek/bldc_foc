@@ -22,6 +22,12 @@
 #define PWM_FREQUENCY_HZ      20000.0f                     	// 20 kHz
 #define PWM_PERIOD_SEC        (1.0f / PWM_FREQUENCY_HZ)		// 50 us
 
+#define FOC_FREQUENCY_HZ	  40000.0f						// 40 kHz
+#define FOC_PERIOD_SEC        (1.0f / FOC_FREQUENCY_HZ)		// 25 us
+
+#define FSM_LOOP_HZ			  1000.0f
+#define FSM_PERIOD_SEC		  (1.0f / FSM_LOOP_HZ)
+
 // Wartość ARR timera (dla 170 MHz taktowania i prescalera = 0)
 #define PWM_PERIOD_ARR        4249
 
@@ -32,9 +38,6 @@
 // Rezystor pomiarowy i wzmocnienie
 #define SHUNT_RESISTOR        0.33f // Ohm
 #define CURRENT_SENSE_GAIN    1.528f
-
-#define FSM_LOOP_HZ			  1000.0f
-#define FSM_PERIOD_SEC		  (1.0f / FSM_LOOP_HZ)
 
 /* =========================================================================
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
@@ -64,13 +67,9 @@
 #define PI_KI_IQ 1000.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_ID 5.0f
-#define PI_KI_ID 1000.0f
-#define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
-
 #define PI_KP_V 0.07f
 #define PI_KI_V 0.03f
-#define PI_LIMIT_V (MOTOR_VELOCITY_CONSTANT * VOLTAGE_LIMIT)
+#define PI_LIMIT_V 2.0f
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)
