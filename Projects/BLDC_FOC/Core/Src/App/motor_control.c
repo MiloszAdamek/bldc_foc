@@ -62,7 +62,7 @@ void MotorControl_Start(void) {
         if (FOC_AlignSensor())
         {
             FOC_Start(); // Włącz PWM/ADC
-            MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
+            MotorControl_SetTorque(0.5f); // Przejdź do trybu momentu z zerowym prądem
         } else {
             g_motor_state = STATE_FAULT; // Błąd kalibracji
         }
