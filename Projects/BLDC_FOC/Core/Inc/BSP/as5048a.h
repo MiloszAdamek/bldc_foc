@@ -8,10 +8,10 @@
 #ifndef INC_AS5048A_H_
 #define INC_AS5048A_H_
 
-#include <config.h>
+#include "App/config.h"
+#include "BSP/delay_us.h"
 #include "main.h"
 #include <stdbool.h>
-#include "delay_us.h"
 #include "math.h"
 
 #define AS_WRITE            0x0000  // bit14=0 -> zapis
@@ -26,13 +26,9 @@
 #define AS_ANGLE            0x3FFF  // aktualny kąt (14 bitów danych)
 #define AS_ERROR_BIT 		0x4000
 
-#define AS5048_SPI_HANDLER  (&hspi3)
-
 #define AS_US_DELAY			4
 
 #define AS5048_RESOLUTION   16384.0f
-
-extern volatile bool spi_ready;
 
 // Status funkcji
 typedef enum {
@@ -56,9 +52,9 @@ typedef struct {
     AS5048_ErrorFlags errorFlags;
 } AS5048_ReadResult;
 
-#ifdef TEST_MODE
-	extern volatile AS5048_ReadResult raw_angle;
-#endif
+extern volatile AS5048_ReadResult raw_angle;
+extern volatile bool g_spi_ready;
+extern volatile bool g_new_encoder_data_ready;
 
 /**
  * @brief Get error details

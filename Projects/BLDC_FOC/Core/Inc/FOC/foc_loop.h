@@ -8,13 +8,13 @@
 #ifndef INC_FOC_LOOP_H_
 #define INC_FOC_LOOP_H_
 
-#include <controller_utils.h>
 #include "stm32g4xx_hal.h"
-#include "svpwm.h"
-#include "current_sense.h"
-#include "as5048a.h"
 #include <stdio.h>
 #include "math.h"
+#include "FOC/controller_utils.h"
+#include "FOC/svpwm.h"
+#include "BSP/current_sense.h"
+#include "BSP/as5048a.h"
 
 #define _3PI_2 4.71238898038f
 #define _SQRT3_2 0.86602540378f
@@ -31,7 +31,7 @@ extern volatile bool foc_data_ready;
 extern volatile bool sensor_aligned;
 
 extern volatile float theta_el_last;
-extern float FOC_GetElecticalAngle(float mech);
+extern volatile float theta_mech_last;
 
 // Debug
 extern volatile float debug_id;
@@ -46,6 +46,8 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
 void FOC_Update(float theta_el); // Główna pętla FOC
 
 void FOC_SetIqTarget(float new_target);
+
+float FOC_GetElecticalAngle(float mech);
 
 void FOC_SetIqTarget_Ramp(float new_target);
 

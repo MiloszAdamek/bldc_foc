@@ -5,21 +5,27 @@
  *      Author: Miloush
  */
 
-#include <config.h>
-#include "foc_loop.h"
+#include "App/config.h"
+#include "FOC/foc_loop.h"
+#include "FOC/controller_utils.h"
 #include "math.h"
 #include "main.h"
-#include "controller_utils.h"
+
 
 static TIM_HandleTypeDef* foc_htim;
 static ADC_HandleTypeDef* foc_hadc;
 
 static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT_ID, .integral = 0.0f };
 static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT_IQ, .integral = 0.0f };
+static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f };
 
+// IQ, ID controller
 static abc_current_t currents;
-
 volatile dq_ref_t i_ref = {0.0f, 0.0f};
+
+// Speed controller
+volatile float speed_rpm_ref = 0.0f;
+volatile float actual_speed_rpm = 0.0f;
 
 // RAMP
 volatile dq_ref_t ramp_i_ref;
@@ -32,9 +38,11 @@ volatile bool spi_angle_ready = false;
 volatile bool foc_data_ready = false;
 volatile bool sensor_aligned = false;
 
-// ENCODER - calibration
+// ENCODER
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
 static float zero_electric_angle = 0.0f;
+static float theta_mech_latest = 0.0f;
+static float theta_el_latest = 0.0f;
 
 // Debug - cubemonitor
 volatile float debug_id = 0.0f;
@@ -43,6 +51,7 @@ volatile float debug_id_ref = 0.0f;
 volatile float debug_iq_ref = 0.0f;
 volatile float debug_vd = 0.0f;
 volatile float debug_vq = 0.0f;
+volatile float debug_speed = 0.0f;
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
 {
@@ -65,13 +74,14 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     // Odczyt kąta przed uruchomieniem pętli FOC
     float mech0 = AS5048_GetAngleRad();
     if (mech0 >= 0.0f) {
-        theta_el_last = FOC_GetElecticalAngle(mech0);
+        theta_mech_latest = mech0;
+        theta_el_latest = FOC_GetElecticalAngle(mech0);
     }
 
     HAL_TIM_Base_Stop(foc_htim);
 
     // Uruchomienie DMA dla SPI
-    if (spi_ready) AS5048_ReadAngleDMA();
+    if (g_spi_ready) AS5048_ReadAngleDMA();
 }
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
@@ -136,6 +146,26 @@ inline float FOC_GetElecticalAngle(float mech){
 // Funkcja pomocnicza do obliczania kąta elektrycznego BEZ offsetu(potrzebna w kalibracji)
 static float FOC_GetElecticalAngle_NoOffset(float mechanical_angle) {
     return normalize_angle((float)sensor_direction * MOTOR_POLE_PAIRS * mechanical_angle);
+}
+
+float VelocityEstimator_Update(float theta_mech){
+	// Estymacja w pętli 20 kHz
+	static float last_mech_angle = 0.0f;
+	static float speed_lpf = 0.0f; // Filtrowana prędkość (LPF)
+
+	float delta_angle = wrap_pi(theta_mech - last_mech_angle);
+
+	float speed_rad_s_raw = delta_angle / PWM_PERIOD_SEC;
+
+	// Zastosuj filtr dolnoprzepustowy (LPF)
+	// Współczynnik 0.1f możesz dostroić; mniejszy = bardziej gładko, wolniej
+	speed_lpf = speed_lpf * 0.9f + speed_rad_s_raw * 0.1f;
+
+	last_mech_angle = theta_mech;
+
+	actual_speed_rpm = speed_lpf * (60.0f / M_TWOPI);
+
+	return actual_speed_rpm;
 }
 
 bool FOC_AlignSensor() {
@@ -322,6 +352,7 @@ void FOC_Update(float theta_el)
     debug_iq_ref = target_iq;
     debug_vd = vd;
     debug_vq = vq;
+    debug_speed = actual_speed_rpm;
 
     // InvPark
     InvParkTransformTrig(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
@@ -360,21 +391,42 @@ void FOC_Start(){
 	HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
 }
 
+void FOC_SpeedController(){
+	// Regulacja w pętli 1 kHz
+    float speed_error = speed_rpm_ref - actual_speed_rpm;
+    float iq_from_speed_pi = pi_control(&pi_speed, speed_error, FSM_PERIOD_SEC);
+    FOC_SetIqTarget(iq_from_speed_pi);
+}
+
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1)
     {
-        // 1) Prądy z TEGO cyklu
-        CurrentSense_Process(hadc);
+    	// Synchronizacja kąta
+    	if (g_new_encoder_data_ready)
+		{
+			g_new_encoder_data_ready = false;
+
+			theta_mech_latest = AS5048_GetMechanicalAngle();
+			theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
+		}
+
+        // Pomiar prądu w tym cyklu
+        CurrentSense_Process();
         CurrentSense_Read(&currents);
 
-        // 2) Użyj KĄTA z POPRZEDNIEGO cyklu (theta_el_last) – deterministycznie
-        float theta = theta_el_last;
-        FOC_Update(theta);
+        // Estymacja prędkości
+        VelocityEstimator_Update(theta_mech_latest);
 
-        // 3) Na końcu – wystartuj NOWY transfer SPI na NASTĘPNY cykl
-        if (spi_ready) {
+        // Pętla FOC
+        FOC_Update(theta_el_latest);
+
+        // Start spi do kolejnego cyklu
+        if (g_spi_ready) {
             AS5048_ReadAngleDMA();
+        }
+        else{
+        	// critical error, pętla foc jest szybsza niż SPI
         }
     }
 }

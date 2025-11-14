@@ -5,8 +5,8 @@
  *      Author: Miloush
  */
 
-#include <config.h>
-#include "current_sense.h"
+#include "App/config.h"
+#include "BSP/current_sense.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include "main.h"

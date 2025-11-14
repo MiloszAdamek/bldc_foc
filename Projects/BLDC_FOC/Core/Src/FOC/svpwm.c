@@ -5,8 +5,8 @@
  *      Author: Miloush
  */
 
-#include <config.h>
-#include "svpwm.h"
+#include "App/config.h"
+#include "FOC/svpwm.h"
 #include "math.h"
 #include "main.h"
 

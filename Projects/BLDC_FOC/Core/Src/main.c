@@ -27,13 +27,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FOC/foc_loop.h"
+#include "App/commander.h"
+#include "App/motor_control.h"
+#include "App/tests.h"
 #include <stdio.h>
-#include "current_sense.h"
-#include "foc_loop.h"
-#include "as5048a.h"
-#include "commander.h"
-#include "tests.h"
-#include "motor_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

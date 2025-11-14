@@ -5,8 +5,8 @@
  *      Author: Miloush
  */
 
-#include "commander.h"
-#include "motor_control.h"
+#include "App/commander.h"
+#include "App/motor_control.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

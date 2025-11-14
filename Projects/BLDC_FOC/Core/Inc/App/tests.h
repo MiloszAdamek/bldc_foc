@@ -8,7 +8,7 @@
 #ifndef INC_TESTS_H_
 #define INC_TESTS_H_
 
-#include "as5048a.h"
+#include "BSP/as5048a.h"
 #include "main.h"
 #include "float.h"
 

@@ -11,7 +11,7 @@
 #include "stm32g4xx_hal.h"
 #include <math.h>
 #include <stdint.h>
-#include "config.h"
+#include "App/config.h"
 
 #define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
 

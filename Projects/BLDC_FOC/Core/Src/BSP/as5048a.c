@@ -5,25 +5,24 @@
  *      Author: Miloush
  */
 
-#include <config.h>
-#include "as5048a.h"
+#include "BSP/as5048a.h"
+#include "App/config.h"
+#include "FOC/foc_loop.h"
 #include <stdio.h>
-#include "foc_loop.h"
 
 static SPI_HandleTypeDef* as5048_hspi;
 
-volatile bool spi_ready = false;
+volatile bool g_spi_ready = false;
 
 static uint8_t spi_tx_buf[2];
 static uint8_t spi_rx_buf[2];
 
-#ifdef TEST_MODE
-	volatile AS5048_ReadResult raw_angle;
-#else
-	static volatile AS5048_ReadResult raw_angle;
-#endif
+volatile AS5048_ReadResult raw_angle;
 
-volatile float theta_el_last = 0.0f;
+volatile bool g_new_encoder_data_ready = false;
+
+//volatile float theta_el_last = 0.0f;
+//volatile float theta_mech_last = 0.0f;
 
 static inline void AS5048_CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
 static inline void AS5048_CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
@@ -32,7 +31,7 @@ void AS5048_Init(SPI_HandleTypeDef *hspi){
 	as5048_hspi = hspi;
 	DWT_Init();
 	AS5048_CS_HIGH();
-	spi_ready = true;
+	g_spi_ready = true;
 
 }
 
@@ -214,9 +213,9 @@ float AS5048_GetAngleRad(void){
 // Transmisja przez DMA
 void AS5048_ReadAngleDMA(void)
 {
-	if (!spi_ready) return; // trwa poprzedni transfer
+	if (!g_spi_ready) return; // trwa poprzedni transfer
 
-	spi_ready = false;
+	g_spi_ready = false;
 	uint16_t cmd = AS_READ | AS_ANGLE;
 	cmd  = AS5048_AddParity(cmd);
 
@@ -235,7 +234,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 		AS5048_CS_HIGH();
 		uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
 
-		spi_ready = true;
+		g_spi_ready = true;
 
 		if (frame & AS_ERROR_BIT) {
 //			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
@@ -243,10 +242,9 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 		} else {
 			raw_angle.position = frame & AS_ANGLE;
 			raw_angle.status = AS5048_OK;
-		}
 
-        float mech = ((float)raw_angle.position / AS5048_RESOLUTION) * M_TWOPI;
-        theta_el_last = FOC_GetElecticalAngle(mech); // użyj offsetu i direction
+			g_new_encoder_data_ready = true;
+		}
 	}
 }
 
