@@ -57,15 +57,15 @@
 #define DEFAULT_IQ_TARGET     0.5f             // A – moment zadany przy starcie
 
 #define PI_KP_ID 5.0f
-#define PI_KI_ID 1000.0f
+#define PI_KI_ID 500.0f
 #define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
 
 #define PI_KP_IQ 5.0f
-#define PI_KI_IQ 1000.0f
+#define PI_KI_IQ 500.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_V 0.07f
-#define PI_KI_V 0.03f
+#define PI_KP_V 0.01f
+#define PI_KI_V 0.005f
 #define PI_LIMIT_V 2.0f
 
 #ifdef ENABLE_SERIAL_DEBUGGING
