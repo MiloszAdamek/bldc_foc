@@ -30,6 +30,9 @@
 
 #define AS5048_RESOLUTION   16384.0f
 
+extern volatile bool spi_ready;
+extern volatile bool new_encoder_data_ready;
+
 // Status funkcji
 typedef enum {
     AS5048_OK = 0,

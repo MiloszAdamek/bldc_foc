@@ -19,6 +19,8 @@
 #define _3PI_2 4.71238898038f
 #define _SQRT3_2 0.86602540378f
 
+extern TIM_HandleTypeDef* foc_htim;
+
 typedef struct {
     float d;
     float q;
@@ -29,6 +31,7 @@ extern volatile bool ramp_active;
 extern volatile bool spi_angle_ready;
 extern volatile bool foc_data_ready;
 extern volatile bool sensor_aligned;
+extern volatile bool new_current_data_ready;
 
 extern volatile float theta_el_last;
 extern volatile float theta_mech_last;
@@ -43,7 +46,9 @@ extern volatile float debug_vq;
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi);
 
-void FOC_Update(float theta_el); // Główna pętla FOC
+void FOC_RunLoop(void); // Główna pętla FOC
+
+void FOC_Update(float theta_el);
 
 void FOC_SetIqTarget(float new_target);
 

@@ -12,8 +12,7 @@
 #include "math.h"
 #include "main.h"
 
-
-static TIM_HandleTypeDef* foc_htim;
+TIM_HandleTypeDef* foc_htim;
 static ADC_HandleTypeDef* foc_hadc;
 
 static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT_ID, .integral = 0.0f, .dt = PWM_PERIOD_SEC};
@@ -36,6 +35,7 @@ volatile bool ramp_active = false;
 volatile bool spi_angle_ready = false;
 volatile bool foc_data_ready = false;
 volatile bool sensor_aligned = false;
+volatile bool new_current_data_ready = false;
 
 // ENCODER
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
@@ -78,9 +78,6 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     }
 
     HAL_TIM_Base_Stop(foc_htim);
-
-    // Uruchomienie DMA dla SPI
-    if (g_spi_ready) AS5048_ReadAngleDMA();
 }
 
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
@@ -289,7 +286,6 @@ void FOC_SetIqTarget(float new_target)
 	ramp_i_ref.q = new_target;
 }
 
-
 void FOC_SetTorqueTarget(float torque_mNm)
 {
     // Iq = (T_mNm / 1000) / Kt
@@ -368,38 +364,53 @@ void FOC_Start(){
 	HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
+
+    spi_ready = true;
+    AS5048_ReadAngleDMA();
 }
+
+void FOC_RunLoop(){
+	// Sprawdź, czy oba pomiary z tego cyklu są gotowe
+	if (new_encoder_data_ready && new_current_data_ready)
+	{
+		// Resetuj flagi na następny cykl
+		new_encoder_data_ready = false;
+		new_current_data_ready = false;
+
+		// --- Pętla FOC (logika przeniesiona z ADC ISR) ---
+
+		// 1. Kąt (zapisany przez SPI DMA)
+		theta_mech_latest = AS5048_GetMechanicalAngle();
+		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
+
+		// 2. Prąd (zapisany przez ADC ISR)
+		// (jest już w globalnej zmiennej 'currents')
+
+		// 3. Estymacja prędkości
+		SpeedEstimator_Update(theta_mech_latest, &actual_speed_rpm);
+
+		// 4. Pętla FOC
+		FOC_Update(theta_el_latest);
+
+		// --- Koniec pętli FOC ---
+	}
+	else
+	{
+		// BŁĄD KRYTYCZNY PIPELINE'U!
+		// Oznacza, że FOC zostało wywołane, zanim SPI lub ADC
+		// dostarczyły dane. Należy tu np. ustawić flagę błędu systemowego.
+	}
+}
+
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1)
     {
-    	// Synchronizacja kąta
-    	if (g_new_encoder_data_ready)
-		{
-			g_new_encoder_data_ready = false;
+    	CurrentSense_Process();
+		CurrentSense_Read(&currents);
 
-			theta_mech_latest = AS5048_GetMechanicalAngle();
-			theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
-		}
-
-        // Pomiar prądu w tym cyklu
-        CurrentSense_Process();
-        CurrentSense_Read(&currents);
-
-        // Estymacja prędkości
-        SpeedEstimator_Update(theta_mech_latest, &actual_speed_rpm);
-
-        // Pętla FOC
-        FOC_Update(theta_el_latest);
-
-        // Start spi do kolejnego cyklu
-        if (g_spi_ready) {
-            AS5048_ReadAngleDMA();
-        }
-        else{
-        	// critical error, pętla foc jest szybsza niż SPI
-        }
+		new_current_data_ready = true;
     }
 }
 

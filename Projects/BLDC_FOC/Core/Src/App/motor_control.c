@@ -93,6 +93,18 @@ void MotorControl_Reboot(){
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	if (htim->Instance == foc_htim->Instance) // pętla 20 kHz
+	{
+		// Pipeline FOC
+		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)){	// Update na początku cyklu PWM, licznik osiągnął 0
+			if (spi_ready) {
+			AS5048_ReadAngleDMA();
+			}
+		}
+		else{	// Update w środku cyklu PWM, licznik osiągnął ARR
+			FOC_RunLoop();
+		}
+	}
 	if (htim->Instance == ctrl_htim->Instance) // pętla 1 kHz
 	{
 		MotorControl_Run();
