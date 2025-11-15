@@ -51,6 +51,10 @@ volatile float debug_iq_ref = 0.0f;
 volatile float debug_vd = 0.0f;
 volatile float debug_vq = 0.0f;
 volatile float debug_speed = 0.0f;
+volatile uint32_t foc_loop_err = 0;
+volatile uint32_t foc_loop_ok = 0;
+volatile uint32_t err_encoder = 0;
+volatile uint32_t err_current = 0;
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
 {
@@ -352,7 +356,6 @@ void FOC_Stop(){
 
 void FOC_Start(){
 
-    HAL_TIM_Base_Start_IT(foc_htim);
     HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
 	HAL_ADCEx_InjectedStart_IT(foc_hadc);
 
@@ -365,8 +368,14 @@ void FOC_Start(){
 	HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
 
+	// Pobranie danych przed uruchomieniem pętli FOC
+	new_current_data_ready = false;
+	new_encoder_data_ready = false;
     spi_ready = true;
+
     AS5048_ReadAngleDMA();
+
+    HAL_TIM_Base_Start_IT(foc_htim);
 }
 
 void FOC_RunLoop(){
@@ -384,7 +393,8 @@ void FOC_RunLoop(){
 		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
 
 		// 2. Prąd (zapisany przez ADC ISR)
-		// (jest już w globalnej zmiennej 'currents')
+    	CurrentSense_CalculatePhases();
+		CurrentSense_Read(&currents);
 
 		// 3. Estymacja prędkości
 		SpeedEstimator_Update(theta_mech_latest, &actual_speed_rpm);
@@ -393,24 +403,30 @@ void FOC_RunLoop(){
 		FOC_Update(theta_el_latest);
 
 		// --- Koniec pętli FOC ---
+		foc_loop_ok++;
 	}
 	else
 	{
+		foc_loop_err++;
+		if(new_encoder_data_ready) err_current++;
+		if(new_current_data_ready) err_encoder++;
 		// BŁĄD KRYTYCZNY PIPELINE'U!
 		// Oznacza, że FOC zostało wywołane, zanim SPI lub ADC
 		// dostarczyły dane. Należy tu np. ustawić flagę błędu systemowego.
 	}
 }
 
+volatile uint32_t adc_inj_irq_cnt = 0;
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1)
     {
-    	CurrentSense_Process();
+    	CurrentSense_Process_ISR();
 		CurrentSense_Read(&currents);
 
 		new_current_data_ready = true;
+		adc_inj_irq_cnt++;
     }
 }
 

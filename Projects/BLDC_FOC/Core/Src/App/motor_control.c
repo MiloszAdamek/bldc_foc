@@ -15,6 +15,11 @@
 static TIM_HandleTypeDef* ctrl_htim;
 static TIM_HandleTypeDef* cmd_htim;
 
+static bool half = 0;
+
+volatile uint32_t spi_ready_err = 0;
+volatile uint32_t spi_ready_ok = 0;
+
 volatile MotorState_t g_motor_state = STATE_IDLE;
 static float target_speed_rpm = 0.0f;
 static float target_torque_iq = 0.0f;
@@ -93,16 +98,21 @@ void MotorControl_Reboot(){
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Instance == foc_htim->Instance) // pętla 20 kHz
+	if (htim->Instance == foc_htim->Instance) // 40 kHz update
 	{
 		// Pipeline FOC
-		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)){	// Update na początku cyklu PWM, licznik osiągnął 0
-			if (spi_ready) {
-			AS5048_ReadAngleDMA();
-			}
+
+		half = !half;
+
+		if (!half){	// Update na początku cyklu PWM, licznik osiągnął 0
+			FOC_RunLoop();
 		}
 		else{	// Update w środku cyklu PWM, licznik osiągnął ARR
-			FOC_RunLoop();
+			if (spi_ready) {
+				AS5048_ReadAngleDMA();
+				spi_ready_ok++;
+			}
+			else spi_ready_err++;
 		}
 	}
 	if (htim->Instance == ctrl_htim->Instance) // pętla 1 kHz
