@@ -10,7 +10,7 @@
 #include "FOC/foc_loop.h"
 #include "math.h"
 
-#define VELOCITY_ALPHA      0.97f           // filtr LPF
+#define VELOCITY_ALPHA      0.99f           // filtr LPF
 #define MAX_DTHETA_RAD      0.2f            // ochrona przed glitchami AS5048A
 #define RAD_TO_RPM          (60.0f / (2.0f * M_PI))
 
