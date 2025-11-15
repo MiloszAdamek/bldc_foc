@@ -373,6 +373,11 @@ void FOC_Start(){
 	new_encoder_data_ready = false;
     spi_ready = true;
 
+    err_current = 0;
+    foc_loop_err = 0;
+    foc_loop_ok = 0;
+
+
     AS5048_ReadAngleDMA();
 
     HAL_TIM_Base_Start_IT(foc_htim);
