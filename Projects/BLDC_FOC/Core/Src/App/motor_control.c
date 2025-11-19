@@ -51,19 +51,16 @@ void MotorControl_Run(void)
             break;
 
         case STATE_FAULT:
-            // Nic nie rób, czekaj na reset błędu
             // FOC_Stop() powinno być wywołane przy przejściu DO tego stanu
             break;
     }
 }
 
-// --- Publiczne API dla main.c ---
-
 void MotorControl_Start(void) {
     if (g_motor_state == STATE_IDLE) {
         g_motor_state = STATE_ALIGNMENT;
 
-        // Uruchom blokującą kalibrację
+        // Uruchom kalibrację
         if (FOC_AlignSensor())
         {
             FOC_Start(); // Włącz PWM/ADC

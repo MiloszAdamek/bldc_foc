@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include "usart.h"
 
-static UART_HandleTypeDef* cmd_huart; // Przechowuje wskaźnik do używanego UART
+static UART_HandleTypeDef* cmd_huart;
 
 #define UART_RX_BUFFER_SIZE 64
 static uint8_t g_uart_rx_buffer[UART_RX_BUFFER_SIZE];
@@ -22,8 +22,6 @@ static volatile uint8_t g_uart_rx_index = 0;
 static volatile bool g_new_command_flag = false;
 
 static void process_command(char* cmd);
-
-// --- Implementacja publicznego API ---
 
 void Commander_Init(void* huart_void) {
     if (huart_void == NULL) {
@@ -56,8 +54,6 @@ void Commander_Process(void) {
         printf("> ");
     }
 }
-
-// --- Funkcje prywatne (static) ---
 
 static void process_command(char* cmd) {
     char* command_token = strtok(cmd, " ");

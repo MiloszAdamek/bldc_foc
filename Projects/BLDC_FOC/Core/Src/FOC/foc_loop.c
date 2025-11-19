@@ -180,7 +180,6 @@ bool FOC_AlignSensor() {
 			if (exit_flag) {
 				// Analiza ruchu
 				float moved = mid_angle - end_angle;
-				// W kodzie SimpleFOC jest proste porównanie, ale normalizacja jest bezpieczniejsza
 				if (moved < - M_PI) moved += M_TWOPI;
 				if (moved > M_PI)  moved -= M_TWOPI;
 
@@ -188,7 +187,6 @@ bool FOC_AlignSensor() {
 					printf("  BLAD: Silnik sie nie poruszyl!\n");
 					exit_flag = 0;
 				} else {
-					// Ta logika jest trochę inna niż w Twoim wklejonym kodzie, ale bardziej intuicyjna
 					sensor_direction = (moved > 0) ? -1 : 1;
 					if (sensor_direction == 1) {
 						   printf("  Wynik: Kierunek sensora: 1 (CW - zgodny z ruchem wskazowek zegara)\n");
@@ -222,13 +220,7 @@ bool FOC_AlignSensor() {
 			} else {
 				// Oblicz kąt elektryczny, jaki wynika z tego pomiaru (bez offsetu)
 				float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos);
-
-				// Offset to różnica między tym, gdzie pole POWINNO być, a tym, co obliczyliśmy
-				// Ale SimpleFOC robi to prościej: po prostu zapisuje obliczoną wartość.
-				// Zróbmy to tak samo.
-
 				zero_electric_angle = normalize_angle(calculated_el_angle - _3PI_2);
-
 				printf("  Wynik: Znaleziony offset ELEKTRYCZNY: %.3f rad\n", zero_electric_angle);
 			}
 		}
@@ -391,7 +383,7 @@ void FOC_RunLoop(){
 		new_encoder_data_ready = false;
 		new_current_data_ready = false;
 
-		// --- Pętla FOC (logika przeniesiona z ADC ISR) ---
+		// --- Pętla FOC ---
 
 		// 1. Kąt (zapisany przez SPI DMA)
 		theta_mech_latest = AS5048_GetMechanicalAngle();

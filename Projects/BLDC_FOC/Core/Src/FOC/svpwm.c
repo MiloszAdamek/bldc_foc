@@ -40,7 +40,7 @@ void SVPWM_Init(TIM_HandleTypeDef *htim) {
 }
 
 void SVPWM_Update(float Ualpha, float Ubeta) {
-    float Ta, Tb, Tc; // Ostateczne czasy włączenia faz (w tickach timera)
+    float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
 
     // --- Krok 1: Ograniczenie napięcia ---
     float U_ref = sqrtf(Ualpha * Ualpha + Ubeta * Ubeta);

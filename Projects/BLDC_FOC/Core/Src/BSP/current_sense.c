@@ -55,7 +55,7 @@ static void CurrentSense_CalibrateOffset(void)
 
     is_calibrated = true;
 
-    printf("Offset A: %u, B: %u, C: %u\r\n", offset_a, offset_b);
+    printf("Offset A: %u, B: %u \r\n", offset_a, offset_b);
 }
 
 void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
@@ -74,7 +74,6 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
 
 void CurrentSense_Process_ISR() {
     if (is_calibrated) {
-        // Tylko odczyt z rejestrów. Żadnych obliczeń!
         adc_raw_phase_a = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_1);
         adc_raw_phase_b = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_2);
 //        adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(hadc_local, ADC_INJECTED_RANK_3);
