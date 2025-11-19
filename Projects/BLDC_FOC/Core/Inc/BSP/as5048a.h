@@ -28,7 +28,9 @@
 
 #define AS_US_DELAY			4
 
-#define AS5048_RESOLUTION   16384.0f
+#define AS5048_RESOLUTION   16384
+
+# define AS5048_DECIMATION	4 // 14 bit -> 12 bit
 
 extern volatile bool spi_ready;
 extern volatile bool new_encoder_data_ready;
@@ -52,6 +54,7 @@ typedef struct {
 typedef struct {
     AS5048_Status status;
     uint16_t position;
+    uint16_t shifted_pos;
     AS5048_ErrorFlags errorFlags;
 } AS5048_ReadResult;
 
@@ -81,7 +84,9 @@ void AS5048_Diagnose(void);
 
 void AS5048_ReadAngleDMA(void);
 
-float AS5048_GetMechanicalAngle();
+float AS5048_GetMechanicalAngle(void);
+
+float AS5048_GetMechanicalAngleShifted(void);
 
 void AS5048_Init();
 

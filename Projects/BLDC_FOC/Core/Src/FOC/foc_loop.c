@@ -41,6 +41,7 @@ volatile bool new_current_data_ready = false;
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
 static float zero_electric_angle = 0.0f;
 volatile float theta_mech_latest = 0.0f;
+volatile float theta_mech_latest_shifed = 0.0f;
 volatile float theta_el_latest = 0.0f;
 
 // Debug - cubemonitor
@@ -387,6 +388,7 @@ void FOC_RunLoop(){
 
 		// 1. Kąt (zapisany przez SPI DMA)
 		theta_mech_latest = AS5048_GetMechanicalAngle();
+		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
 		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
 
 		// 2. Prąd (zapisany przez ADC ISR)
@@ -394,7 +396,7 @@ void FOC_RunLoop(){
 		CurrentSense_Read(&currents);
 
 		// 3. Estymacja prędkości
-		SpeedEstimator_Update(theta_mech_latest, &actual_speed_rpm);
+		SpeedEstimator_Update(theta_mech_latest_shifed, &actual_speed_rpm);
 
 		// 4. Pętla FOC
 		FOC_Update(theta_el_latest);

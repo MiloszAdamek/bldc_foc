@@ -227,6 +227,8 @@ void AS5048_ReadAngleDMA(void)
 
 float AS5048_GetMechanicalAngle(void) {return (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;}
 
+float AS5048_GetMechanicalAngleShifted(void) {return ((float)raw_angle.shifted_pos / (AS5048_RESOLUTION >> AS5048_DECIMATION)) * M_TWOPI;}
+
 // Callback wywoływany po zakończeniu transmisji po DMA
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
@@ -242,6 +244,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.status = AS5048_ERR_FLAG;
 		} else {
 			raw_angle.position = frame & AS_ANGLE;
+			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
 			raw_angle.status = AS5048_OK;
 
 			new_encoder_data_ready = true;
