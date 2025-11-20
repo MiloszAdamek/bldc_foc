@@ -62,20 +62,12 @@ extern volatile AS5048_ReadResult raw_angle;
 extern volatile bool g_spi_ready;
 extern volatile bool g_new_encoder_data_ready;
 
-/**
- * @brief Get error details
- * @return ErrorFlag of error(watchdogError, offsetfinished, cordicOverflow)
- */
 AS5048_ErrorFlags AS5048_GetErrorDetails(void);
 
 void AS5048_GetRawPosition(void);
 
 extern float el_from_mech(float mech);
 
-/**
- * @brief Convert raw angle to degrees
- * @return float, -1.0f when raw.status != AS5048_OK
- */
 float AS5048_GetAngleDeg(void);
 
 float AS5048_GetAngleRad(void);

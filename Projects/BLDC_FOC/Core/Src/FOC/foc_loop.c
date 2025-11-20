@@ -85,41 +85,36 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDe
     HAL_TIM_Base_Stop(foc_htim);
 }
 
+// Funkcja używana tylko do kalibracji, w FOC_Align_Sensor()
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
-    // --- Krok 1: Ograniczenie wektora napięcia ---
-    // Zapewnia, że żądane napięcie nie przekracza fizycznych możliwości systemu.
+    // Krok 1: Ograniczenie wektora napięcia
     float U_ref = sqrtf(Uq * Uq + Ud * Ud);
     if (U_ref > VOLTAGE_LIMIT) {
         Uq *= VOLTAGE_LIMIT / U_ref;
         Ud *= VOLTAGE_LIMIT / U_ref;
     }
 
-    // --- Krok 2: Odwrotna transformacja Parka ---
+    // Krok 2: Odwrotna transformacja Parka
     // Przekształca napięcia z wirującego układu współrzędnych (d-q)
     // na stacjonarny układ współrzędnych (alpha-beta).
     float Ualpha = -sinf(angle_el) * Uq + cosf(angle_el) * Ud;
     float Ubeta  =  cosf(angle_el) * Uq + sinf(angle_el) * Ud;
 
-    // --- Krok 3: Odwrotna transformacja Clarke'a ---
+    // Krok 3: Odwrotna transformacja Clarke'a
     // Przekształca napięcia z układu alpha-beta na napięcia
     // dla trzech fizycznych faz silnika (a, b, c).
     float Ua = Ualpha;
     float Ub = -0.5f * Ualpha - _SQRT3_2 * Ubeta;
     float Uc = -0.5f * Ualpha + _SQRT3_2 * Ubeta;
 
-    // --- Krok 4: Mapowanie na PWM dla drivera 3-PWM ---
-    // Napięcia fazowe Ua, Ub, Uc są teraz w zakresie [-VOLTAGE_LIMIT, +VOLTAGE_LIMIT].
-    // Musimy je przeskalować i przesunąć do zakresu [0, PWM_PERIOD] dla timera.
-
-    // Dzielimy przez napięcie zasilania, aby uzyskać współczynnik w zakresie [-x, +x],
-    // gdzie x = VOLTAGE_LIMIT / VOLTAGE_POWER_SUPPLY.
+    // Krok 4: Mapowanie na PWM dla drivera 3-PWM ---
+    // Napięcia fazowe Ua, Ub, Uc są w zakresie [-VOLTAGE_LIMIT, +VOLTAGE_LIMIT].
+    // Należy je przeskalować i przesunąć do zakresu [0, PWM_PERIOD] dla timera.
     float dc_a = Ua / VOLTAGE_SUPPLY;
     float dc_b = Ub / VOLTAGE_SUPPLY;
     float dc_c = Uc / VOLTAGE_SUPPLY;
 
-    // Dodajemy 0.5, aby przesunąć zakres.
-    // Np. jeśli dc_a było w [-0.4, +0.4], teraz będzie w [0.1, 0.9].
-    // To centrowanie jest kluczowe dla drivera 3-PWM.
+    // Dodajemy 0.5, aby przesunąć zakres. Centrowanie dla drivera 3-PWM.
     dc_a += 0.5f;
     dc_b += 0.5f;
     dc_c += 0.5f;
@@ -134,7 +129,7 @@ void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     if (pwm_b > PWM_PERIOD_ARR) pwm_b = PWM_PERIOD_ARR;
     if (pwm_c > PWM_PERIOD_ARR) pwm_c = PWM_PERIOD_ARR;
 
-    // --- Krok 5: Ustawienie wartości w rejestrach timera ---
+    // Krok 5: Ustawienie wartości w rejestrach timera ---
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_1, pwm_a);
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_2, pwm_b);
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_3, pwm_c);
@@ -156,7 +151,7 @@ bool FOC_AlignSensor() {
 
 		int exit_flag = 1;
 
-		// --- KROK 1: Wykrywanie kierunku metodą "przód-tył" ---
+		// KROK 1: Wykrywanie kierunku metodą "przód-tył" ---
 		printf("Krok 1: Wykrywanie kierunku...\n");
 
 		// Obrót "w przód" o jeden obrót elektryczny
@@ -207,7 +202,7 @@ bool FOC_AlignSensor() {
 			}
 		}
 
-		// --- KROK 2: Znalezienie zerowego kąta elektrycznego ---
+		// KROK 2: Znalezienie zerowego kąta elektrycznego ---
 		if (exit_flag) {
 			printf("\nKrok 2: Wyrównywanie do zera elektrycznego...\n");
 			// Ustaw wirnik w znanej pozycji elektrycznej (_3PI_2)
@@ -401,7 +396,7 @@ void FOC_RunLoop(){
 		// 4. Pętla FOC
 		FOC_Update(theta_el_latest);
 
-		// --- Koniec pętli FOC ---
+		// Koniec pętli FOC ---
 		foc_loop_ok++;
 	}
 	else
@@ -409,9 +404,7 @@ void FOC_RunLoop(){
 		foc_loop_err++;
 		if(new_encoder_data_ready) err_current++;
 		if(new_current_data_ready) err_encoder++;
-		// BŁĄD KRYTYCZNY PIPELINE'U!
-		// Oznacza, że FOC zostało wywołane, zanim SPI lub ADC
-		// dostarczyły dane. Należy tu np. ustawić flagę błędu systemowego.
+		// FOC zostało wywołane, zanim SPI lub ADC dostarczyły dane
 	}
 }
 

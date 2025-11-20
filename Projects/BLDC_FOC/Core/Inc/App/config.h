@@ -64,7 +64,7 @@
 
 #define PI_KP_V 0.005f
 #define PI_KI_V 0.02f
-#define PI_LIMIT_V 3.0f
+#define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)

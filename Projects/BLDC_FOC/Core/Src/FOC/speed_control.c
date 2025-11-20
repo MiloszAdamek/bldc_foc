@@ -14,7 +14,6 @@
 #define MAX_DTHETA_RAD      0.2f            // ochrona przed glitchami AS5048A
 #define RAD_TO_RPM          (60.0f / (2.0f * M_PI))
 
-// Estimator state
 static float last_angle = 0.0f;
 static float omega_lpf = 0.0f;
 static float speed_rpm = 0.0f;

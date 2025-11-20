@@ -48,11 +48,6 @@ static uint16_t AS5048_AddParity(uint16_t cmd)
     return cmd;
 }
 
-/**
- * @brief Check error on 14th bit in received frame
- * @param response Received data
- * @return Bool 1 -> ERROR
- */
 static bool AS5048_HasError(uint16_t response) {return (response & AS_ERROR_BIT);}
 
 static AS5048_Status AS5048_TransceiveReceive(const uint8_t *tx, uint8_t *rx)
@@ -75,12 +70,6 @@ static AS5048_Status AS5048_Transceive(const uint8_t *tx)
     return (result == HAL_OK) ? AS5048_OK : AS5048_ERR_SPI;
 }
 
-/**
- * @brief Read value from AS5048A register
- * @param regAddr 14-bit register address
- * @param dst Pointer to store the result
- * @return Status of the operation (AS5048_OK, AS5048_ERR_SPI, etc.)
- */
 static AS5048_Status AS5048_RegRead(const uint16_t regAddr, uint16_t *dst)
 {
     AS5048_Status s;
@@ -107,13 +96,6 @@ static AS5048_Status AS5048_RegRead(const uint16_t regAddr, uint16_t *dst)
     return AS5048_OK;
 }
 
-/**
- * @brief Write value to AS5048A register
- * @param regAddr 14-bit register address
- * @param value Data to write into register
- * @param confirm Pointer to store the send comfirmation
- * @return Status of the operation (AS5048_OK, AS5048_ERR_SPI, etc.)
- */
 static AS5048_Status AS5048_RegWrite(const uint16_t regAddr, const uint16_t value, uint16_t *confirm){
 
 	AS5048_Status s;

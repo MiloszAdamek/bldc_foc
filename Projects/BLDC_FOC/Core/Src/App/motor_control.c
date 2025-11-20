@@ -51,7 +51,7 @@ void MotorControl_Run(void)
             break;
 
         case STATE_FAULT:
-            // FOC_Stop() powinno być wywołane przy przejściu DO tego stanu
+            // FOC_Stop() powinno być wywołane przy przejściu do tego stanu
             break;
     }
 }

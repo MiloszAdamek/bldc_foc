@@ -42,7 +42,7 @@ void SVPWM_Init(TIM_HandleTypeDef *htim) {
 void SVPWM_Update(float Ualpha, float Ubeta) {
     float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
 
-    // --- Krok 1: Ograniczenie napięcia ---
+    // Krok 1: Ograniczenie napięcia
     float U_ref = sqrtf(Ualpha * Ualpha + Ubeta * Ubeta);
     if (U_ref > VOLTAGE_SUPPLY / M_SQRT3) {
         float scale = (VOLTAGE_SUPPLY / M_SQRT3) / U_ref;
@@ -51,7 +51,7 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
         U_ref *= scale; // Zaktualizuj też U_ref
     }
 
-    // --- Krok 2: Obliczenie kąta i sektora ---
+    // Krok 2: Obliczenie kąta i sektora
     float angle = atan2f(Ubeta, Ualpha);
     if (angle < 0) {
         angle += M_TWOPI;
@@ -60,7 +60,7 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
     int sector = (int)(angle / _PI_3);
     if (sector >= 6) sector = 5;
 
-    // --- Krok 3: Obliczenie czasów T1, T2 (w sekundach) ---
+    // Krok 3: Obliczenie czasów T1, T2 (w sekundach)
     // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
     float T1, T2;
     // Współczynnik modulacji (0.0 do 1.0)
@@ -71,7 +71,7 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
     T1 = m * sinf(_PI_3 - angle_in_sector) * PWM_PERIOD_SEC;
     T2 = m * sinf(angle_in_sector) * PWM_PERIOD_SEC;
 
-    // --- Krok 4: Obliczenie czasów włączenia dla każdej fazy (w sekundach) ---
+    // Krok 4: Obliczenie czasów włączenia dla każdej fazy (w sekundach)
     // T0 to czas, przez który używane są wektory zerowe (gdy wszystkie tranzystory
     // są w tym samym stanie). Rozdzielamy go symetrycznie.
     float T0 = PWM_PERIOD_SEC - T1 - T2;
@@ -115,7 +115,7 @@ void SVPWM_Update(float Ualpha, float Ubeta) {
     //  są w zakresie od 0 do PWM_PERIOD_SEC (okres PWM w sekundach). Dzielimy je przez PWM_PERIOD_SEC,
     //	aby uzyskać współczynnik wypełnienia od 0.0 do 1.0, a następnie mnożymy przez PWM_PERIOD,
     //	aby uzyskać wartość do wpisania do rejestru compare timera.
-    // --- Krok 5: Przeskaluj czasy [0, PWM_PERIOD_SEC] na wartości compare [0, PWM_PERIOD_ARR] ---
+    //  Krok 5: Przeskaluj czasy [0, PWM_PERIOD_SEC] na wartości compare [0, PWM_PERIOD_ARR] ---
     __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, (uint32_t)(Ta / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
     __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, (uint32_t)(Tb / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
     __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, (uint32_t)(Tc / PWM_PERIOD_SEC * PWM_PERIOD_ARR));

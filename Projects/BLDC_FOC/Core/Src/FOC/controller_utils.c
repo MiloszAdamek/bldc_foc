@@ -18,18 +18,3 @@ float pi_control(PI_Controller *pi, float error){
 
     return u;
 }
-
-//static inline float pi_control(PI_Controller *pi, float error)
-//{
-//    pi->integral += error * pi->ki * PWM_PERIOD_SEC; // Ts = 50 us
-//
-//    if (pi->integral > pi->limit) pi->integral = pi->limit;
-//    else if (pi->integral < -pi->limit) pi->integral = -pi->limit;
-//
-//    float output = pi->kp * error + pi->integral;
-//
-//    if (output > pi->limit) output = pi->limit;
-//    else if (output < -pi->limit) output = -pi->limit;
-//
-//    return output;
-//}
