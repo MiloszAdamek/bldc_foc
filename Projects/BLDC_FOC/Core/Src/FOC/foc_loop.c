@@ -415,7 +415,6 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     if (hadc->Instance == ADC1)
     {
     	CurrentSense_Process_ISR();
-		CurrentSense_Read(&currents);
 
 		new_current_data_ready = true;
 		adc_inj_irq_cnt++;

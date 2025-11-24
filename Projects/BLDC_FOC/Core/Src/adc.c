@@ -89,10 +89,6 @@ void MX_ADC1_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_ADCEx_EnableInjectedQueue(&hadc1) != HAL_OK)
-  {
-    Error_Handler();
-  }
 
   /** Configure Injected Channel
   */
