@@ -19,18 +19,18 @@
  * ========================================================================= */
 
 // Częstotliwość PWM i odpowiadający okres [s]
-#define PWM_FREQUENCY_HZ      10000.0f                     	// 10 kHz
+#define PWM_FREQUENCY_HZ      20000.0f                     	// 10 kHz
 #define PWM_PERIOD_SEC        (1.0f / PWM_FREQUENCY_HZ)
 
 #define FSM_LOOP_HZ			  1000.0f
 #define FSM_PERIOD_SEC		  (1.0f / FSM_LOOP_HZ)
 
 // Wartość ARR timera (dla 170 MHz taktowania i prescalera = 0)
-#define PWM_PERIOD_ARR        4250
+#define PWM_PERIOD_ARR        4249
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        12.0f
-#define VOLTAGE_LIMIT         8.0f
+#define VOLTAGE_LIMIT         10.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define SHUNT_RESISTOR        0.33f // Ohm
