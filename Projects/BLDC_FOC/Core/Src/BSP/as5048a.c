@@ -230,7 +230,10 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.status = AS5048_OK;
 
 			new_encoder_data_ready = true;
+			HAL_GPIO_WritePin(SPI_DMA_Flag_GPIO_Port, SPI_DMA_Flag_Pin, GPIO_PIN_RESET);
+
 		}
+
 	}
 }
 

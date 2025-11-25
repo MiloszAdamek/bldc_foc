@@ -77,6 +77,8 @@ void Error_Handler(void);
 #define PWM_EN_W_GPIO_Port GPIOB
 #define TIM1_Update_Flag_Pin GPIO_PIN_8
 #define TIM1_Update_Flag_GPIO_Port GPIOC
+#define SPI_DMA_Flag_Pin GPIO_PIN_9
+#define SPI_DMA_Flag_GPIO_Port GPIOC
 #define PWM_UH_Pin GPIO_PIN_8
 #define PWM_UH_GPIO_Port GPIOA
 #define PWM_VH_Pin GPIO_PIN_9
@@ -85,6 +87,8 @@ void Error_Handler(void);
 #define PWM_WH_GPIO_Port GPIOA
 #define SPI3_CS_Pin GPIO_PIN_2
 #define SPI3_CS_GPIO_Port GPIOD
+#define ADC_Conv_Flag_Pin GPIO_PIN_8
+#define ADC_Conv_Flag_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

@@ -62,6 +62,9 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : PA6 PA7 */
   GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -70,12 +73,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PWM_EN_FAULT_Pin */
-  GPIO_InitStruct.Pin = PWM_EN_FAULT_Pin;
+  /*Configure GPIO pins : PWM_EN_FAULT_Pin ADC_Conv_Flag_Pin */
+  GPIO_InitStruct.Pin = PWM_EN_FAULT_Pin|ADC_Conv_Flag_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(PWM_EN_FAULT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PWM_EN_U_Pin PWM_EN_V_Pin PWM_EN_W_Pin */
   GPIO_InitStruct.Pin = PWM_EN_U_Pin|PWM_EN_V_Pin|PWM_EN_W_Pin;
@@ -90,6 +93,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TIM1_Update_Flag_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SPI_DMA_Flag_Pin */
+  GPIO_InitStruct.Pin = SPI_DMA_Flag_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SPI_DMA_Flag_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI3_CS_Pin */
   GPIO_InitStruct.Pin = SPI3_CS_Pin;

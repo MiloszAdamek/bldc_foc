@@ -323,7 +323,7 @@ void SVPWM_Update(float Ualpha, float Ubeta)
 
     // Detekcja sektora: wybierz najbliższy wektor środkowy (30°, 90°, ...)
     int sector = 0;
-    float max_dot = cos_theta * cos_mid[0] + sin_theta * sin_mid[0]; // inicjalizacja - zaczynamy od sektora 0
+    float max_dot = cos_theta * cos_mid[0] + sin_theta * sin_mid[0];
 
     for (int k = 1; k < 6; ++k) {
         float dot = cos_theta * cos_mid[k] + sin_theta * sin_mid[k];

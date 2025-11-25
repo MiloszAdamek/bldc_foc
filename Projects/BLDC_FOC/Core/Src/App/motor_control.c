@@ -108,6 +108,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 		else{	// Update w środku cyklu PWM, licznik osiągnął ARR
 			if (spi_ready) {
+				HAL_GPIO_WritePin(SPI_DMA_Flag_GPIO_Port, SPI_DMA_Flag_Pin, GPIO_PIN_SET);
 				AS5048_ReadAngleDMA();
 				spi_ready_ok++;
 			}

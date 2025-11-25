@@ -425,6 +425,9 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 
 //		HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_SET);
 //		HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
+
+//		HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_TogglePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin);
     }
 }
 
