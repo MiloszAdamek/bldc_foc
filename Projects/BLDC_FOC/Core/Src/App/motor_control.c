@@ -11,6 +11,7 @@
 #include "FOC/foc_loop.h"
 #include "FOC/speed_control.h"
 #include "BSP/as5048a.h"
+#include "gpio.h"
 
 static TIM_HandleTypeDef* ctrl_htim;
 static TIM_HandleTypeDef* cmd_htim;
@@ -98,11 +99,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == foc_htim->Instance) // 40 kHz update
 	{
 		// Pipeline FOC
-
 		half = !half;
 
 		if (!half){	// Update na początku cyklu PWM, licznik osiągnął 0
+			HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_SET);
 			FOC_RunLoop();
+			HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
 		}
 		else{	// Update w środku cyklu PWM, licznik osiągnął ARR
 			if (spi_ready) {

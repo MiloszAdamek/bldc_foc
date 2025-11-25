@@ -62,7 +62,7 @@
 #define PI_KI_IQ 500.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_V 0.005f
+#define PI_KP_V 0.008f
 #define PI_KI_V 0.02f
 #define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
 

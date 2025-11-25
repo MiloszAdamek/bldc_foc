@@ -14,6 +14,7 @@
 #include "App/config.h"
 
 #define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
+#define ONE_OVER_TWO_PI (1.0f / (2 * M_TWOPI))
 
 // Parametry regulatorów PI
 typedef struct {
@@ -24,11 +25,26 @@ typedef struct {
     float dt;
 } PI_Controller;
 
-float pi_control(PI_Controller *pi, float error);
+static inline float pi_control(PI_Controller *pi, float error){
 
-static inline float normalize_angle(float angle) {
-    float result = fmodf(angle, M_TWOPI);
-    return result >= 0.0f ? result : result + M_TWOPI;
+    float u_p = pi->kp * error;
+    pi->integral += pi->ki * error * pi->dt;
+
+    float u = u_p + pi->integral;
+    if (u > pi->limit) { u = pi->limit; pi->integral = u - u_p; }
+    else if (u < -pi->limit) { u = -pi->limit; pi->integral = u - u_p; }
+
+    return u;
+}
+
+static inline float normalize_angle(float a)
+{
+    if (a >= M_TWOPI)
+        a -= M_TWOPI;
+    else if (a < 0.0f)
+        a += M_TWOPI;
+
+    return a;
 }
 
 // Clarke transform: 3 fazy → αβ (z pomiarów Ia, Ib)

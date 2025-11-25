@@ -75,6 +75,8 @@ void Error_Handler(void);
 #define PWM_EN_V_GPIO_Port GPIOB
 #define PWM_EN_W_Pin GPIO_PIN_15
 #define PWM_EN_W_GPIO_Port GPIOB
+#define TIM1_Update_Flag_Pin GPIO_PIN_8
+#define TIM1_Update_Flag_GPIO_Port GPIOC
 #define PWM_UH_Pin GPIO_PIN_8
 #define PWM_UH_GPIO_Port GPIOA
 #define PWM_VH_Pin GPIO_PIN_9

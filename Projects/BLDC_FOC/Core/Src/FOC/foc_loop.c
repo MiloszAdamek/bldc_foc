@@ -5,6 +5,7 @@
  *      Author: Miloush
  */
 
+#include <FOC/lut_sincos.h>
 #include "App/config.h"
 #include "FOC/foc_loop.h"
 #include "FOC/controller_utils.h"
@@ -52,8 +53,8 @@ volatile float debug_iq_ref = 0.0f;
 volatile float debug_vd = 0.0f;
 volatile float debug_vq = 0.0f;
 volatile float debug_speed = 0.0f;
-volatile uint32_t foc_loop_err = 0;
 volatile uint32_t foc_loop_ok = 0;
+volatile uint32_t foc_loop_err = 0;
 volatile uint32_t err_encoder = 0;
 volatile uint32_t err_current = 0;
 
@@ -292,6 +293,7 @@ void FOC_Update(float theta_el)
     float vd, vq;
     float valpha, vbeta;
     float target_iq; // Lokalna zmienna dla celu PI
+    float sin_theta, cos_theta;
 
 	if (ramp_active) {
 		FOC_LinearRamp();
@@ -300,8 +302,10 @@ void FOC_Update(float theta_el)
 		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
 	}
 
-    float sin_theta = sinf(theta_el);
-    float cos_theta = cosf(theta_el);
+//    float sin_theta = sinf(theta_el);
+//    float cos_theta = cosf(theta_el);
+
+    LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
 
     // Clarke
     ClarkeTransform(currents.a, currents.b, &ialpha, &ibeta);
@@ -415,9 +419,12 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     if (hadc->Instance == ADC1)
     {
     	CurrentSense_Process_ISR();
-
+//    	HAL_GPIO_TogglePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin);
 		new_current_data_ready = true;
 		adc_inj_irq_cnt++;
+
+//		HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
     }
 }
 

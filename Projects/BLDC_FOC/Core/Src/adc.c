@@ -74,7 +74,7 @@ void MX_ADC1_Init(void)
   */
   sConfigInjected.InjectedChannel = ADC_CHANNEL_2;
   sConfigInjected.InjectedRank = ADC_INJECTED_RANK_1;
-  sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_6CYCLES_5;
+  sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_2CYCLES_5;
   sConfigInjected.InjectedSingleDiff = ADC_SINGLE_ENDED;
   sConfigInjected.InjectedOffsetNumber = ADC_OFFSET_NONE;
   sConfigInjected.InjectedOffset = 0;
@@ -145,7 +145,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* ADC1 interrupt Init */
-    HAL_NVIC_SetPriority(ADC1_2_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(ADC1_2_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
