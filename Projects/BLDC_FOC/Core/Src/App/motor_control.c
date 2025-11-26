@@ -98,21 +98,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == foc_htim->Instance) // 40 kHz update
 	{
-		// Pipeline FOC
-		half = !half;
+		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim)) // 20 kHz
+		{
+			// --- Jesteśmy na dole (CNT ~ 0) ---
+			// Update na początku cyklu PWM.
+			// Tutaj mamy świeże dane z ADC (TRGO przy Update) i SPI (z poprzedniego ARR).
 
-		if (!half){	// Update na początku cyklu PWM, licznik osiągnął 0
 			HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_SET);
 			FOC_RunLoop();
 			HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
 		}
-		else{	// Update w środku cyklu PWM, licznik osiągnął ARR
-			if (spi_ready) {
-				HAL_GPIO_WritePin(SPI_DMA_Flag_GPIO_Port, SPI_DMA_Flag_Pin, GPIO_PIN_SET);
-				AS5048_ReadAngleDMA();
-				spi_ready_ok++;
-			}
-			else spi_ready_err++;
+		else // 20 kHz
+		{
+			static bool div2 = false;
+			div2 = !div2;
+			if (div2) {
+		        if (spi_ready) { // 10kHz
+		        	GPIOC->BSRR = (1U << 9); // PC9 GPIO Set, debug
+		            AS5048_ReadAngleDMA();
+		            spi_ready_ok++;
+		        } else {
+		            spi_ready_err++;
+		        }
+		    }
 		}
 	}
 	if (htim->Instance == ctrl_htim->Instance) // pętla 1 kHz

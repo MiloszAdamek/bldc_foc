@@ -194,7 +194,7 @@ float AS5048_GetAngleRad(void){
 // Transmisja przez DMA
 void AS5048_ReadAngleDMA(void)
 {
-	if (!spi_ready) return; // trwa poprzedni transfer
+//	if (!spi_ready) return; // trwa poprzedni transfer
 
 	spi_ready = false;
 	uint16_t cmd = AS_READ | AS_ANGLE;
@@ -218,7 +218,6 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 	{
 		AS5048_CS_HIGH();
 		uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
-
 		spi_ready = true;
 
 		if (frame & AS_ERROR_BIT) {
@@ -230,10 +229,8 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.status = AS5048_OK;
 
 			new_encoder_data_ready = true;
-			HAL_GPIO_WritePin(SPI_DMA_Flag_GPIO_Port, SPI_DMA_Flag_Pin, GPIO_PIN_RESET);
-
 		}
-
+		GPIOC->BSRR = (1U << (9 + 16));  // GPIO PC9 reset, debug
 	}
 }
 

@@ -55,11 +55,11 @@
  * ========================================================================= */
 
 #define PI_KP_ID 3.0f
-#define PI_KI_ID 500.0f
+#define PI_KI_ID 250.0f
 #define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
 
 #define PI_KP_IQ 3.0f
-#define PI_KI_IQ 500.0f
+#define PI_KI_IQ 250.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
 #define PI_KP_V 0.008f

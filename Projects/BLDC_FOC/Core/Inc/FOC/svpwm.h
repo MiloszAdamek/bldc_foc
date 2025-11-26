@@ -15,7 +15,9 @@ extern volatile uint16_t debug_Ta;
 extern volatile uint16_t debug_Tb;
 extern volatile uint16_t debug_Tc;
 
-void SVPWM_Update(float Valpha, float Vbeta);
+void SVPWM_Update(float Valpha, float Vbeta, float Vref);
+
+void SVPWM_Update_Dot(float Valpha, float Vbeta);
 
 void SVPWM_Init();
 

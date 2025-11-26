@@ -325,11 +325,24 @@ void FOC_Update(float theta_el)
     debug_vq = vq;
     debug_speed = actual_speed_rpm;
 
+    // TODO:  kołowe ograniczenie napięcia
+    float Uref = sqrtf(vd * vd + vq * vq);
+    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
+
+    if (Uref > Umax) {
+        float scale = Umax / Uref;
+        vd *= scale;
+        vq *= scale;
+    }
+
     // InvPark
     InvParkTransformTrig(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
 
+
+
     // SVPWM
-    SVPWM_Update(valpha, vbeta);
+//    SVPWM_Update(valpha, vbeta, Uref);
+    SVPWM_Update_Dot(valpha, vbeta);
 }
 
 void FOC_Stop(){
@@ -377,39 +390,40 @@ void FOC_Start(){
 
 void FOC_RunLoop(){
 	// Sprawdź, czy oba pomiary z tego cyklu są gotowe
-	if (new_encoder_data_ready && new_current_data_ready)
-	{
-		// Resetuj flagi na następny cykl
+
+	if (!new_current_data_ready)
+	    {
+	        // wyjątkowo możesz zliczać błędy, ale normalnie to rzadkie sytuacje
+	        foc_loop_err++;
+	        return;
+	    }
+
+	new_current_data_ready = false;
+
+	// --- Pętla FOC ---
+
+	// 1. Kąt (zapisany przez SPI DMA)
+	if (new_encoder_data_ready){
 		new_encoder_data_ready = false;
-		new_current_data_ready = false;
 
-		// --- Pętla FOC ---
-
-		// 1. Kąt (zapisany przez SPI DMA)
 		theta_mech_latest = AS5048_GetMechanicalAngle();
 		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
 		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
-
-		// 2. Prąd (zapisany przez ADC ISR)
-    	CurrentSense_CalculatePhases();
-		CurrentSense_Read(&currents);
-
-		// 3. Estymacja prędkości
+		// Estymacja predkosci
 		SpeedEstimator_Update(theta_mech_latest_shifed, &actual_speed_rpm);
-
-		// 4. Pętla FOC
-		FOC_Update(theta_el_latest);
-
-		// Koniec pętli FOC ---
-		foc_loop_ok++;
 	}
-	else
-	{
-		foc_loop_err++;
-		if(new_encoder_data_ready) err_current++;
-		if(new_current_data_ready) err_encoder++;
-		// FOC zostało wywołane, zanim SPI lub ADC dostarczyły dane
-	}
+
+	// 2. Prąd (zapisany przez ADC ISR)
+	CurrentSense_CalculatePhases();
+	CurrentSense_Read(&currents);
+
+
+	// 4. Pętla FOC
+	FOC_Update(theta_el_latest);
+
+	// Koniec pętli FOC ---
+	foc_loop_ok++;
+
 }
 
 volatile uint32_t adc_inj_irq_cnt = 0;
@@ -419,15 +433,8 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     if (hadc->Instance == ADC1)
     {
     	CurrentSense_Process_ISR();
-//    	HAL_GPIO_TogglePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin);
 		new_current_data_ready = true;
 		adc_inj_irq_cnt++;
-
-//		HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_SET);
-//		HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
-
-//		HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_TogglePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin);
     }
 }
 

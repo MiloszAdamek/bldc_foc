@@ -11,6 +11,7 @@
 #include "stm32g4xx_hal.h"
 #include <math.h>
 #include <stdint.h>
+#include "cordic.h"
 #include "App/config.h"
 
 #define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
@@ -98,5 +99,30 @@ static inline float wrap_pi_dtheta(float x)
     if (x < -M_PI) x += M_TWOPI;
     return x;
 }
+
+#define CORDIC_Q31_PI   (3.14159265358979f)
+#define CORDIC_Q31_INV  (4.65661287308e-10f)      // 1 / 2^31
+#define CORDIC_MAX_VOLTAGE 32.0f                  // musi być > max |Ualpha|, |Ubeta|
+#define CORDIC_INPUT_K     (2147483648.0f / CORDIC_MAX_VOLTAGE)
+
+static inline float CORDIC_Atan2_Fast(float x, float y)
+{
+    int32_t input_x = (int32_t)(x * CORDIC_INPUT_K);
+    int32_t input_y = (int32_t)(y * CORDIC_INPUT_K);
+
+    // PHASE: najpierw X, potem Y
+    CORDIC->WDATA = input_x;
+    CORDIC->WDATA = input_y;
+
+    int32_t angle_q31 = (int32_t)CORDIC->RDATA;   // tylko kąt, bo NbRead = 1
+
+    float angle_rad = (float)angle_q31 * (CORDIC_Q31_INV * CORDIC_Q31_PI);
+
+    if (angle_rad < 0.0f)
+        angle_rad += 2.0f * CORDIC_Q31_PI;
+
+    return angle_rad;
+}
+
 
 #endif /* INC_CONTROLLER_UTILS_H_ */

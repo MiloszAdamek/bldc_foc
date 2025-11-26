@@ -112,14 +112,14 @@ void CurrentSense_GetRaw(abc_raw_t *raw)
     raw->c = 0;
 }
 
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    if (htim->Instance == TIM1)
-    {
-        if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
-        {
-            HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
-        }
-    }
-}
+//void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
+//{
+//    if (htim->Instance == TIM1)
+//    {
+//        if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
+//        {
+////            HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
+//        }
+//    }
+//}
 
