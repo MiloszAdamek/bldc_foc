@@ -77,6 +77,7 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTy
 	__HAL_TIM_SET_COUNTER(enc_htim, 0);
 
 	HAL_TIM_Base_Start(foc_htim);
+	HAL_TIM_Base_Start_IT(enc_htim);
 	HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
 	HAL_Delay(50);

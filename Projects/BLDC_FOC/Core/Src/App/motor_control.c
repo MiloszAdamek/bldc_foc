@@ -102,7 +102,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		static bool spi_toggle = false;
 
 		// CNT = ARR → counting DOWN (20 kHz)
-		if (__HAL_TIM_IS_TIM_COUNTING_DOWN(htim))
+		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim))
 		{
 			foc_toggle = !foc_toggle;      // dzieli CNT=0 na pół → 10 kHz
 
@@ -115,24 +115,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 		else
 		{
-			spi_toggle = !spi_toggle;
-			if(spi_toggle){
-		        if (spi_ready) {
-		            spi_ready = false;
-		            GPIOC->BSRR = (1U << 9);
-		            AS5048_ReadAngleDMA();
-		        }
-			}
+//			spi_toggle = !spi_toggle;
+//			if(spi_toggle){
+//		        if (spi_ready) {
+//		            spi_ready = false;
+//		            GPIOC->BSRR = (1U << 9);
+//		            AS5048_ReadAngleDMA();
+//		        }
+//			}
 
 		}
 	}
 	if (htim->Instance == enc_htim->Instance) // pętla 10 kHz
 	{
-//        if (spi_ready) {
-//            spi_ready = false;
-//            GPIOC->BSRR = (1U << 9);
-//            AS5048_ReadAngleDMA();
-//        }
+        if (spi_ready) {
+            spi_ready = false;
+            GPIOC->BSRR = (1U << 9);
+            AS5048_ReadAngleDMA();
+        }
 	}
 	if (htim->Instance == ctrl_htim->Instance) // pętla 1 kHz
 	{

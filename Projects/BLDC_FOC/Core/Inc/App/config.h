@@ -19,7 +19,7 @@
  * ========================================================================= */
 
 // Częstotliwość PWM i odpowiadający okres [s]
-#define PWM_FREQUENCY_HZ      20000.0f                     	// 10 kHz
+#define PWM_FREQUENCY_HZ      10000.0f                     	// 10 kHz
 #define PWM_PERIOD_SEC        (1.0f / PWM_FREQUENCY_HZ)
 
 #define FSM_LOOP_HZ			  1000.0f
