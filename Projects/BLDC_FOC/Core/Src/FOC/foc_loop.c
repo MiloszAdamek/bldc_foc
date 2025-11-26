@@ -10,11 +10,13 @@
 #include "FOC/foc_loop.h"
 #include "FOC/controller_utils.h"
 #include "FOC/speed_control.h"
+#include "BSP/as5048a.h"
 #include "math.h"
 #include "main.h"
 
 TIM_HandleTypeDef* foc_htim;
-static ADC_HandleTypeDef* foc_hadc;
+TIM_HandleTypeDef* enc_htim;
+ADC_HandleTypeDef* foc_hadc;
 
 static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT_ID, .integral = 0.0f, .dt = PWM_PERIOD_SEC};
 static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT_IQ, .integral = 0.0f, .dt = PWM_PERIOD_SEC};
@@ -37,6 +39,7 @@ volatile bool spi_angle_ready = false;
 volatile bool foc_data_ready = false;
 volatile bool sensor_aligned = false;
 volatile bool new_current_data_ready = false;
+volatile bool encoder_prev_ready = false;
 
 // ENCODER
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
@@ -58,13 +61,20 @@ volatile uint32_t foc_loop_err = 0;
 volatile uint32_t err_encoder = 0;
 volatile uint32_t err_current = 0;
 
-void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim, SPI_HandleTypeDef *hspi)
+void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi)
 {
 	printf("FOC: Init...\n");
-	foc_htim = htim;
+	foc_htim = htim_foc;
+	enc_htim = htim_enc;
 	foc_hadc = hadc;
 
 	AS5048_Init(hspi);
+
+	HAL_TIM_Base_Stop_IT(foc_htim);
+	HAL_TIM_Base_Stop_IT(enc_htim);
+
+	__HAL_TIM_SET_COUNTER(foc_htim, 0);
+	__HAL_TIM_SET_COUNTER(enc_htim, 0);
 
 	HAL_TIM_Base_Start(foc_htim);
 	HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
@@ -338,11 +348,9 @@ void FOC_Update(float theta_el)
     // InvPark
     InvParkTransformTrig(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
 
-
-
     // SVPWM
-//    SVPWM_Update(valpha, vbeta, Uref);
-    SVPWM_Update_Dot(valpha, vbeta);
+    SVPWM_Update(valpha, vbeta, Uref);
+//    SVPWM_Update_Dot(valpha, vbeta);
 }
 
 void FOC_Stop(){
@@ -403,8 +411,8 @@ void FOC_RunLoop(){
 	// --- Pętla FOC ---
 
 	// 1. Kąt (zapisany przez SPI DMA)
-	if (new_encoder_data_ready){
-		new_encoder_data_ready = false;
+	if (encoder_prev_ready){
+		encoder_prev_ready = false;
 
 		theta_mech_latest = AS5048_GetMechanicalAngle();
 		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
@@ -435,6 +443,7 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     	CurrentSense_Process_ISR();
 		new_current_data_ready = true;
 		adc_inj_irq_cnt++;
+
     }
 }
 

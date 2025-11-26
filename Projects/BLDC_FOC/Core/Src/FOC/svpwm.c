@@ -42,211 +42,84 @@ void SVPWM_Init(TIM_HandleTypeDef *htim) {
     HAL_TIM_PWM_Start(svpwm_htim, TIM_CHANNEL_3);
 }
 
-//void SVPWM_Update(float Ualpha, float Ubeta)
-//{
-//    float T1 = 0.0f, T2 = 0.0f, T0, Ta, Tb, Tc;
-//
-//    // 1. Trzy projekcje (zawierają już amplitudę |U|)
-//    float V1 = Ubeta;                                  // ~ |U| sinθ
-//    float V2 = 0.8660254f * Ualpha - 0.5f * Ubeta;     // ~ |U| sin(π/3 − θ)
-//    float V3 = -0.8660254f * Ualpha - 0.5f * Ubeta;    // ~ |U| sin(π/3 + θ)
-//
-//    // 2. Kod sektora (3 bity)
-//    uint8_t N = 0;
-//    if (V1 > 0.0f) N |= 1;
-//    if (V2 > 0.0f) N |= 2;
-//    if (V3 > 0.0f) N |= 4;
-//
-//    // 3. Stały współczynnik: k = (sqrt(3) * Ts) / Vdc
-//    const float Ts = PWM_PERIOD_SEC;
-//    const float k  = (M_SQRT3 * Ts) / VOLTAGE_SUPPLY;
-//
-//    switch (N)
-//    {
-//        case 3:  // sektor 1
-//            T1 = V2 * k;
-//            T2 = V1 * k;
-//            break;
-//
-//        case 1:  // sektor 2
-//            T1 = -V2 * k;
-//            T2 = -V3 * k;
-//            break;
-//
-//        case 5:  // sektor 3
-//            T1 = V1 * k;
-//            T2 = V3 * k;
-//            break;
-//
-//        case 4:  // sektor 4
-//            T1 = -V1 * k;
-//            T2 = -V2 * k;
-//            break;
-//
-//        case 6:  // sektor 5
-//            T1 = V3 * k;
-//            T2 = V2 * k;
-//            break;
-//
-//        case 2:  // sektor 6
-//            T1 = -V3 * k;
-//            T2 = -V1 * k;
-//            break;
-//
-//        default: // N = 0 → wektor zerowy
-//            T1 = 0.0f;
-//            T2 = 0.0f;
-//            break;
-//    }
-//
-//    // 5. Upewniamy się, że dodatnie
-//    if (T1 < 0.0f) T1 = -T1;
-//    if (T2 < 0.0f) T2 = -T2;
-//
-//    float Tsum = T1 + T2;
-//    if (Tsum > Ts) {
-//        float scale = Ts / Tsum;
-//        T1 *= scale;
-//        T2 *= scale;
-//        Tsum = Ts;
-//    }
-//
-//    T0 = Ts - Tsum;
-//    float T0h = 0.5f * T0;
-//
-//    // 6. Ta, Tb, Tc
-//    switch (N)
-//    {
-//        case 3:  // S1
-//            Ta = T1 + T2 + T0h;
-//            Tb = T2 + T0h;
-//            Tc = T0h;
-//            break;
-//
-//        case 1:  // S2
-//            Ta = T1 + T0h;
-//            Tb = T1 + T2 + T0h;
-//            Tc = T0h;
-//            break;
-//
-//        case 5:  // S3
-//            Ta = T0h;
-//            Tb = T1 + T2 + T0h;
-//            Tc = T2 + T0h;
-//            break;
-//
-//        case 4:  // S4
-//            Ta = T0h;
-//            Tb = T1 + T0h;
-//            Tc = T1 + T2 + T0h;
-//            break;
-//
-//        case 6:  // S5
-//            Ta = T2 + T0h;
-//            Tb = T0h;
-//            Tc = T1 + T2 + T0h;
-//            break;
-//
-//        case 2:  // S6
-//            Ta = T1 + T2 + T0h;
-//            Tb = T0h;
-//            Tc = T1 + T0h;
-//            break;
-//
-//        default: // środek
-//            Ta = Tb = Tc = Ts * 0.5f;
-//            break;
-//    }
-//
-//    // 7. Sekundy → ticki
-//    const float scale_arr = (float)PWM_PERIOD_ARR / Ts;
-//    uint32_t c1 = (uint32_t)(Ta * scale_arr);
-//    uint32_t c2 = (uint32_t)(Tb * scale_arr);
-//    uint32_t c3 = (uint32_t)(Tc * scale_arr);
-//
-//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, c1);
-//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, c2);
-//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, c3);
-//}
+void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
+    float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
 
-//void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
-//    float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
-//
-//    // Krok 2: Obliczenie kąta i sektora
-//    float angle = atan2f(Ubeta, Ualpha);
-////    float angle = CORDIC_Atan2_Fast(Ualpha, Ubeta);
-//    if (angle < 0) {
-//        angle += M_TWOPI;
-//    }
-//    // Sektor od 0 do 5, co odpowiada sektorom 1-6
-//    int sector = (int)(angle / _PI_3);
-//    if (sector >= 6) sector = 5;
-//
-//    // Krok 3: Obliczenie czasów T1, T2 (w sekundach)
-//    // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
-//    float T1, T2;
-//    // Współczynnik modulacji (0.0 do 1.0)
-////    float m = M_SQRT3 * U_ref / VOLTAGE_SUPPLY;
-//    // Kąt wewnątrz bieżącego sektora
-//    float angle_in_sector = angle - (float)sector * _PI_3;
-//
-////    T1 = m * LUT_Sin(_PI_3 - angle_in_sector) * PWM_PERIOD_SEC;
-////    T2 = m * LUT_Sin(angle_in_sector) * PWM_PERIOD_SEC;
-//
-//    float k = (M_SQRT3 * PWM_PERIOD_SEC) / VOLTAGE_SUPPLY;
-//
-//	T1 = Vref * LUT_Sin(_PI_3 - angle_in_sector) * k;
-//	T2 = Vref * LUT_Sin(angle_in_sector) * k;
-//
-//    // Krok 4: Obliczenie czasów włączenia dla każdej fazy (w sekundach)
-//    // T0 to czas, przez który używane są wektory zerowe (gdy wszystkie tranzystory
-//    // są w tym samym stanie). Rozdzielamy go symetrycznie.
-//    float T0 = PWM_PERIOD_SEC - T1 - T2;
-//
-//    switch (sector) {
-//        case 0: // Sektor 1 (wektory V1, V2)
-//            Ta = T1 + T2 + T0 / 2.0f;
-//            Tb = T2 + T0 / 2.0f;
-//            Tc = T0 / 2.0f;
-//            break;
-//        case 1: // Sektor 2 (wektory V2, V3)
-//            Ta = T1 + T0 / 2.0f;
-//            Tb = T1 + T2 + T0 / 2.0f;
-//            Tc = T0 / 2.0f;
-//            break;
-//        case 2: // Sektor 3 (wektory V3, V4)
-//            Ta = T0 / 2.0f;
-//            Tb = T1 + T2 + T0 / 2.0f;
-//            Tc = T2 + T0 / 2.0f;
-//            break;
-//        case 3: // Sektor 4 (wektory V4, V5)
-//            Ta = T0 / 2.0f;
-//            Tb = T1 + T0 / 2.0f;
-//            Tc = T1 + T2 + T0 / 2.0f;
-//            break;
-//        case 4: // Sektor 5 (wektory V5, V6)
-//            Ta = T2 + T0 / 2.0f;
-//            Tb = T0 / 2.0f;
-//            Tc = T1 + T2 + T0 / 2.0f;
-//            break;
-//        case 5: // Sektor 6 (wektory V6, V1)
-//            Ta = T1 + T2 + T0 / 2.0f;
-//            Tb = T0 / 2.0f;
-//            Tc = T1 + T0 / 2.0f;
-//            break;
-//        default: // Powinno się nigdy nie zdarzyć
-//            Ta = Tb = Tc = PWM_PERIOD_SEC / 2.0f;
-//            break;
-//    }
-//    //  Mapowanie na PWM: Ostateczne czasy włączenia dla każdej fazy (Ta, Tb, Tc)
-//    //  są w zakresie od 0 do PWM_PERIOD_SEC (okres PWM w sekundach). Dzielimy je przez PWM_PERIOD_SEC,
-//    //	aby uzyskać współczynnik wypełnienia od 0.0 do 1.0, a następnie mnożymy przez PWM_PERIOD,
-//    //	aby uzyskać wartość do wpisania do rejestru compare timera.
-//    //  Krok 5: Przeskaluj czasy [0, PWM_PERIOD_SEC] na wartości compare [0, PWM_PERIOD_ARR] ---
-//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, (uint32_t)(Ta / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
-//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, (uint32_t)(Tb / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
-//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, (uint32_t)(Tc / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
-//}
+    // Krok 2: Obliczenie kąta i sektora
+    float angle = atan2f(Ubeta, Ualpha);
+//    float angle = CORDIC_Atan2_Fast(Ualpha, Ubeta);
+    if (angle < 0) {
+        angle += M_TWOPI;
+    }
+    // Sektor od 0 do 5, co odpowiada sektorom 1-6
+    int sector = (int)(angle / _PI_3);
+    if (sector >= 6) sector = 5;
+
+    // Krok 3: Obliczenie czasów T1, T2 (w sekundach)
+    // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
+    float T1, T2;
+    // Współczynnik modulacji (0.0 do 1.0)
+//    float m = M_SQRT3 * U_ref / VOLTAGE_SUPPLY;
+    // Kąt wewnątrz bieżącego sektora
+    float angle_in_sector = angle - (float)sector * _PI_3;
+
+//    T1 = m * LUT_Sin(_PI_3 - angle_in_sector) * PWM_PERIOD_SEC;
+//    T2 = m * LUT_Sin(angle_in_sector) * PWM_PERIOD_SEC;
+
+    float k = (M_SQRT3 * PWM_PERIOD_SEC) / VOLTAGE_SUPPLY;
+
+	T1 = Vref * LUT_Sin(_PI_3 - angle_in_sector) * k;
+	T2 = Vref * LUT_Sin(angle_in_sector) * k;
+
+    // Krok 4: Obliczenie czasów włączenia dla każdej fazy (w sekundach)
+    // T0 to czas, przez który używane są wektory zerowe (gdy wszystkie tranzystory
+    // są w tym samym stanie). Rozdzielamy go symetrycznie.
+    float T0 = PWM_PERIOD_SEC - T1 - T2;
+
+    switch (sector) {
+        case 0: // Sektor 1 (wektory V1, V2)
+            Ta = T1 + T2 + T0 / 2.0f;
+            Tb = T2 + T0 / 2.0f;
+            Tc = T0 / 2.0f;
+            break;
+        case 1: // Sektor 2 (wektory V2, V3)
+            Ta = T1 + T0 / 2.0f;
+            Tb = T1 + T2 + T0 / 2.0f;
+            Tc = T0 / 2.0f;
+            break;
+        case 2: // Sektor 3 (wektory V3, V4)
+            Ta = T0 / 2.0f;
+            Tb = T1 + T2 + T0 / 2.0f;
+            Tc = T2 + T0 / 2.0f;
+            break;
+        case 3: // Sektor 4 (wektory V4, V5)
+            Ta = T0 / 2.0f;
+            Tb = T1 + T0 / 2.0f;
+            Tc = T1 + T2 + T0 / 2.0f;
+            break;
+        case 4: // Sektor 5 (wektory V5, V6)
+            Ta = T2 + T0 / 2.0f;
+            Tb = T0 / 2.0f;
+            Tc = T1 + T2 + T0 / 2.0f;
+            break;
+        case 5: // Sektor 6 (wektory V6, V1)
+            Ta = T1 + T2 + T0 / 2.0f;
+            Tb = T0 / 2.0f;
+            Tc = T1 + T0 / 2.0f;
+            break;
+        default: // Powinno się nigdy nie zdarzyć
+            Ta = Tb = Tc = PWM_PERIOD_SEC / 2.0f;
+            break;
+    }
+    //  Mapowanie na PWM: Ostateczne czasy włączenia dla każdej fazy (Ta, Tb, Tc)
+    //  są w zakresie od 0 do PWM_PERIOD_SEC (okres PWM w sekundach). Dzielimy je przez PWM_PERIOD_SEC,
+    //	aby uzyskać współczynnik wypełnienia od 0.0 do 1.0, a następnie mnożymy przez PWM_PERIOD,
+    //	aby uzyskać wartość do wpisania do rejestru compare timera.
+    //  Krok 5: Przeskaluj czasy [0, PWM_PERIOD_SEC] na wartości compare [0, PWM_PERIOD_ARR] ---
+    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, (uint32_t)(Ta / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
+    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, (uint32_t)(Tb / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
+    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, (uint32_t)(Tc / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
+}
 
 //void SVPWM_Test_Run(float test_freq_hz)
 //{

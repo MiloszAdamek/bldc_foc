@@ -228,7 +228,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
 			raw_angle.status = AS5048_OK;
 
-			new_encoder_data_ready = true;
+			encoder_prev_ready = true;
 		}
 		GPIOC->BSRR = (1U << (9 + 16));  // GPIO PC9 reset, debug
 	}
