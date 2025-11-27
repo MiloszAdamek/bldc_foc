@@ -91,6 +91,7 @@ void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
+  sConfigOC.OCMode = TIM_OCMODE_PWM2;
   sConfigOC.Pulse = 4220;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
@@ -324,12 +325,12 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
     PA9     ------> TIM1_CH2
     PA10     ------> TIM1_CH3
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Pin = TIM1_CH4_ADC_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM1;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+    HAL_GPIO_Init(TIM1_CH4_ADC_GPIO_Port, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = PWM_UH_Pin|PWM_VH_Pin|PWM_WH_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;

@@ -61,6 +61,10 @@ void Error_Handler(void);
 #define RCC_OSC_IN_GPIO_Port GPIOF
 #define RCC_OSC_OUT_Pin GPIO_PIN_1
 #define RCC_OSC_OUT_GPIO_Port GPIOF
+#define ADC_Conv_Flag_Pin GPIO_PIN_0
+#define ADC_Conv_Flag_GPIO_Port GPIOC
+#define TIM1_CH4_ADC_Pin GPIO_PIN_3
+#define TIM1_CH4_ADC_GPIO_Port GPIOC
 #define CURR_AMPL_U_Pin GPIO_PIN_1
 #define CURR_AMPL_U_GPIO_Port GPIOA
 #define CURR_AMPL_W_Pin GPIO_PIN_0
@@ -87,8 +91,6 @@ void Error_Handler(void);
 #define PWM_WH_GPIO_Port GPIOA
 #define SPI3_CS_Pin GPIO_PIN_2
 #define SPI3_CS_GPIO_Port GPIOD
-#define ADC_Conv_Flag_Pin GPIO_PIN_8
-#define ADC_Conv_Flag_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

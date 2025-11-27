@@ -97,6 +97,27 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTy
     HAL_TIM_Base_Stop(foc_htim);
 }
 
+// Funkcja pomocnicza do kalibracji (zamiast FOC_SetPhaseVoltage)
+void FOC_ApplyCalibrationVoltage(float voltage, float angle_el)
+{
+    float valpha, vbeta;
+    float sin_th, cos_th;
+
+    // 1. Oblicz sin/cos dla zadanego kąta kalibracji
+    LUT_SinCos(angle_el, &sin_th, &cos_th);
+
+    // 2. Inverse Park (Uq=0, Ud=voltage) -> Alpha/Beta
+    // Ud celuje w oś d (strumień), Uq=0 (brak momentu)
+    // Ualpha = Ud * cos - Uq * sin  =>  voltage * cos
+    // Ubeta  = Ud * sin + Uq * cos  =>  voltage * sin
+
+    valpha = voltage * cos_th;
+    vbeta  = voltage * sin_th;
+
+    // 3. Wywołaj Twoje SVPWM (zamiast liczyć to ręcznie)
+    // Uref = voltage (bo Uq=0), więc możesz podać 'voltage' jako trzeci parametr
+    SVPWM_Update(valpha, vbeta, voltage);
+}
 // Funkcja używana tylko do kalibracji, w FOC_Align_Sensor()
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     // Krok 1: Ograniczenie wektora napięcia
@@ -170,6 +191,7 @@ bool FOC_AlignSensor() {
 		for (int i = 0; i <= 500; i++) {
 			float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
 			FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
+//			FOC_ApplyCalibrationVoltage(VOLTAGE_SENSOR_ALIGN, angle);
 			HAL_Delay(2);
 		}
 		float mid_angle = AS5048_GetAngleRad();
@@ -180,6 +202,7 @@ bool FOC_AlignSensor() {
 			for (int i = 500; i >= 0; i--) {
 				float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
 				FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
+//				FOC_ApplyCalibrationVoltage(VOLTAGE_SENSOR_ALIGN, angle);
 				HAL_Delay(2);
 			}
 			float end_angle = AS5048_GetAngleRad();
@@ -219,6 +242,7 @@ bool FOC_AlignSensor() {
 			printf("\nKrok 2: Wyrównywanie do zera elektrycznego...\n");
 			// Ustaw wirnik w znanej pozycji elektrycznej (_3PI_2)
 			FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
+//			FOC_ApplyCalibrationVoltage(VOLTAGE_SENSOR_ALIGN, _3PI_2);
 			HAL_Delay(700);
 
 			// Odczytaj kąt mechaniczny z sensora
@@ -235,6 +259,7 @@ bool FOC_AlignSensor() {
 
 		// Zakończenie
 		FOC_SetPhaseVoltage(0, 0, 0);
+//		FOC_ApplyCalibrationVoltage(0, 0);
 		if (exit_flag) {
 			printf("--- Kalibracja zakonczona POMYSLNIE! ---\n\n");
 			sensor_aligned = true;
@@ -426,8 +451,7 @@ void FOC_RunLoop(){
 	CurrentSense_CalculatePhases();
 	CurrentSense_Read(&currents);
 
-
-	// 4. Pętla FOC
+	// 3. Pętla FOC
 	FOC_Update(theta_el_latest);
 
 	// Koniec pętli FOC ---
@@ -439,12 +463,22 @@ volatile uint32_t adc_inj_irq_cnt = 0;
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    if (hadc->Instance == ADC1)
+    if (hadc->Instance == ADC1) // Przerwanie 20kHz
     {
-    	CurrentSense_Process_ISR();
-		new_current_data_ready = true;
-		adc_inj_irq_cnt++;
+    	if (__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)) // Pomiar 10 kHz
+		{
+			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
 
+			CurrentSense_Process_ISR();
+			new_current_data_ready = true;
+			adc_inj_irq_cnt++;
+
+			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
+		}
+		else
+		{
+
+		}
     }
 }
 

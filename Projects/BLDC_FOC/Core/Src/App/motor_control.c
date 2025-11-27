@@ -16,8 +16,6 @@
 static TIM_HandleTypeDef* ctrl_htim;
 static TIM_HandleTypeDef* cmd_htim;
 
-static bool half = 0;
-
 volatile uint32_t spi_ready_err = 0;
 volatile uint32_t spi_ready_ok = 0;
 
@@ -99,7 +97,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == foc_htim->Instance) // 40 kHz update
 	{
 		static bool foc_toggle = false;
-		static bool spi_toggle = false;
 
 		// CNT = ARR → counting DOWN (20 kHz)
 		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim))
@@ -123,14 +120,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //		            AS5048_ReadAngleDMA();
 //		        }
 //			}
-
 		}
 	}
 	if (htim->Instance == enc_htim->Instance) // pętla 10 kHz
 	{
         if (spi_ready) {
             spi_ready = false;
-            GPIOC->BSRR = (1U << 9);
+            GPIOC->BSRR = (1U << 9); // PC9
             AS5048_ReadAngleDMA();
         }
 	}
