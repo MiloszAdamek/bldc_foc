@@ -7,6 +7,7 @@
 
 #include "App/config.h"
 #include "BSP/current_sense.h"
+#include "FOC/foc_loop.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include "main.h"
@@ -29,6 +30,8 @@ static uint16_t offset_b = 0;
 //static uint16_t offset_c = 0;
 
 volatile bool is_calibrated = false;
+
+volatile uint32_t adc_inj_irq_cnt = 0;
 
 static void CurrentSense_CalibrateOffset(void)
 {
@@ -111,5 +114,24 @@ void CurrentSense_GetRaw(abc_raw_t *raw)
 //    raw->c = adc_raw_phase_c;
     raw->c = 0;
 }
+
+void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+    if (hadc->Instance == ADC1) // Przerwanie 20kHz
+    {
+    	if (__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)) // 10 kHz
+		{
+			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
+
+			CurrentSense_Process_ISR();
+			new_current_data_ready = true;
+			adc_inj_irq_cnt++;
+
+			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
+		}
+    }
+}
+
+
 
 

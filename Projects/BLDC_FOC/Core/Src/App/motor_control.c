@@ -110,17 +110,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
 			}
 		}
-		else
-		{
-//			spi_toggle = !spi_toggle;
-//			if(spi_toggle){
-//		        if (spi_ready) {
-//		            spi_ready = false;
-//		            GPIOC->BSRR = (1U << 9);
-//		            AS5048_ReadAngleDMA();
-//		        }
-//			}
-		}
 	}
 	if (htim->Instance == enc_htim->Instance) // pętla 10 kHz
 	{

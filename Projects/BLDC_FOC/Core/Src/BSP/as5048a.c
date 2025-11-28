@@ -21,13 +21,11 @@ volatile AS5048_ReadResult raw_angle;
 
 volatile bool new_encoder_data_ready = false;
 
-//volatile float theta_el_last = 0.0f;
-//volatile float theta_mech_last = 0.0f;
-
 static inline void AS5048_CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
 static inline void AS5048_CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
 
-void AS5048_Init(SPI_HandleTypeDef *hspi){
+void AS5048_Init(SPI_HandleTypeDef *hspi)
+{
 	as5048_hspi = hspi;
 	DWT_Init();
 	AS5048_CS_HIGH();
@@ -96,7 +94,8 @@ static AS5048_Status AS5048_RegRead(const uint16_t regAddr, uint16_t *dst)
     return AS5048_OK;
 }
 
-static AS5048_Status AS5048_RegWrite(const uint16_t regAddr, const uint16_t value, uint16_t *confirm){
+static AS5048_Status AS5048_RegWrite(const uint16_t regAddr, const uint16_t value, uint16_t *confirm)
+{
 
 	AS5048_Status s;
 
@@ -122,7 +121,8 @@ static AS5048_Status AS5048_RegWrite(const uint16_t regAddr, const uint16_t valu
     return AS5048_OK;
 }
 
-AS5048_ErrorFlags AS5048_GetErrorDetails(void) {
+AS5048_ErrorFlags AS5048_GetErrorDetails(void)
+{
 //    printf("[ERROR] Rozpoczynam odczyt rejestru błędów (0x0001)\n");
 
     AS5048_ErrorFlags err = {0};
@@ -146,7 +146,8 @@ AS5048_ErrorFlags AS5048_GetErrorDetails(void) {
     return err;
 }
 
-void AS5048_GetRawPosition(void) {
+void AS5048_GetRawPosition(void)
+{
 
     uint16_t raw = 0;
     AS5048_Status status = AS5048_ERR_SPI;
@@ -169,7 +170,8 @@ void AS5048_GetRawPosition(void) {
     }
 }
 
-float AS5048_GetAngleDeg(void) {
+float AS5048_GetAngleDeg(void)
+{
     AS5048_GetRawPosition();
 
     if (raw_angle.status != AS5048_OK) {
@@ -180,7 +182,8 @@ float AS5048_GetAngleDeg(void) {
     return angle_deg;
 }
 
-float AS5048_GetAngleRad(void){
+float AS5048_GetAngleRad(void)
+{
     AS5048_GetRawPosition();
 
     if (raw_angle.status != AS5048_OK) {
@@ -194,8 +197,6 @@ float AS5048_GetAngleRad(void){
 // Transmisja przez DMA
 void AS5048_ReadAngleDMA(void)
 {
-//	if (!spi_ready) return; // trwa poprzedni transfer
-
 	spi_ready = false;
 	uint16_t cmd = AS_READ | AS_ANGLE;
 	cmd  = AS5048_AddParity(cmd);
@@ -233,34 +234,4 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 		GPIOC->BSRR = (1U << (9 + 16));  // GPIO PC9 reset, debug
 	}
 }
-
-//void AS5048_Diagnose(void) {0
-//    uint16_t agc = 0, mag = 0, diag = 0;
-//
-//    printf("\n=== DIAGNOSTYKA AS5048A ===\n");
-//
-//    if (AS5048_Reg_Read(AS_DIAG_AGC, &agc) == AS5048_OK)
-//        printf("[AGC] Automatic Gain Control: %3u\n", agc);
-//    else
-//        printf("[AGC] Błąd odczytu rejestru\n");
-//
-//    if (AS5048_Reg_Read(AS_MAGNITUDE, &mag) == AS5048_OK)
-//        printf("[MAG] Magnituda pola (14 bit): %5u\n", mag);
-//    else
-//        printf("[MAG] Błąd odczytu rejestru\n");
-//
-//    if (AS5048_Reg_Read(0x0017, &diag) == AS5048_OK) {
-//        printf("[DIAG] 0x%04X → ", diag);
-//        printf("OCF=%d, COF=%d, COMP_low=%d, COMP_high=%d\n",
-//            (diag >> 3) & 0x01,  // OCF (Offset Compensation Finished)
-//            (diag >> 2) & 0x01,  // COF (CORDIC Overflow)
-//            (diag >> 1) & 0x01,  // COMP_low (komparator niskiego poziomu)
-//            diag & 0x01          // COMP_high (komparator wysokiego poziomu)
-//        );
-//    } else {
-//        printf("[DIAG] Błąd odczytu rejestru\n");
-//    }
-//
-//    printf("===========================\n\n");
-//}
 

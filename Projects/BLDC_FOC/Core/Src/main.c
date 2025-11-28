@@ -66,12 +66,15 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 int __io_putchar(int ch)
 {
-    if (ch == '\n') {
-        uint8_t ch2 = '\r';
-        HAL_UART_Transmit(&huart2, &ch2, 1, HAL_MAX_DELAY);
-    }
+    uint8_t buf[2];
+    uint16_t len = 0;
 
-    HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
+    if (ch == '\n')
+        buf[len++] = '\r';
+
+    buf[len++] = (uint8_t)ch;
+
+    HAL_UART_Transmit(&huart2, buf, len, HAL_MAX_DELAY);
     return 1;
 }
 /* USER CODE END 0 */
@@ -134,7 +137,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//	Commander_Process();
   }
   /* USER CODE END 3 */
 }

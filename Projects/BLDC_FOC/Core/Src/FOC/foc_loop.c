@@ -97,9 +97,196 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTy
     HAL_TIM_Base_Stop(foc_htim);
 }
 
+void FOC_Start(){
+
+    HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
+	HAL_ADCEx_InjectedStart_IT(foc_hadc);
+
+	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_3);
+
+	HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
+
+	// Pobranie danych przed uruchomieniem pętli FOC
+	new_current_data_ready = false;
+	new_encoder_data_ready = false;
+    spi_ready = true;
+
+    err_current = 0;
+    foc_loop_err = 0;
+    foc_loop_ok = 0;
+
+    AS5048_ReadAngleDMA();
+
+    HAL_TIM_Base_Start_IT(foc_htim);
+}
+
+void FOC_Stop()
+{
+
+    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_3);
+
+    HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
+
+    HAL_ADCEx_InjectedStop(foc_hadc);
+}
+
+void FOC_LinearRamp()
+{
+    if (ramp_active)
+    {
+        if (iq_current < i_ref.q)
+        {
+            iq_current += iq_step;
+            if (iq_current > i_ref.q) {
+                iq_current = i_ref.q;
+                ramp_active = false; // Zakończ rampę
+            }
+        }
+        else if (iq_current > i_ref.q)
+        {
+            iq_current -= iq_step;
+            if (iq_current < i_ref.q) {
+                iq_current = i_ref.q;
+                ramp_active = false; // Zakończ rampę
+            }
+        }
+        else
+        {
+            ramp_active = false;
+        }
+    }
+    ramp_i_ref.q = iq_current;
+}
+
+void FOC_RunLoop()
+{
+	if (!new_current_data_ready)
+	    {
+	        foc_loop_err++;
+	        return;
+	    }
+
+	new_current_data_ready = false;
+
+	// --- Pętla FOC ---
+
+	// Kąt (zapisany przez SPI DMA)
+	if (encoder_prev_ready){
+		encoder_prev_ready = false;
+
+		theta_mech_latest = AS5048_GetMechanicalAngle();
+		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
+		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
+		// Estymacja predkosci
+		SpeedEstimator_Update(theta_mech_latest_shifed, &actual_speed_rpm);
+	}
+
+	// Prąd (zapisany przez ADC ISR)
+	CurrentSense_CalculatePhases();
+	CurrentSense_Read(&currents);
+
+	// Pętla FOC
+	FOC_Update(theta_el_latest);
+
+	// Koniec pętli FOC ---
+	foc_loop_ok++;
+}
+
+void FOC_Update(float theta_el)
+{
+    float ialpha, ibeta;
+    float id, iq;
+    float vd, vq;
+    float valpha, vbeta;
+    float target_iq; // Lokalna zmienna dla celu PI
+    float sin_theta, cos_theta;
+
+	if (ramp_active) {
+		FOC_LinearRamp();
+		target_iq = ramp_i_ref.q; // Użyj wyjścia z rampy
+	} else {
+		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
+	}
+
+    LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
+
+    // Clarke
+    ClarkeTransform(currents.a, currents.b, &ialpha, &ibeta);
+
+    // Park
+    ParkTransform(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
+
+    // PI
+    vd = pi_control(&pi_id, i_ref.d - id);
+    vq = pi_control(&pi_iq, target_iq - iq);
+
+    debug_id = id;
+    debug_iq = iq;
+    debug_id_ref = i_ref.d;
+    debug_iq_ref = target_iq;
+    debug_vd = vd;
+    debug_vq = vq;
+    debug_speed = actual_speed_rpm;
+
+    float Uref = sqrtf(vd * vd + vq * vq);
+    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
+
+    if (Uref > Umax) {
+        float scale = Umax / Uref;
+        vd *= scale;
+        vq *= scale;
+        Uref *= scale;
+    }
+
+    // InvPark
+    InvParkTransform(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
+
+    // SVPWM
+    SVPWM_Update(valpha, vbeta, Uref);
+}
+
+
+inline float FOC_GetElecticalAngle(float mech)
+{
+    return normalize_angle((float)(sensor_direction * MOTOR_POLE_PAIRS) * mech - zero_electric_angle);
+}
+
+void FOC_SetIqTarget_Ramp(float new_target)
+{
+	i_ref.q = new_target;
+    ramp_active = true;
+}
+
+void FOC_SetIqTarget(float new_target)
+{
+	i_ref.q = new_target;
+	ramp_active = false; // Wymuś wyłączenie rampy
+
+	// Zsynchronizuj stan rampy, aby uniknąć nagłego skoku
+	iq_current = new_target;
+	ramp_i_ref.q = new_target;
+}
+
+void FOC_SetTorqueTarget(float torque_mNm)
+{
+    // Iq = (T_mNm / 1000) / Kt
+    float target_iq = (torque_mNm / 1000.0f) / MOTOR_TORQUE_CONSTANT;
+    FOC_SetIqTarget(target_iq);
+}
 
 // Funkcja używana tylko do kalibracji, w FOC_Align_Sensor()
-void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
+void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el)
+{
     // Ograniczenie wektora napięcia
     float Uref = sqrtf(Ud * Ud + Uq * Uq);
     float Umax = VOLTAGE_SUPPLY / M_SQRT3;
@@ -225,7 +412,7 @@ bool FOC_AlignSensor()
         return (sensor_aligned = false);
     }
 
-    // LKąt elektryczny
+    // Kąt elektryczny
     float el_angle = normalize_angle(
         (float)sensor_direction * MOTOR_POLE_PAIRS * mech_angle
     );
@@ -240,216 +427,5 @@ bool FOC_AlignSensor()
 
     return (sensor_aligned = true);
 }
-
-inline float FOC_GetElecticalAngle(float mech){
-    return normalize_angle((float)(sensor_direction * MOTOR_POLE_PAIRS) * mech - zero_electric_angle);
-}
-
-void FOC_LinearRamp()
-{
-    if (ramp_active)
-    {
-        if (iq_current < i_ref.q)
-        {
-            iq_current += iq_step;
-            if (iq_current > i_ref.q) {
-                iq_current = i_ref.q;
-                ramp_active = false; // Zakończ rampę
-            }
-        }
-        else if (iq_current > i_ref.q)
-        {
-            iq_current -= iq_step;
-            if (iq_current < i_ref.q) {
-                iq_current = i_ref.q;
-                ramp_active = false; // Zakończ rampę
-            }
-        }
-        else
-        {
-            ramp_active = false;
-        }
-    }
-    ramp_i_ref.q = iq_current;
-}
-
-void FOC_SetIqTarget_Ramp(float new_target)
-{
-	i_ref.q = new_target;
-    ramp_active = true;
-}
-
-void FOC_SetIqTarget(float new_target)
-{
-	i_ref.q = new_target;
-	ramp_active = false; // Wymuś wyłączenie rampy
-
-	// Zsynchronizuj stan rampy, aby uniknąć nagłego skoku
-	iq_current = new_target;
-	ramp_i_ref.q = new_target;
-}
-
-void FOC_SetTorqueTarget(float torque_mNm)
-{
-    // Iq = (T_mNm / 1000) / Kt
-    float target_iq = (torque_mNm / 1000.0f) / MOTOR_TORQUE_CONSTANT;
-    FOC_SetIqTarget(target_iq);
-}
-
-void FOC_Update(float theta_el)
-{
-    float ialpha, ibeta;
-    float id, iq;
-    float vd, vq;
-    float valpha, vbeta;
-    float target_iq; // Lokalna zmienna dla celu PI
-    float sin_theta, cos_theta;
-
-	if (ramp_active) {
-		FOC_LinearRamp();
-		target_iq = ramp_i_ref.q; // Użyj wyjścia z rampy
-	} else {
-		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
-	}
-
-    LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
-
-    // Clarke
-    ClarkeTransform(currents.a, currents.b, &ialpha, &ibeta);
-
-    // Park
-    ParkTransform(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
-
-    // PI
-    vd = pi_control(&pi_id, i_ref.d - id);
-    vq = pi_control(&pi_iq, target_iq - iq);
-
-    debug_id = id;
-    debug_iq = iq;
-    debug_id_ref = i_ref.d;
-    debug_iq_ref = target_iq;
-    debug_vd = vd;
-    debug_vq = vq;
-    debug_speed = actual_speed_rpm;
-
-    float Uref = sqrtf(vd * vd + vq * vq);
-    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
-
-    if (Uref > Umax) {
-        float scale = Umax / Uref;
-        vd *= scale;
-        vq *= scale;
-        Uref *= scale;
-    }
-
-    // InvPark
-    InvParkTransform(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
-
-    // SVPWM
-    SVPWM_Update(valpha, vbeta, Uref);
-}
-
-void FOC_Stop(){
-	// TODO: w trybie 6PWM trzeba wyłączyć wszystkie kanały + __HAL_TIM_MOE_DISABLE(foc_htim);
-    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_3);
-
-    HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
-
-    HAL_ADCEx_InjectedStop(foc_hadc);
-}
-
-void FOC_Start(){
-
-    HAL_TIM_OC_Start(foc_htim, TIM_CHANNEL_4);
-	HAL_ADCEx_InjectedStart_IT(foc_hadc);
-
-	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(foc_htim, TIM_CHANNEL_3);
-
-	HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_SET);
-
-	// Pobranie danych przed uruchomieniem pętli FOC
-	new_current_data_ready = false;
-	new_encoder_data_ready = false;
-    spi_ready = true;
-
-    err_current = 0;
-    foc_loop_err = 0;
-    foc_loop_ok = 0;
-
-    AS5048_ReadAngleDMA();
-
-    HAL_TIM_Base_Start_IT(foc_htim);
-}
-
-void FOC_RunLoop(){
-	// Sprawdź, czy oba pomiary z tego cyklu są gotowe
-
-	if (!new_current_data_ready)
-	    {
-	        foc_loop_err++;
-	        return;
-	    }
-
-	new_current_data_ready = false;
-
-	// --- Pętla FOC ---
-
-	// Kąt (zapisany przez SPI DMA)
-	if (encoder_prev_ready){
-		encoder_prev_ready = false;
-
-		theta_mech_latest = AS5048_GetMechanicalAngle();
-		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
-		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
-		// Estymacja predkosci
-		SpeedEstimator_Update(theta_mech_latest_shifed, &actual_speed_rpm);
-	}
-
-	// Prąd (zapisany przez ADC ISR)
-	CurrentSense_CalculatePhases();
-	CurrentSense_Read(&currents);
-
-	// Pętla FOC
-	FOC_Update(theta_el_latest);
-
-	// Koniec pętli FOC ---
-	foc_loop_ok++;
-
-}
-
-volatile uint32_t adc_inj_irq_cnt = 0;
-
-void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-    if (hadc->Instance == ADC1) // Przerwanie 20kHz
-    {
-    	if (__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)) // Pomiar 10 kHz
-		{
-			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
-
-			CurrentSense_Process_ISR();
-			new_current_data_ready = true;
-			adc_inj_irq_cnt++;
-
-			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
-		}
-		else
-		{
-
-		}
-    }
-}
-
-
 
 

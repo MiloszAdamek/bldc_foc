@@ -24,8 +24,8 @@ static TIM_HandleTypeDef* svpwm_htim;
 const float TEST_VOLTAGE_AMPLITUDE = 3.0f;
 float theta = 0.0f;
 
-void SVPWM_Init(TIM_HandleTypeDef *htim) {
-
+void SVPWM_Init(TIM_HandleTypeDef *htim)
+{
     if (htim == NULL) {
         while(1);
     }
@@ -42,12 +42,13 @@ void SVPWM_Init(TIM_HandleTypeDef *htim) {
     HAL_TIM_PWM_Start(svpwm_htim, TIM_CHANNEL_3);
 }
 
-void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
+void SVPWM_Update(float Ualpha, float Ubeta, float Vref)
+{
     float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
 
     // Obliczenie kąta i sektora
     float angle = atan2f(Ubeta, Ualpha);
-//    float angle = CORDIC_Atan2_Fast(Ualpha, Ubeta);
+
     if (angle < 0) {
         angle += M_TWOPI;
     }

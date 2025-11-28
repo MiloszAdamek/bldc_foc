@@ -18,7 +18,7 @@ static float last_angle = 0.0f;
 static float omega_lpf = 0.0f;
 static float speed_rpm = 0.0f;
 
-static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = FSM_PERIOD_SEC};
+static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
 
 void SpeedEstimator_Update(float theta_mech, volatile float *out_rpm)
 {
@@ -29,7 +29,7 @@ void SpeedEstimator_Update(float theta_mech, volatile float *out_rpm)
         return;
     }
 
-    float omega_raw = dtheta / PWM_PERIOD_SEC;
+    float omega_raw = dtheta / FOC_PERIOD_SEC; // Estymator działa w pętli FOC 10 kHz
 
     omega_lpf = VELOCITY_ALPHA * omega_lpf +
                (1.0f - VELOCITY_ALPHA) * omega_raw;

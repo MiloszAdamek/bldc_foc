@@ -18,15 +18,15 @@
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
  * ========================================================================= */
 
-// Częstotliwość PWM i odpowiadający okres [s]
-#define PWM_FREQUENCY_HZ      10000.0f                     	// 10 kHz
-#define PWM_PERIOD_SEC        (1.0f / PWM_FREQUENCY_HZ)
-
-#define FSM_LOOP_HZ			  1000.0f
-#define FSM_PERIOD_SEC		  (1.0f / FSM_LOOP_HZ)
-
-// Wartość ARR timera (dla 170 MHz taktowania i prescalera = 0)
+#define PWM_FREQ_HZ			  20000.0f				// 20 kHz - PWM
+#define PWM_PERIOD_SEC		  (1.0f / PWM_FREQ_HZ)
 #define PWM_PERIOD_ARR        4249
+
+#define FOC_FREQ_HZ      	  10000.0f              // 10 kHz - pętla algorytmu FOC
+#define FOC_PERIOD_SEC        (1.0f / FOC_FREQ_HZ)
+
+#define SPEED_FREQ_HZ		  1000.0f				// 1kHz - pętla regulatora prędkości
+#define SPEED_PERIOD_SEC      (1.0f / SPEED_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        12.0f
@@ -51,7 +51,7 @@
 #define SENSOR_DIRECTION_CCW -1
 
 /* =========================================================================
- * ----------------  PARAMETRY ALGORYTMU FOC  -------------------------------
+ * ----------------  PARAMETRY REGULATORÓW PI  -----------------------------
  * ========================================================================= */
 
 #define PI_KP_ID 3.0f
@@ -62,8 +62,8 @@
 #define PI_KI_IQ 250.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_V 0.008f
-#define PI_KI_V 0.02f
+#define PI_KP_V 0.001f
+#define PI_KI_V 0.01f
 #define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
 
 #ifdef ENABLE_SERIAL_DEBUGGING
