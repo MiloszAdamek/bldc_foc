@@ -18,22 +18,20 @@ TIM_HandleTypeDef* foc_htim;
 TIM_HandleTypeDef* enc_htim;
 ADC_HandleTypeDef* foc_hadc;
 
+// REGULATORY PI
 static PI_Controller pi_id = { .kp = PI_KP_ID, .ki = PI_KI_ID, .limit = PI_LIMIT_ID, .integral = 0.0f, .dt = PWM_PERIOD_SEC};
 static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT_IQ, .integral = 0.0f, .dt = PWM_PERIOD_SEC};
-
-// IQ, ID controller
-static abc_current_t currents;
 volatile dq_ref_t i_ref = {0.0f, 0.0f};
+static abc_current_t currents;
 
-// Speed estimator
+// ESTYMATOR PRĘDKOŚCI
 volatile float actual_speed_rpm = 0.0f;
 
-// RAMP
-volatile dq_ref_t ramp_i_ref;
+// RAMPA
 static const float iq_step = 0.0001f; // przyrost prądu na 1 krok
-static float iq_current;
+static float iq_ramp_out;
 
-// FLAGS
+// FLAGI
 volatile bool ramp_active = false;
 volatile bool spi_angle_ready = false;
 volatile bool foc_data_ready = false;
@@ -41,7 +39,7 @@ volatile bool sensor_aligned = false;
 volatile bool new_current_data_ready = false;
 volatile bool encoder_prev_ready = false;
 
-// ENCODER
+// ENKODER
 static int sensor_direction = 0; // 1 - CW, -1 - CCW
 static float zero_electric_angle = 0.0f;
 volatile float theta_mech_latest = 0.0f;
@@ -49,17 +47,30 @@ volatile float theta_mech_latest_shifed = 0.0f;
 volatile float theta_el_latest = 0.0f;
 
 // Debug - cubemonitor
-volatile float debug_id = 0.0f;
-volatile float debug_iq = 0.0f;
-volatile float debug_id_ref = 0.0f;
-volatile float debug_iq_ref = 0.0f;
-volatile float debug_vd = 0.0f;
-volatile float debug_vq = 0.0f;
-volatile float debug_speed = 0.0f;
+volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
+
 volatile uint32_t foc_loop_ok = 0;
 volatile uint32_t foc_loop_err = 0;
 volatile uint32_t err_encoder = 0;
 volatile uint32_t err_current = 0;
+
+static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
+{
+    monitor_data.current_a = currents.a;
+    monitor_data.current_b = currents.b;
+    monitor_data.current_c = currents.c;
+
+    monitor_data.id = id;
+    monitor_data.iq = iq;
+    monitor_data.iq_ref = target_iq;
+
+    monitor_data.theta_el = theta_el_latest;
+    monitor_data.theta_mech = theta_mech_latest;
+
+    monitor_data.id_ref = i_ref.d;
+    monitor_data.speed_ref = 0;
+    monitor_data.speed = actual_speed_rpm;
+}
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi)
 {
@@ -144,19 +155,19 @@ void FOC_LinearRamp()
 {
     if (ramp_active)
     {
-        if (iq_current < i_ref.q)
+        if (iq_ramp_out < i_ref.q)
         {
-            iq_current += iq_step;
-            if (iq_current > i_ref.q) {
-                iq_current = i_ref.q;
+            iq_ramp_out += iq_step;
+            if (iq_ramp_out > i_ref.q) {
+                iq_ramp_out = i_ref.q;
                 ramp_active = false; // Zakończ rampę
             }
         }
-        else if (iq_current > i_ref.q)
+        else if (iq_ramp_out > i_ref.q)
         {
-            iq_current -= iq_step;
-            if (iq_current < i_ref.q) {
-                iq_current = i_ref.q;
+            iq_ramp_out -= iq_step;
+            if (iq_ramp_out < i_ref.q) {
+                iq_ramp_out = i_ref.q;
                 ramp_active = false; // Zakończ rampę
             }
         }
@@ -165,7 +176,6 @@ void FOC_LinearRamp()
             ramp_active = false;
         }
     }
-    ramp_i_ref.q = iq_current;
 }
 
 void FOC_RunLoop()
@@ -213,7 +223,7 @@ void FOC_Update(float theta_el)
 
 	if (ramp_active) {
 		FOC_LinearRamp();
-		target_iq = ramp_i_ref.q; // Użyj wyjścia z rampy
+		target_iq = iq_ramp_out; // Użyj wyjścia z rampy
 	} else {
 		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
 	}
@@ -230,13 +240,8 @@ void FOC_Update(float theta_el)
     vd = pi_control(&pi_id, i_ref.d - id);
     vq = pi_control(&pi_iq, target_iq - iq);
 
-    debug_id = id;
-    debug_iq = iq;
-    debug_id_ref = i_ref.d;
-    debug_iq_ref = target_iq;
-    debug_vd = vd;
-    debug_vq = vq;
-    debug_speed = actual_speed_rpm;
+//    // CubeMonitor log data
+    Log_To_CubeMonitor(id, iq, target_iq);
 
     float Uref = sqrtf(vd * vd + vq * vq);
     float Umax = VOLTAGE_SUPPLY / M_SQRT3;
@@ -273,8 +278,7 @@ void FOC_SetIqTarget(float new_target)
 	ramp_active = false; // Wymuś wyłączenie rampy
 
 	// Zsynchronizuj stan rampy, aby uniknąć nagłego skoku
-	iq_current = new_target;
-	ramp_i_ref.q = new_target;
+	iq_ramp_out = new_target;
 }
 
 void FOC_SetTorqueTarget(float torque_mNm)
@@ -303,7 +307,6 @@ void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el)
     // Odwrotna transformacja Parka
     // Przekształca napięcia z wirującego układu współrzędnych (d-q)
     // na stacjonarny układ współrzędnych (alpha-beta).
-
     float Ualpha, Ubeta;
     InvParkTransform(Ud, Uq, &sin_t, &cos_t, &Ualpha, &Ubeta);
 

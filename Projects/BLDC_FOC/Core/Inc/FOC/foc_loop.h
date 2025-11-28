@@ -36,17 +36,6 @@ extern volatile bool sensor_aligned;
 extern volatile bool new_current_data_ready;
 extern volatile bool encoder_prev_ready;
 
-extern volatile float theta_el_last;
-extern volatile float theta_mech_last;
-
-// Debug
-extern volatile float debug_id;
-extern volatile float debug_iq;
-extern volatile float debug_id_ref;
-extern volatile float debug_iq_ref;
-extern volatile float debug_vd;
-extern volatile float debug_vq;
-
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi);
 
 void FOC_RunLoop(void); // Główna pętla FOC

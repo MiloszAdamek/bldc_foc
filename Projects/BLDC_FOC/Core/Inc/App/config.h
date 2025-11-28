@@ -72,4 +72,22 @@
     #define LOG(format, ...) do {} while (0)
 #endif
 
+/* =========================================================================
+ * ----------------  DEBUG I LOGOWANIE DANYCH  -----------------------------
+ * ========================================================================= */
+
+typedef struct {
+    float current_a;
+    float current_b;
+    float current_c;
+    float iq;
+    float iq_ref;
+    float id;
+    float id_ref;
+    float speed;
+    float speed_ref;
+    float theta_el;
+    float theta_mech;
+} MonitorData_t;
+
 #endif /* MOTOR_CONFIG_H_ */

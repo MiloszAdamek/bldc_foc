@@ -129,6 +129,18 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
     . = ALIGN(4);
   } >FLASH
+  
+  /* ==================================================================== */
+  /* FIXED SECTION FOR CUBEMONITOR DATA: */
+  
+  .fixed_logs (NOLOAD) :
+  {
+    . = ALIGN(4);
+    *(.fixed_logs_section)
+    . = ALIGN(4);
+  } >RAM
+  
+  /* ==================================================================== */
 
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);
