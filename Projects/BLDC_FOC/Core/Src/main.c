@@ -118,11 +118,10 @@ int main(void)
   MX_TIM4_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  FOC_Init(&hadc1, &htim1,&htim4, &hspi3);
+  FOC_Init(&hadc1, &htim1, &htim4, &hspi3);
   Commander_Init(&huart2);
   MotorControl_Init(&htim2, &htim3);
 
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 //  TestMode_Init(&hspi3);
 //  Test_AS5048AStability();
 //  Test_AS5048AStabilityDMA();

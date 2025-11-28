@@ -17,7 +17,6 @@
 #include "BSP/as5048a.h"
 
 #define _3PI_2 4.71238898038f
-#define _SQRT3_2 0.86602540378f
 
 extern TIM_HandleTypeDef* foc_htim;
 extern TIM_HandleTypeDef* foc_htim;

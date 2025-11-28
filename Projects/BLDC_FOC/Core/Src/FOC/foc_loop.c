@@ -97,50 +97,36 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTy
     HAL_TIM_Base_Stop(foc_htim);
 }
 
-// Funkcja pomocnicza do kalibracji (zamiast FOC_SetPhaseVoltage)
-void FOC_ApplyCalibrationVoltage(float voltage, float angle_el)
-{
-    float valpha, vbeta;
-    float sin_th, cos_th;
 
-    // 1. Oblicz sin/cos dla zadanego kąta kalibracji
-    LUT_SinCos(angle_el, &sin_th, &cos_th);
-
-    // 2. Inverse Park (Uq=0, Ud=voltage) -> Alpha/Beta
-    // Ud celuje w oś d (strumień), Uq=0 (brak momentu)
-    // Ualpha = Ud * cos - Uq * sin  =>  voltage * cos
-    // Ubeta  = Ud * sin + Uq * cos  =>  voltage * sin
-
-    valpha = voltage * cos_th;
-    vbeta  = voltage * sin_th;
-
-    // 3. Wywołaj Twoje SVPWM (zamiast liczyć to ręcznie)
-    // Uref = voltage (bo Uq=0), więc możesz podać 'voltage' jako trzeci parametr
-    SVPWM_Update(valpha, vbeta, voltage);
-}
 // Funkcja używana tylko do kalibracji, w FOC_Align_Sensor()
 void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
-    // Krok 1: Ograniczenie wektora napięcia
-    float U_ref = sqrtf(Uq * Uq + Ud * Ud);
-    if (U_ref > VOLTAGE_LIMIT) {
-        Uq *= VOLTAGE_LIMIT / U_ref;
-        Ud *= VOLTAGE_LIMIT / U_ref;
+    // Ograniczenie wektora napięcia
+    float Uref = sqrtf(Ud * Ud + Uq * Uq);
+    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
+
+    if (Uref > Umax) {
+        float scale = Umax / Uref;
+        Ud *= scale;
+        Uq *= scale;
     }
 
-    // Krok 2: Odwrotna transformacja Parka
+    float sin_t, cos_t;
+    LUT_SinCos(angle_el, &sin_t, &cos_t); // Pobranie sin cos z tablicy LUT
+
+    // Odwrotna transformacja Parka
     // Przekształca napięcia z wirującego układu współrzędnych (d-q)
     // na stacjonarny układ współrzędnych (alpha-beta).
-    float Ualpha = -sinf(angle_el) * Uq + cosf(angle_el) * Ud;
-    float Ubeta  =  cosf(angle_el) * Uq + sinf(angle_el) * Ud;
 
-    // Krok 3: Odwrotna transformacja Clarke'a
+    float Ualpha, Ubeta;
+    InvParkTransform(Ud, Uq, &sin_t, &cos_t, &Ualpha, &Ubeta);
+
+    //  Odwrotna transformacja Clarke'a
     // Przekształca napięcia z układu alpha-beta na napięcia
     // dla trzech fizycznych faz silnika (a, b, c).
-    float Ua = Ualpha;
-    float Ub = -0.5f * Ualpha - _SQRT3_2 * Ubeta;
-    float Uc = -0.5f * Ualpha + _SQRT3_2 * Ubeta;
+    float Ua, Ub, Uc;
+    InvClarkeTransform(Ualpha, Ubeta, &Ua, &Ub, &Uc);
 
-    // Krok 4: Mapowanie na PWM dla drivera 3-PWM ---
+    // Mapowanie na PWM dla drivera 3-PWM ---
     // Napięcia fazowe Ua, Ub, Uc są w zakresie [-VOLTAGE_LIMIT, +VOLTAGE_LIMIT].
     // Należy je przeskalować i przesunąć do zakresu [0, PWM_PERIOD] dla timera.
     float dc_a = Ua / VOLTAGE_SUPPLY;
@@ -157,118 +143,106 @@ void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el) {
     uint32_t pwm_b = (uint32_t)(dc_b * PWM_PERIOD_ARR);
     uint32_t pwm_c = (uint32_t)(dc_c * PWM_PERIOD_ARR);
 
-    // Zabezpieczenie na wszelki wypadek, choć przy poprawnym ograniczeniu Uq/Ud nie powinno być potrzebne.
+    // Zabezpieczenie
     if (pwm_a > PWM_PERIOD_ARR) pwm_a = PWM_PERIOD_ARR;
     if (pwm_b > PWM_PERIOD_ARR) pwm_b = PWM_PERIOD_ARR;
     if (pwm_c > PWM_PERIOD_ARR) pwm_c = PWM_PERIOD_ARR;
 
-    // Krok 5: Ustawienie wartości w rejestrach timera ---
+    // Ustawienie wartości w rejestrach timera
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_1, pwm_a);
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_2, pwm_b);
     __HAL_TIM_SET_COMPARE(foc_htim, TIM_CHANNEL_3, pwm_c);
 }
 
+bool FOC_AlignSensor()
+{
+    if (sensor_aligned) {
+        return true;
+    }
+
+    printf("\n--- Start kalibracji sensora (SimpleFOC) ---\n");
+    printf("Krok 1: Wykrywanie kierunku...\n");
+
+    // --- Obrót w przód ---
+    for (int i = 0; i <= 500; i++) {
+        float angle = _3PI_2 + (i * (M_TWOPI / 500.0f));
+        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
+        HAL_Delay(2);
+    }
+
+    float mid_angle = AS5048_GetAngleRad();
+    if (mid_angle < 0.0f) {
+        printf("Błąd: odczyt kąta (mid)\n");
+        return (sensor_aligned = false);
+    }
+
+    // --- Obrót w tył ---
+    for (int i = 500; i >= 0; i--) {
+        float angle = _3PI_2 + (i * (M_TWOPI / 500.0f));
+        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
+        HAL_Delay(2);
+    }
+
+    float end_angle = AS5048_GetAngleRad();
+    if (end_angle < 0.0f) {
+        printf("Błąd: odczyt kąta (end)\n");
+        return (sensor_aligned = false);
+    }
+
+    // Analiza ruchu
+    float moved = mid_angle - end_angle;
+
+    if (moved < -M_PI) moved += M_TWOPI;
+    if (moved >  M_PI) moved -= M_TWOPI;
+
+    if (fabsf(moved) < 0.1f) {
+        printf("Błąd: silnik nie poruszył się!\n");
+        return (sensor_aligned = false);
+    }
+
+    sensor_direction = (moved > 0) ? -1 : 1;
+    printf("Kierunek sensora: %d (%s)\n",
+           sensor_direction,
+           sensor_direction == 1 ? "CW" : "CCW");
+
+    // Sprawdzenie par biegunów
+    float expected = M_TWOPI / MOTOR_POLE_PAIRS;
+    if (fabsf(fabsf(moved) - expected) > 0.5f) {
+        printf("Ostrzeżenie: możliwy błąd liczby par biegunów\n");
+    } else {
+        printf("Weryfikacja par biegunów: OK\n");
+    }
+
+    printf("Krok 2: Wyrównywanie do zera elektrycznego...\n");
+
+    // Ustaw znaną elektryczną pozycję
+    FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
+    HAL_Delay(700);
+
+    float mech_angle = AS5048_GetAngleRad();
+    if (mech_angle < 0.0f) {
+        printf("Błąd odczytu kąta przy wyznaczaniu zera.\n");
+        return (sensor_aligned = false);
+    }
+
+    // LKąt elektryczny
+    float el_angle = normalize_angle(
+        (float)sensor_direction * MOTOR_POLE_PAIRS * mech_angle
+    );
+
+    zero_electric_angle = normalize_angle(el_angle - _3PI_2);
+
+    printf("Offset elektryczny: %.4f rad\n", zero_electric_angle);
+
+    // Zatrzymanie silnika
+    FOC_SetPhaseVoltage(0, 0, 0);
+    printf("--- Kalibracja zakończona pomyślnie! ---\n\n");
+
+    return (sensor_aligned = true);
+}
+
 inline float FOC_GetElecticalAngle(float mech){
     return normalize_angle((float)(sensor_direction * MOTOR_POLE_PAIRS) * mech - zero_electric_angle);
-}
-
-// Funkcja pomocnicza do obliczania kąta elektrycznego BEZ offsetu(potrzebna w kalibracji)
-static float FOC_GetElecticalAngle_NoOffset(float mechanical_angle) {
-    return normalize_angle((float)sensor_direction * MOTOR_POLE_PAIRS * mechanical_angle);
-}
-
-bool FOC_AlignSensor() {
-
-	if(!sensor_aligned){
-		printf("\n--- Rozpoczynam procedure kalibracji (metoda SimpleFOC) ---\n");
-
-		int exit_flag = 1;
-
-		// KROK 1: Wykrywanie kierunku metodą "przód-tył" ---
-		printf("Krok 1: Wykrywanie kierunku...\n");
-
-		// Obrót "w przód" o jeden obrót elektryczny
-		for (int i = 0; i <= 500; i++) {
-			float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
-			FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
-//			FOC_ApplyCalibrationVoltage(VOLTAGE_SENSOR_ALIGN, angle);
-			HAL_Delay(2);
-		}
-		float mid_angle = AS5048_GetAngleRad();
-		if (mid_angle < 0.0f) { exit_flag = 0; }
-
-		if (exit_flag) {
-			// Obrót "w tył"
-			for (int i = 500; i >= 0; i--) {
-				float angle = _3PI_2 + ((float)i / 500.0f) * M_TWOPI;
-				FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, angle);
-//				FOC_ApplyCalibrationVoltage(VOLTAGE_SENSOR_ALIGN, angle);
-				HAL_Delay(2);
-			}
-			float end_angle = AS5048_GetAngleRad();
-			if (end_angle < 0.0f) { exit_flag = 0; }
-
-			if (exit_flag) {
-				// Analiza ruchu
-				float moved = mid_angle - end_angle;
-				if (moved < - M_PI) moved += M_TWOPI;
-				if (moved > M_PI)  moved -= M_TWOPI;
-
-				if (fabs(moved) < 0.1f) {
-					printf("  BLAD: Silnik sie nie poruszyl!\n");
-					exit_flag = 0;
-				} else {
-					sensor_direction = (moved > 0) ? -1 : 1;
-					if (sensor_direction == 1) {
-						   printf("  Wynik: Kierunek sensora: 1 (CW - zgodny z ruchem wskazowek zegara)\n");
-					   } else {
-						   printf("  Wynik: Kierunek sensora: -1 (CCW - przeciwny do ruchu wskazowek zegara)\n");
-					   }
-
-					// Weryfikacja par biegunów
-					float expected_movement = M_TWOPI / MOTOR_POLE_PAIRS;
-					if (fabs(fabs(moved) - expected_movement) > 0.5f) {
-						printf("  OSTRZEZENIE: Sprawdzenie par biegunow nie powiodlo sie!\n");
-						// exit_flag = 0; // Możesz zdecydować, czy to ma być błąd krytyczny
-					} else {
-						printf("  Wynik: Sprawdzenie par biegunow: OK!\n");
-					}
-				}
-			}
-		}
-
-		// KROK 2: Znalezienie zerowego kąta elektrycznego ---
-		if (exit_flag) {
-			printf("\nKrok 2: Wyrównywanie do zera elektrycznego...\n");
-			// Ustaw wirnik w znanej pozycji elektrycznej (_3PI_2)
-			FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
-//			FOC_ApplyCalibrationVoltage(VOLTAGE_SENSOR_ALIGN, _3PI_2);
-			HAL_Delay(700);
-
-			// Odczytaj kąt mechaniczny z sensora
-			float mechanical_angle_at_known_el_pos = AS5048_GetAngleRad();
-			if (mechanical_angle_at_known_el_pos < 0.0f) {
-				exit_flag = 0;
-			} else {
-				// Oblicz kąt elektryczny, jaki wynika z tego pomiaru (bez offsetu)
-				float calculated_el_angle = FOC_GetElecticalAngle_NoOffset(mechanical_angle_at_known_el_pos);
-				zero_electric_angle = normalize_angle(calculated_el_angle - _3PI_2);
-				printf("  Wynik: Znaleziony offset ELEKTRYCZNY: %.3f rad\n", zero_electric_angle);
-			}
-		}
-
-		// Zakończenie
-		FOC_SetPhaseVoltage(0, 0, 0);
-//		FOC_ApplyCalibrationVoltage(0, 0);
-		if (exit_flag) {
-			printf("--- Kalibracja zakonczona POMYSLNIE! ---\n\n");
-			sensor_aligned = true;
-		} else {
-			printf("--- Kalibracja ZAKONCZONA BLEDEM! ---\n\n");
-			sensor_aligned = false;
-		}
-	}
-	return sensor_aligned;
 }
 
 void FOC_LinearRamp()
@@ -338,16 +312,13 @@ void FOC_Update(float theta_el)
 		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
 	}
 
-//    float sin_theta = sinf(theta_el);
-//    float cos_theta = cosf(theta_el);
-
     LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
 
     // Clarke
     ClarkeTransform(currents.a, currents.b, &ialpha, &ibeta);
 
     // Park
-    ParkTransformTrig(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
+    ParkTransform(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
 
     // PI
     vd = pi_control(&pi_id, i_ref.d - id);
@@ -361,7 +332,6 @@ void FOC_Update(float theta_el)
     debug_vq = vq;
     debug_speed = actual_speed_rpm;
 
-    // TODO:  kołowe ograniczenie napięcia
     float Uref = sqrtf(vd * vd + vq * vq);
     float Umax = VOLTAGE_SUPPLY / M_SQRT3;
 
@@ -369,14 +339,14 @@ void FOC_Update(float theta_el)
         float scale = Umax / Uref;
         vd *= scale;
         vq *= scale;
+        Uref *= scale;
     }
 
     // InvPark
-    InvParkTransformTrig(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
+    InvParkTransform(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
 
     // SVPWM
     SVPWM_Update(valpha, vbeta, Uref);
-//    SVPWM_Update_Dot(valpha, vbeta);
 }
 
 void FOC_Stop(){
@@ -416,7 +386,6 @@ void FOC_Start(){
     foc_loop_err = 0;
     foc_loop_ok = 0;
 
-
     AS5048_ReadAngleDMA();
 
     HAL_TIM_Base_Start_IT(foc_htim);
@@ -427,7 +396,6 @@ void FOC_RunLoop(){
 
 	if (!new_current_data_ready)
 	    {
-	        // wyjątkowo możesz zliczać błędy, ale normalnie to rzadkie sytuacje
 	        foc_loop_err++;
 	        return;
 	    }
@@ -436,7 +404,7 @@ void FOC_RunLoop(){
 
 	// --- Pętla FOC ---
 
-	// 1. Kąt (zapisany przez SPI DMA)
+	// Kąt (zapisany przez SPI DMA)
 	if (encoder_prev_ready){
 		encoder_prev_ready = false;
 
@@ -447,11 +415,11 @@ void FOC_RunLoop(){
 		SpeedEstimator_Update(theta_mech_latest_shifed, &actual_speed_rpm);
 	}
 
-	// 2. Prąd (zapisany przez ADC ISR)
+	// Prąd (zapisany przez ADC ISR)
 	CurrentSense_CalculatePhases();
 	CurrentSense_Read(&currents);
 
-	// 3. Pętla FOC
+	// Pętla FOC
 	FOC_Update(theta_el_latest);
 
 	// Koniec pętli FOC ---

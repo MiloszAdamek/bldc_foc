@@ -45,7 +45,7 @@ void SVPWM_Init(TIM_HandleTypeDef *htim) {
 void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
     float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
 
-    // Krok 2: Obliczenie kąta i sektora
+    // Obliczenie kąta i sektora
     float angle = atan2f(Ubeta, Ualpha);
 //    float angle = CORDIC_Atan2_Fast(Ualpha, Ubeta);
     if (angle < 0) {
@@ -55,23 +55,18 @@ void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
     int sector = (int)(angle / _PI_3);
     if (sector >= 6) sector = 5;
 
-    // Krok 3: Obliczenie czasów T1, T2 (w sekundach)
-    // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
-    float T1, T2;
-    // Współczynnik modulacji (0.0 do 1.0)
-//    float m = M_SQRT3 * U_ref / VOLTAGE_SUPPLY;
     // Kąt wewnątrz bieżącego sektora
     float angle_in_sector = angle - (float)sector * _PI_3;
 
-//    T1 = m * LUT_Sin(_PI_3 - angle_in_sector) * PWM_PERIOD_SEC;
-//    T2 = m * LUT_Sin(angle_in_sector) * PWM_PERIOD_SEC;
+    // Obliczenie czasów T1, T2 (w sekundach)
+    // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
+    float T1, T2;
 
     float k = (M_SQRT3 * PWM_PERIOD_SEC) / VOLTAGE_SUPPLY;
-
 	T1 = Vref * LUT_Sin(_PI_3 - angle_in_sector) * k;
 	T2 = Vref * LUT_Sin(angle_in_sector) * k;
 
-    // Krok 4: Obliczenie czasów włączenia dla każdej fazy (w sekundach)
+    //  Obliczenie czasów włączenia dla każdej fazy (w sekundach)
     // T0 to czas, przez który używane są wektory zerowe (gdy wszystkie tranzystory
     // są w tym samym stanie). Rozdzielamy go symetrycznie.
     float T0 = PWM_PERIOD_SEC - T1 - T2;
@@ -115,10 +110,25 @@ void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
     //  są w zakresie od 0 do PWM_PERIOD_SEC (okres PWM w sekundach). Dzielimy je przez PWM_PERIOD_SEC,
     //	aby uzyskać współczynnik wypełnienia od 0.0 do 1.0, a następnie mnożymy przez PWM_PERIOD,
     //	aby uzyskać wartość do wpisania do rejestru compare timera.
-    //  Krok 5: Przeskaluj czasy [0, PWM_PERIOD_SEC] na wartości compare [0, PWM_PERIOD_ARR] ---
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, (uint32_t)(Ta / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, (uint32_t)(Tb / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, (uint32_t)(Tc / PWM_PERIOD_SEC * PWM_PERIOD_ARR));
+
+	// Przeskalowanie [sekundy] → [ticki timera]
+	const float sec_to_arr = (float)PWM_PERIOD_ARR / PWM_PERIOD_SEC;
+
+	uint32_t ccr1 = (uint32_t)(Ta * sec_to_arr);
+	uint32_t ccr2 = (uint32_t)(Tb * sec_to_arr);
+	uint32_t ccr3 = (uint32_t)(Tc * sec_to_arr);
+
+	if (ccr1 > PWM_PERIOD_ARR) ccr1 = PWM_PERIOD_ARR;
+	if (ccr2 > PWM_PERIOD_ARR) ccr2 = PWM_PERIOD_ARR;
+	if (ccr3 > PWM_PERIOD_ARR) ccr3 = PWM_PERIOD_ARR;
+
+	debug_Ta = (uint16_t)ccr1;
+	debug_Tb = (uint16_t)ccr2;
+	debug_Tc = (uint16_t)ccr3;
+
+	__HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, ccr1);
+	__HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, ccr2);
+	__HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, ccr3);
 }
 
 //void SVPWM_Test_Run(float test_freq_hz)
@@ -132,178 +142,180 @@ void SVPWM_Update(float Ualpha, float Ubeta, float Vref) {
 //	SVPWM_Update(Ualpha, Ubeta);
 //}
 
-#define _PI_3          (M_PI / 3.0f)
-#define INV_SQRT3      (0.57735026919f)    // 1/sqrt(3)
-#define SQRT3          (1.73205080757f)
-#define HALF_SQRT3     (0.86602540378f)    // sqrt(3)/2
-
-// Środkowe kierunki sektorów (30°, 90°, 150°, 210°, 270°, 330°)
-static const float cos_mid[6] = {
-    0.86602540378f,   // cos 30°
-    0.0f,             // cos 90°
-   -0.86602540378f,   // cos 150°
-   -0.86602540378f,   // cos 210°
-    0.0f,             // cos 270°
-    0.86602540378f    // cos 330°
-};
-
-static const float sin_mid[6] = {
-    0.5f,             // sin 30°
-    1.0f,             // sin 90°
-    0.5f,             // sin 150°
-   -0.5f,             // sin 210°
-   -1.0f,             // sin 270°
-   -0.5f              // sin 330°
-};
-
-// Granice sektorów: k * 60°
-static const float cos_sec[6] = {
-    1.0f,             // cos 0°
-    0.5f,             // cos 60°
-   -0.5f,             // cos 120°
-   -1.0f,             // cos 180°
-   -0.5f,             // cos 240°
-    0.5f              // cos 300°
-};
-
-static const float sin_sec[6] = {
-    0.0f,             // sin 0°
-    HALF_SQRT3,       // sin 60°
-    HALF_SQRT3,       // sin 120°
-    0.0f,             // sin 180°
-   -HALF_SQRT3,       // sin 240°
-   -HALF_SQRT3        // sin 300°
-};
-
-void SVPWM_Update_Dot(float Ualpha, float Ubeta)
-{
-	float T1, T2, T0; // Czasy włączenia faz (w tickach sekundach)
-    float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
-
-    float Uref_sq = Ualpha * Ualpha + Ubeta * Ubeta;
-    float Uref = sqrtf(Uref_sq);
-
-    // 1. Ograniczenie napięcia: U <= Vdc / sqrt(3
-    const float Umax = VOLTAGE_SUPPLY / M_SQRT3;
-    if (Uref > VOLTAGE_SUPPLY / M_SQRT3) {
-        float scale = Umax / Uref;
-        Ualpha *= scale;
-        Ubeta  *= scale;
-        Uref    = Umax;
-    }
-
-    // Sin i cos kąta wektora (bez atan2)
-    float cos_theta = Ualpha / Uref;
-    float sin_theta = Ubeta  / Uref;
-
-    // Detekcja sektora: wybierz najbliższy wektor środkowy (30°, 90°, ...)
-    int sector = 0;
-    float max_dot = cos_theta * cos_mid[0] + sin_theta * sin_mid[0];
-
-    for (int k = 1; k < 6; ++k) {
-        float dot = cos_theta * cos_mid[k] + sin_theta * sin_mid[k];
-        if (dot > max_dot) {
-            max_dot = dot;
-            sector = k;
-        }
-    }
-    // sector ∈ {0..5}, granice między sektorami są dokładnie co 60°
-
-    //    BEZ ATAN, nie znamy θ_s
-    // --- 4. Wyznaczenie sin(θ_s) i sin(π/3 − θ_s) dla danego sektora
-    // --- Wyznaczenie sin(θ_s) oraz sin(π/3 − θ_s) bez użycia atan2
-    //
-    // θ_s = θ − θ_k           (θ_k = k * 60° – kąt wektora bazowego sektora)
-    //
-    // Z tożsamości: sin(θ − φ) = sinθ·cosφ − cosθ·sinφ
-    //
-    // Dlatego:
-    //   sin(θ_s)          = sinθ*cosθ_k − cosθ*sinθ_k
-    //   sin(π/3 − θ_s)    = sinθ_(k+1)*cosθ − cosθ_(k+1)*sinθ
-    //
-    // Wartości te odpowiadają projekcjom Vref na dwa wektory aktywne
-    // i służą do obliczenia czasów T1 i T2 w SVPWM.
-
-    int k      = sector;
-    int k_next = (sector + 1) % 6;
-
-    float cos_k     = cos_sec[k];
-    float sin_k     = sin_sec[k];
-    float cos_k1    = cos_sec[k_next];
-    float sin_k1    = sin_sec[k_next];
-
-    float sin_theta_s  = sin_theta * cos_k  - cos_theta * sin_k;
-    float sin_pi3_min  = sin_k1   * cos_theta - cos_k1    * sin_theta;
-
-    // Zabezpieczenie przed drobnymi błędami numerycznymi
-    if (sin_theta_s < 0.0f)   sin_theta_s = 0.0f;
-    if (sin_pi3_min < 0.0f)   sin_pi3_min = 0.0f;
-
-    // Współczynnik modulacji m od 0 do 1
-    float m = M_SQRT3 * Uref / VOLTAGE_SUPPLY;
-
-    //  Czasy T1, T2 w sekundach (jak w wersji z atan2)
-    T1 = m * sin_pi3_min * PWM_PERIOD_SEC;
-    T2 = m * sin_theta_s * PWM_PERIOD_SEC;
-
-    // Czas wektora zerowego
-    T0 = PWM_PERIOD_SEC - T1 - T2;
-    float half_T0 = 0.5f * T0;
-
-    // Wyznacz Ta, Tb, Tc (sekundy)
-	switch (sector) {
-		case 0: // Sektor 1 (wektory V1, V2)
-			Ta = T1 + T2 + half_T0;
-			Tb = T2 + half_T0;
-			Tc = half_T0;
-			break;
-		case 1: // Sektor 2 (wektory V2, V3)
-			Ta = T1 + half_T0;
-			Tb = T1 + T2 + T0 / 2.0f;
-			Tc = T0 / 2.0f;
-			break;
-		case 2: // Sektor 3 (wektory V3, V4)
-			Ta = half_T0;
-			Tb = T1 + T2 + half_T0;
-			Tc = T2 + half_T0;
-			break;
-		case 3: // Sektor 4 (wektory V4, V5)
-			Ta = half_T0;
-			Tb = T1 + half_T0;
-			Tc = T1 + T2 + half_T0;
-			break;
-		case 4: // Sektor 5 (wektory V5, V6)
-			Ta = T2 + half_T0;
-			Tb = half_T0;
-			Tc = T1 + T2 + half_T0;
-			break;
-		case 5: // Sektor 6 (wektory V6, V1)
-			Ta = T1 + T2 + half_T0;
-			Tb = half_T0;
-			Tc = T1 + half_T0;
-			break;
-		default: // Powinno się nigdy nie zdarzyć
-			Ta = Tb = Tc = PWM_PERIOD_SEC / 2.0f;
-			break;
-	}
-    // Przeskalowanie [sekundy] → [ticki timera]
-    const float sec_to_arr = (float)PWM_PERIOD_ARR / PWM_PERIOD_SEC;
-
-    uint32_t ccr1 = (uint32_t)(Ta * sec_to_arr);
-    uint32_t ccr2 = (uint32_t)(Tb * sec_to_arr);
-    uint32_t ccr3 = (uint32_t)(Tc * sec_to_arr);
-
-    if (ccr1 > PWM_PERIOD_ARR) ccr1 = PWM_PERIOD_ARR;
-    if (ccr2 > PWM_PERIOD_ARR) ccr2 = PWM_PERIOD_ARR;
-    if (ccr3 > PWM_PERIOD_ARR) ccr3 = PWM_PERIOD_ARR;
-
-    debug_Ta = (uint16_t)ccr1;
-    debug_Tb = (uint16_t)ccr2;
-    debug_Tc = (uint16_t)ccr3;
-
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, ccr1);
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, ccr2);
-    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, ccr3);
-}
-
+// Wersja z iloczynem skalarnymn
+//
+//#define _PI_3          (M_PI / 3.0f)
+//#define INV_SQRT3      (0.57735026919f)    // 1/sqrt(3)
+//#define SQRT3          (1.73205080757f)
+//#define HALF_SQRT3     (0.86602540378f)    // sqrt(3)/2
+//
+//// Środkowe kierunki sektorów (30°, 90°, 150°, 210°, 270°, 330°)
+//static const float cos_mid[6] = {
+//    0.86602540378f,   // cos 30°
+//    0.0f,             // cos 90°
+//   -0.86602540378f,   // cos 150°
+//   -0.86602540378f,   // cos 210°
+//    0.0f,             // cos 270°
+//    0.86602540378f    // cos 330°
+//};
+//
+//static const float sin_mid[6] = {
+//    0.5f,             // sin 30°
+//    1.0f,             // sin 90°
+//    0.5f,             // sin 150°
+//   -0.5f,             // sin 210°
+//   -1.0f,             // sin 270°
+//   -0.5f              // sin 330°
+//};
+//
+//// Granice sektorów: k * 60°
+//static const float cos_sec[6] = {
+//    1.0f,             // cos 0°
+//    0.5f,             // cos 60°
+//   -0.5f,             // cos 120°
+//   -1.0f,             // cos 180°
+//   -0.5f,             // cos 240°
+//    0.5f              // cos 300°
+//};
+//
+//static const float sin_sec[6] = {
+//    0.0f,             // sin 0°
+//    HALF_SQRT3,       // sin 60°
+//    HALF_SQRT3,       // sin 120°
+//    0.0f,             // sin 180°
+//   -HALF_SQRT3,       // sin 240°
+//   -HALF_SQRT3        // sin 300°
+//};
+//
+//void SVPWM_Update_Dot(float Ualpha, float Ubeta)
+//{
+//	float T1, T2, T0; // Czasy włączenia faz (w tickach sekundach)
+//    float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
+//
+//    float Uref_sq = Ualpha * Ualpha + Ubeta * Ubeta;
+//    float Uref = sqrtf(Uref_sq);
+//
+//    // 1. Ograniczenie napięcia: U <= Vdc / sqrt(3
+//    const float Umax = VOLTAGE_SUPPLY / M_SQRT3;
+//    if (Uref > VOLTAGE_SUPPLY / M_SQRT3) {
+//        float scale = Umax / Uref;
+//        Ualpha *= scale;
+//        Ubeta  *= scale;
+//        Uref    = Umax;
+//    }
+//
+//    // Sin i cos kąta wektora (bez atan2)
+//    float cos_theta = Ualpha / Uref;
+//    float sin_theta = Ubeta  / Uref;
+//
+//    // Detekcja sektora: wybierz najbliższy wektor środkowy (30°, 90°, ...)
+//    int sector = 0;
+//    float max_dot = cos_theta * cos_mid[0] + sin_theta * sin_mid[0];
+//
+//    for (int k = 1; k < 6; ++k) {
+//        float dot = cos_theta * cos_mid[k] + sin_theta * sin_mid[k];
+//        if (dot > max_dot) {
+//            max_dot = dot;
+//            sector = k;
+//        }
+//    }
+//    // sector ∈ {0..5}, granice między sektorami są dokładnie co 60°
+//
+//    //    BEZ ATAN, nie znamy θ_s
+//    // --- 4. Wyznaczenie sin(θ_s) i sin(π/3 − θ_s) dla danego sektora
+//    // --- Wyznaczenie sin(θ_s) oraz sin(π/3 − θ_s) bez użycia atan2
+//    //
+//    // θ_s = θ − θ_k           (θ_k = k * 60° – kąt wektora bazowego sektora)
+//    //
+//    // Z tożsamości: sin(θ − φ) = sinθ·cosφ − cosθ·sinφ
+//    //
+//    // Dlatego:
+//    //   sin(θ_s)          = sinθ*cosθ_k − cosθ*sinθ_k
+//    //   sin(π/3 − θ_s)    = sinθ_(k+1)*cosθ − cosθ_(k+1)*sinθ
+//    //
+//    // Wartości te odpowiadają projekcjom Vref na dwa wektory aktywne
+//    // i służą do obliczenia czasów T1 i T2 w SVPWM.
+//
+//    int k      = sector;
+//    int k_next = (sector + 1) % 6;
+//
+//    float cos_k     = cos_sec[k];
+//    float sin_k     = sin_sec[k];
+//    float cos_k1    = cos_sec[k_next];
+//    float sin_k1    = sin_sec[k_next];
+//
+//    float sin_theta_s  = sin_theta * cos_k  - cos_theta * sin_k;
+//    float sin_pi3_min  = sin_k1   * cos_theta - cos_k1    * sin_theta;
+//
+//    // Zabezpieczenie przed drobnymi błędami numerycznymi
+//    if (sin_theta_s < 0.0f)   sin_theta_s = 0.0f;
+//    if (sin_pi3_min < 0.0f)   sin_pi3_min = 0.0f;
+//
+//    // Współczynnik modulacji m od 0 do 1
+//    float m = M_SQRT3 * Uref / VOLTAGE_SUPPLY;
+//
+//    //  Czasy T1, T2 w sekundach (jak w wersji z atan2)
+//    T1 = m * sin_pi3_min * PWM_PERIOD_SEC;
+//    T2 = m * sin_theta_s * PWM_PERIOD_SEC;
+//
+//    // Czas wektora zerowego
+//    T0 = PWM_PERIOD_SEC - T1 - T2;
+//    float half_T0 = 0.5f * T0;
+//
+//    // Wyznacz Ta, Tb, Tc (sekundy)
+//	switch (sector) {
+//		case 0: // Sektor 1 (wektory V1, V2)
+//			Ta = T1 + T2 + half_T0;
+//			Tb = T2 + half_T0;
+//			Tc = half_T0;
+//			break;
+//		case 1: // Sektor 2 (wektory V2, V3)
+//			Ta = T1 + half_T0;
+//			Tb = T1 + T2 + T0 / 2.0f;
+//			Tc = T0 / 2.0f;
+//			break;
+//		case 2: // Sektor 3 (wektory V3, V4)
+//			Ta = half_T0;
+//			Tb = T1 + T2 + half_T0;
+//			Tc = T2 + half_T0;
+//			break;
+//		case 3: // Sektor 4 (wektory V4, V5)
+//			Ta = half_T0;
+//			Tb = T1 + half_T0;
+//			Tc = T1 + T2 + half_T0;
+//			break;
+//		case 4: // Sektor 5 (wektory V5, V6)
+//			Ta = T2 + half_T0;
+//			Tb = half_T0;
+//			Tc = T1 + T2 + half_T0;
+//			break;
+//		case 5: // Sektor 6 (wektory V6, V1)
+//			Ta = T1 + T2 + half_T0;
+//			Tb = half_T0;
+//			Tc = T1 + half_T0;
+//			break;
+//		default: // Powinno się nigdy nie zdarzyć
+//			Ta = Tb = Tc = PWM_PERIOD_SEC / 2.0f;
+//			break;
+//	}
+//    // Przeskalowanie [sekundy] → [ticki timera]
+//    const float sec_to_arr = (float)PWM_PERIOD_ARR / PWM_PERIOD_SEC;
+//
+//    uint32_t ccr1 = (uint32_t)(Ta * sec_to_arr);
+//    uint32_t ccr2 = (uint32_t)(Tb * sec_to_arr);
+//    uint32_t ccr3 = (uint32_t)(Tc * sec_to_arr);
+//
+//    if (ccr1 > PWM_PERIOD_ARR) ccr1 = PWM_PERIOD_ARR;
+//    if (ccr2 > PWM_PERIOD_ARR) ccr2 = PWM_PERIOD_ARR;
+//    if (ccr3 > PWM_PERIOD_ARR) ccr3 = PWM_PERIOD_ARR;
+//
+//    debug_Ta = (uint16_t)ccr1;
+//    debug_Tb = (uint16_t)ccr2;
+//    debug_Tc = (uint16_t)ccr3;
+//
+//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, ccr1);
+//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, ccr2);
+//    __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, ccr3);
+//}
+//
 
