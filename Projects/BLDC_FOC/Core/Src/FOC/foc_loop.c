@@ -24,9 +24,6 @@ static PI_Controller pi_iq = { .kp = PI_KP_IQ, .ki = PI_KI_IQ, .limit = PI_LIMIT
 volatile dq_ref_t i_ref = {0.0f, 0.0f};
 static abc_current_t currents;
 
-// ESTYMATOR PRĘDKOŚCI
-volatile float actual_speed_rpm = 0.0f;
-
 // RAMPA
 static const float iq_step = 0.0001f; // przyrost prądu na 1 krok
 static float iq_ramp_out;
@@ -69,7 +66,7 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 
     monitor_data.id_ref = i_ref.d;
     monitor_data.speed_ref = 0;
-    monitor_data.speed = actual_speed_rpm;
+    monitor_data.speed = estimated_speed_rpm;
 }
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi)
@@ -198,7 +195,7 @@ void FOC_RunLoop()
 		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
 		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
 		// Estymacja predkosci
-		SpeedEstimator_Update(theta_mech_latest_shifed, &actual_speed_rpm);
+		SpeedEstimator_Update(theta_mech_latest_shifed);
 	}
 
 	// Prąd (zapisany przez ADC ISR)

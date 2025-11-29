@@ -121,13 +121,16 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
     {
     	if (__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)) // 10 kHz
 		{
-			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
+//			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_SET);
 
 			CurrentSense_Process_ISR();
 			new_current_data_ready = true;
 			adc_inj_irq_cnt++;
 
-			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
+//			HAL_GPIO_WritePin(ADC_Conv_Flag_GPIO_Port, ADC_Conv_Flag_Pin, GPIO_PIN_RESET);
+
+			ADC_Conv_Flag_GPIO_Port->BSRR = ADC_Conv_Flag_Pin; // GPIO_PIN_SET
+			ADC_Conv_Flag_GPIO_Port->BSRR = (uint32_t)ADC_Conv_Flag_Pin << 16; // GPIO_PIN_RESET
 		}
     }
 }

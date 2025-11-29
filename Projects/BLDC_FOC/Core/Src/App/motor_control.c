@@ -45,7 +45,8 @@ void MotorControl_Run(void)
             break;
 
         case STATE_SPEED_CONTROL:
-        	float iq_cmd = SpeedController_Update(target_speed_rpm);
+        	SpeedController_LinearRamp();
+        	float iq_cmd = SpeedController_Update();
         	FOC_SetIqTarget(iq_cmd);
             break;
 
@@ -78,17 +79,19 @@ void MotorControl_Stop(void) {
 void MotorControl_SetSpeed(float rpm) {
     target_speed_rpm = rpm;
     SpeedController_Reset();
+    SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_SPEED_CONTROL;
 }
 
-void MotorControl_SetTorque(float iq) {
-    target_torque_iq = iq; // Zapisz cel
+void MotorControl_SetTorque(float iq)
+{
+    target_torque_iq = iq;
+    FOC_SetIqTarget_Ramp(iq); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_TORQUE_CONTROL;
-
-    FOC_SetIqTarget_Ramp(iq); // Aktywacja rampy tylko raz
 }
 
-void MotorControl_Reboot(){
+void MotorControl_Reboot()
+{
 	HAL_NVIC_SystemReset();
 }
 
@@ -98,32 +101,31 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 		static bool foc_toggle = false;
 
-		// CNT = ARR → counting DOWN (20 kHz)
-		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim))
+		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim)) // 20kHz
 		{
-			foc_toggle = !foc_toggle;      // dzieli CNT=0 na pół → 10 kHz
+			foc_toggle = !foc_toggle;
 
-			if (foc_toggle)                // FOC = 10 kHz
+			if (foc_toggle)                // Pętla FOC 10 kHz
 			{
-				HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_SET);
+				FOC_Flag_GPIO_Port->BSRR = FOC_Flag_Pin; // GPIO_PIN_SET
 				FOC_RunLoop();
-				HAL_GPIO_WritePin(TIM1_Update_Flag_GPIO_Port, TIM1_Update_Flag_Pin, GPIO_PIN_RESET);
+				FOC_Flag_GPIO_Port->BSRR = (uint32_t)FOC_Flag_Pin << 16; // GPIO_PIN_RESET
 			}
 		}
 	}
-	if (htim->Instance == enc_htim->Instance) // pętla 10 kHz
+	if (htim->Instance == enc_htim->Instance) // Odczyt z enkodera 10 kHz
 	{
         if (spi_ready) {
             spi_ready = false;
-            GPIOC->BSRR = (1U << 9); // PC9
+            SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET
             AS5048_ReadAngleDMA();
         }
 	}
-	if (htim->Instance == ctrl_htim->Instance) // pętla 1 kHz
+	if (htim->Instance == ctrl_htim->Instance) // Pętla regulacji prędkości 1 kHz
 	{
 		MotorControl_Run();
 	}
-	if (htim->Instance == cmd_htim->Instance) // pętla 100 Hz
+	if (htim->Instance == cmd_htim->Instance) // Pętla obsługi wiersza poleceń 100 Hz
 	{
 		Commander_Process();
 	}

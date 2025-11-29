@@ -231,7 +231,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 
 			encoder_prev_ready = true;
 		}
-		GPIOC->BSRR = (1U << (9 + 16));  // GPIO PC9 reset, debug
+		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug
 	}
 }
 

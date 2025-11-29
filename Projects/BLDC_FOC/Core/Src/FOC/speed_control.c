@@ -16,16 +16,21 @@
 
 static float last_angle = 0.0f;
 static float omega_lpf = 0.0f;
-static float speed_rpm = 0.0f;
+volatile float estimated_speed_rpm = 0.0f;
+volatile float speed_ref_rpm = 0.0f;
+
+// RAMPA
+volatile bool speed_ramp_active = false;
+static const float speed_step = 1.0f; // przyrost prędkości na 1 krok przy aktywacji rampy liniowej
+volatile float speed_ramp_out = 0.0f;
 
 static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
 
-void SpeedEstimator_Update(float theta_mech, volatile float *out_rpm)
+void SpeedEstimator_Update(float theta_mech)
 {
     float dtheta = wrap_pi(theta_mech - last_angle);
 
     if (fabsf(dtheta) > MAX_DTHETA_RAD) {
-        *out_rpm = speed_rpm;  // poprzednia wartość
         return;
     }
 
@@ -36,19 +41,55 @@ void SpeedEstimator_Update(float theta_mech, volatile float *out_rpm)
 
     last_angle = theta_mech;
 
-    speed_rpm = omega_lpf * RAD_TO_RPM;
-
-    *out_rpm = speed_rpm;
+    estimated_speed_rpm = omega_lpf * RAD_TO_RPM;
 }
 
-float SpeedController_Update(float speed_ref_rpm)
+float SpeedController_GetReference(void)
 {
-    float speed_now = actual_speed_rpm;
-    float error = speed_ref_rpm - speed_now;
+    return speed_ramp_out;
+}
 
-    float iq_cmd = pi_control(&pi_speed, error);
+float SpeedController_Update()
+{
+    float target = SpeedController_GetReference();
+    float error = target - estimated_speed_rpm;
 
-    return iq_cmd;
+    return pi_control(&pi_speed, error);
+}
+
+void SpeedController_SetTarget_Ramp(float new_target_rpm)
+{
+	speed_ramp_out = estimated_speed_rpm; //start rampy od aktualnej prędkości
+    speed_ref_rpm = new_target_rpm;
+    speed_ramp_active = true;
+}
+
+void SpeedController_LinearRamp()
+{
+    if (!speed_ramp_active){
+    	 return;
+    }
+
+	if (speed_ramp_out < speed_ref_rpm)
+	{
+		speed_ramp_out += speed_step;
+		if (speed_ramp_out > speed_ref_rpm) {
+			speed_ramp_out = speed_ref_rpm;
+			speed_ramp_active = false; // Zakończ rampę
+		}
+	}
+	else if (speed_ramp_out > speed_ref_rpm)
+	{
+		speed_ramp_out -= speed_step;
+		if (speed_ramp_out < speed_ref_rpm) {
+			speed_ramp_out = speed_ref_rpm;
+			speed_ramp_active = false; // Zakończ rampę
+		}
+	}
+	else
+	{
+		speed_ramp_active = false;
+	}
 }
 
 void SpeedController_Reset(void)
