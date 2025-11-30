@@ -1,0 +1,2 @@
+../Core/Src/FOC/svpwm.c:27:6:SVPWM_Init	2
+../Core/Src/FOC/svpwm.c:45:6:SVPWM_Update	12

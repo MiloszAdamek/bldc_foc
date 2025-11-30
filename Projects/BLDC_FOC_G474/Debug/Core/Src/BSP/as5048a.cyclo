@@ -1,0 +1,17 @@
+../Core/Src/BSP/as5048a.c:24:20:AS5048_CS_LOW	1
+../Core/Src/BSP/as5048a.c:25:20:AS5048_CS_HIGH	1
+../Core/Src/BSP/as5048a.c:27:6:AS5048_Init	1
+../Core/Src/BSP/as5048a.c:35:17:AS5048_AddParity	3
+../Core/Src/BSP/as5048a.c:49:13:AS5048_HasError	1
+../Core/Src/BSP/as5048a.c:51:22:AS5048_TransceiveReceive	1
+../Core/Src/BSP/as5048a.c:61:22:AS5048_Transceive	1
+../Core/Src/BSP/as5048a.c:71:22:AS5048_RegRead	5
+../Core/Src/BSP/as5048a.c:97:22:AS5048_RegWrite	5
+../Core/Src/BSP/as5048a.c:124:19:AS5048_GetErrorDetails	1
+../Core/Src/BSP/as5048a.c:149:6:AS5048_GetRawPosition	5
+../Core/Src/BSP/as5048a.c:173:7:AS5048_GetAngleDeg	2
+../Core/Src/BSP/as5048a.c:185:7:AS5048_GetAngleRad	2
+../Core/Src/BSP/as5048a.c:198:6:AS5048_ReadAngleDMA	1
+../Core/Src/BSP/as5048a.c:211:7:AS5048_GetMechanicalAngle	1
+../Core/Src/BSP/as5048a.c:213:7:AS5048_GetMechanicalAngleShifted	1
+../Core/Src/BSP/as5048a.c:216:6:HAL_SPI_TxRxCpltCallback	3
