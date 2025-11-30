@@ -150,6 +150,7 @@ void FOC_Stop()
 
 void FOC_LinearRamp()
 {
+#ifdef ENABLE_RAMP
     if (ramp_active)
     {
         if (iq_ramp_out < i_ref.q)
@@ -173,8 +174,8 @@ void FOC_LinearRamp()
             ramp_active = false;
         }
     }
+#endif
 }
-
 void FOC_RunLoop()
 {
 	if (!new_current_data_ready)
@@ -218,12 +219,17 @@ void FOC_Update(float theta_el)
     float target_iq; // Lokalna zmienna dla celu PI
     float sin_theta, cos_theta;
 
+#ifdef ENABLE_RAMP
 	if (ramp_active) {
 		FOC_LinearRamp();
 		target_iq = iq_ramp_out; // Użyj wyjścia z rampy
 	} else {
 		target_iq = i_ref.q; // Użyj globalnej wartości zadanej
 	}
+#else
+    // Jeśli rampa wyłączona, użyj bezpośrednio wartości zadanej
+    target_iq = i_ref.q;
+#endif
 
     LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
 
@@ -265,18 +271,26 @@ inline float FOC_GetElecticalAngle(float mech)
 
 void FOC_SetIqTarget_Ramp(float new_target)
 {
+#ifdef ENABLE_RAMP
 	i_ref.q = new_target;
     ramp_active = true;
+#else
+    // Jeśli rampa wyłączona, ustaw wartość natychmiast
+    FOC_SetIqTarget(new_target);
+#endif
 }
 
 void FOC_SetIqTarget(float new_target)
 {
 	i_ref.q = new_target;
-	ramp_active = false; // Wymuś wyłączenie rampy
 
-	// Zsynchronizuj stan rampy, aby uniknąć nagłego skoku
+#ifdef ENABLE_RAMP
+	ramp_active = false; // Wymuś wyłączenie rampy
+	// Zsynchronizuj stan rampy, aby uniknąć nagłego skoku przy kolejnym włączeniu
 	iq_ramp_out = new_target;
+#endif
 }
+
 
 void FOC_SetTorqueTarget(float torque_mNm)
 {

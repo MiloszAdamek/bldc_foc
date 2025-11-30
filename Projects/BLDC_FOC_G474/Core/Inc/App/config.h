@@ -12,7 +12,9 @@
 #include <math.h>
 
 #define ENABLE_SERIAL_DEBUGGING
+//#define ENABLE_RAMP
 //#define TEST_MODE
+
 
 /* =========================================================================
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------

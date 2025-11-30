@@ -51,6 +51,8 @@ float SpeedController_GetReference(void)
 
 float SpeedController_Update()
 {
+	SpeedController_LinearRamp();
+
     float target = SpeedController_GetReference();
     float error = target - estimated_speed_rpm;
 

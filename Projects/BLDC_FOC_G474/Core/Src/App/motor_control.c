@@ -45,7 +45,7 @@ void MotorControl_Run(void)
             break;
 
         case STATE_SPEED_CONTROL:
-        	SpeedController_LinearRamp();
+
         	float iq_cmd = SpeedController_Update();
         	FOC_SetIqTarget(iq_cmd);
             break;

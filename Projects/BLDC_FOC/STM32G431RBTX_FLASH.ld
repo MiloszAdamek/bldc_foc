@@ -175,6 +175,17 @@ SECTIONS
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
   } >RAM
+  
+  /* ==================================================================== */
+  /* FIXED SECTION FOR CUBEMONITOR DATA: */
+  
+  .fixed_logs (NOLOAD) :
+  {
+    . = ALIGN(4);
+    *(.fixed_logs_section)
+    . = ALIGN(4);
+  } >RAM
+  
 
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */
   ._user_heap_stack :
