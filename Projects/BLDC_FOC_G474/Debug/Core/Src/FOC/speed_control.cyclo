@@ -1,8 +1,0 @@
-../Core/Inc/FOC/controller_utils.h:29:21:pi_control	3
-../Core/Inc/FOC/controller_utils.h:79:21:wrap_pi	2
-../Core/Src/FOC/speed_control.c:29:6:SpeedEstimator_Update	2
-../Core/Src/FOC/speed_control.c:47:7:SpeedController_GetReference	1
-../Core/Src/FOC/speed_control.c:52:7:SpeedController_Update	1
-../Core/Src/FOC/speed_control.c:60:6:SpeedController_SetTarget_Ramp	1
-../Core/Src/FOC/speed_control.c:67:6:SpeedController_LinearRamp	6
-../Core/Src/FOC/speed_control.c:95:6:SpeedController_Reset	1

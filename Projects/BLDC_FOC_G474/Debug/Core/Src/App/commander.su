@@ -1,4 +1,0 @@
-../Core/Src/App/commander.c:26:6:Commander_Init	16	static
-../Core/Src/App/commander.c:44:6:Commander_Process	8	static
-../Core/Src/App/commander.c:58:13:process_command	40	static
-../Core/Src/App/commander.c:107:6:HAL_UART_RxCpltCallback	16	static

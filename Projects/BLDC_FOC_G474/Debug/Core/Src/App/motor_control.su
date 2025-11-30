@@ -1,8 +1,0 @@
-../Core/Src/App/motor_control.c:26:6:MotorControl_Init	16	static
-../Core/Src/App/motor_control.c:34:6:MotorControl_Run	16	static
-../Core/Src/App/motor_control.c:59:6:MotorControl_Start	8	static
-../Core/Src/App/motor_control.c:74:6:MotorControl_Stop	8	static
-../Core/Src/App/motor_control.c:79:6:MotorControl_SetSpeed	16	static
-../Core/Src/App/motor_control.c:86:6:MotorControl_SetTorque	16	static
-../Core/Src/App/motor_control.c:93:6:MotorControl_Reboot	8	static
-../Core/Src/App/motor_control.c:98:6:HAL_TIM_PeriodElapsedCallback	16	static

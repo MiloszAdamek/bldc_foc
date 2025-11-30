@@ -1,3 +1,0 @@
-../Core/Src/FOC/lut_sin_cos.c:271:7:LUT_Sin	24	static
-../Core/Src/FOC/lut_sin_cos.c:283:7:LUT_Cos	24	static
-../Core/Src/FOC/lut_sin_cos.c:294:6:LUT_SinCos	40	static
