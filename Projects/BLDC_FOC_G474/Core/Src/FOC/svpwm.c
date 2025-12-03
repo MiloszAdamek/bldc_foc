@@ -42,9 +42,19 @@ void SVPWM_Init(TIM_HandleTypeDef *htim)
     HAL_TIM_PWM_Start(svpwm_htim, TIM_CHANNEL_3);
 }
 
-void SVPWM_Update(float Ualpha, float Ubeta, float Vref)
+void SVPWM_Update(float Ualpha, float Ubeta)
 {
     float Ta, Tb, Tc; // Czasy włączenia faz (w tickach timera)
+
+    float Uref = sqrtf(Ualpha * Ualpha + Ubeta * Ubeta);
+    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
+
+    if (Uref > Umax) {
+        float scale = Umax / Uref;
+        Ualpha *= scale;
+        Ubeta  *= scale;
+        Uref = Umax;;
+    }
 
     // Obliczenie kąta i sektora
     float angle = atan2f(Ubeta, Ualpha);
@@ -61,16 +71,16 @@ void SVPWM_Update(float Ualpha, float Ubeta, float Vref)
 
     // Obliczenie czasów T1, T2 (w sekundach)
     // T1 i T2 to czasy trwania sąsiadujących wektorów bazowych.
-    float T1, T2;
+    float T1, T2, T0;
 
     float k = (M_SQRT3 * PWM_PERIOD_SEC) / VOLTAGE_SUPPLY;
-	T1 = Vref * LUT_Sin(_PI_3 - angle_in_sector) * k;
-	T2 = Vref * LUT_Sin(angle_in_sector) * k;
+	T1 = Uref * LUT_Sin(_PI_3 - angle_in_sector) * k;
+	T2 = Uref * LUT_Sin(angle_in_sector) * k;
 
     //  Obliczenie czasów włączenia dla każdej fazy (w sekundach)
     // T0 to czas, przez który używane są wektory zerowe (gdy wszystkie tranzystory
     // są w tym samym stanie). Rozdzielamy go symetrycznie.
-    float T0 = PWM_PERIOD_SEC - T1 - T2;
+    T0 = PWM_PERIOD_SEC - T1 - T2;
 
     switch (sector) {
         case 0: // Sektor 1 (wektory V1, V2)
@@ -132,16 +142,16 @@ void SVPWM_Update(float Ualpha, float Ubeta, float Vref)
 	__HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, ccr3);
 }
 
-//void SVPWM_Test_Run(float test_freq_hz)
-//{
-//	theta += M_TWOPI * test_freq_hz * PWM_PERIOD_SEC;
-//	if (theta > M_TWOPI) theta -= M_TWOPI;
-//
-//	float Ualpha = TEST_VOLTAGE_AMPLITUDE * cosf(theta);
-//	float Ubeta = TEST_VOLTAGE_AMPLITUDE * sinf(theta);
-//
-//	SVPWM_Update(Ualpha, Ubeta);
-//}
+void SVPWM_Test_Run(float test_freq_hz)
+{
+	theta += M_TWOPI * test_freq_hz * PWM_PERIOD_SEC;
+	if (theta > M_TWOPI) theta -= M_TWOPI;
+
+	float Ualpha = TEST_VOLTAGE_AMPLITUDE * LUT_Cos(theta);
+	float Ubeta = TEST_VOLTAGE_AMPLITUDE * LUT_Sin(theta);
+
+	SVPWM_Update(Ualpha, Ubeta);
+}
 
 // Wersja z iloczynem skalarnymn
 //

@@ -23,6 +23,8 @@ extern TIM_HandleTypeDef* foc_htim;
 extern TIM_HandleTypeDef* enc_htim;
 extern ADC_HandleTypeDef* foc_hadc;
 
+extern volatile MonitorData_t monitor_data;
+
 typedef struct {
     float d;
     float q;

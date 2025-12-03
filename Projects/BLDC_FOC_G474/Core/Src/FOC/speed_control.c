@@ -36,8 +36,7 @@ void SpeedEstimator_Update(float theta_mech)
 
     float omega_raw = dtheta / FOC_PERIOD_SEC; // Estymator działa w pętli FOC 10 kHz
 
-    omega_lpf = VELOCITY_ALPHA * omega_lpf +
-               (1.0f - VELOCITY_ALPHA) * omega_raw;
+    omega_lpf = VELOCITY_ALPHA * omega_lpf + (1.0f - VELOCITY_ALPHA) * omega_raw;
 
     last_angle = theta_mech;
 
@@ -49,14 +48,15 @@ float SpeedController_GetReference(void)
     return speed_ramp_out;
 }
 
-float SpeedController_Update()
+void SpeedController_Update()
 {
 	SpeedController_LinearRamp();
 
     float target = SpeedController_GetReference();
     float error = target - estimated_speed_rpm;
 
-    return pi_control(&pi_speed, error);
+    float iq_ref = pi_control(&pi_speed, error);
+    FOC_SetIqTarget(iq_ref);
 }
 
 void SpeedController_SetTarget_Ramp(float new_target_rpm)

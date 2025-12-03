@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 extern volatile float estimated_speed_rpm;
+extern volatile float speed_ramp_out;
 
 void SpeedControl_Init(void);
 
@@ -18,7 +19,7 @@ void SpeedControl_Init(void);
 void SpeedEstimator_Update(float theta_mech);
 
 // Aktualizacja regulatora prędkości (wywoływane w pętli 1 kHz)
-float SpeedController_Update();
+void SpeedController_Update();
 
 void SpeedController_LinearRamp();
 

@@ -56,12 +56,12 @@
  * ----------------  PARAMETRY REGULATORÓW PI  -----------------------------
  * ========================================================================= */
 
-#define PI_KP_ID 3.0f
-#define PI_KI_ID 250.0f
+#define PI_KP_ID 7.0f
+#define PI_KI_ID 600.0f
 #define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_IQ 3.0f
-#define PI_KI_IQ 250.0f
+#define PI_KP_IQ 7.0f
+#define PI_KI_IQ 600.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
 #define PI_KP_V 0.001f

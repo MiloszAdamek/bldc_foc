@@ -46,12 +46,10 @@ void MotorControl_Run(void)
 
         case STATE_SPEED_CONTROL:
 
-        	float iq_cmd = SpeedController_Update();
-        	FOC_SetIqTarget(iq_cmd);
+        	SpeedController_Update();
             break;
 
         case STATE_FAULT:
-            // FOC_Stop() powinno być wywołane przy przejściu do tego stanu
             break;
     }
 }
@@ -66,6 +64,7 @@ void MotorControl_Start(void) {
             FOC_Start(); // Włącz PWM/ADC
             MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
         } else {
+        	FOC_Stop();
             g_motor_state = STATE_FAULT; // Błąd kalibracji
         }
     }
@@ -109,6 +108,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			{
 				FOC_Flag_GPIO_Port->BSRR = FOC_Flag_Pin; // GPIO_PIN_SET
 				FOC_RunLoop();
+
 				FOC_Flag_GPIO_Port->BSRR = (uint32_t)FOC_Flag_Pin << 16; // GPIO_PIN_RESET
 			}
 		}

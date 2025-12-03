@@ -25,8 +25,10 @@ volatile dq_ref_t i_ref = {0.0f, 0.0f};
 static abc_current_t currents;
 
 // RAMPA
-static const float iq_step = 0.0001f; // przyrost prądu na 1 krok
-static float iq_ramp_out;
+#ifdef ENABLE_RAMP
+	static const float iq_step = 0.0001f; // przyrost prądu na 1 krok
+	static float iq_ramp_out;
+#endif
 
 // FLAGI
 volatile bool ramp_active = false;
@@ -65,7 +67,7 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
     monitor_data.theta_mech = theta_mech_latest;
 
     monitor_data.id_ref = i_ref.d;
-    monitor_data.speed_ref = 0;
+    monitor_data.speed_ref = speed_ramp_out;
     monitor_data.speed = estimated_speed_rpm;
 }
 
@@ -243,24 +245,14 @@ void FOC_Update(float theta_el)
     vd = pi_control(&pi_id, i_ref.d - id);
     vq = pi_control(&pi_iq, target_iq - iq);
 
-//    // CubeMonitor log data
+    // CubeMonitor log data
     Log_To_CubeMonitor(id, iq, target_iq);
-
-    float Uref = sqrtf(vd * vd + vq * vq);
-    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
-
-    if (Uref > Umax) {
-        float scale = Umax / Uref;
-        vd *= scale;
-        vq *= scale;
-        Uref *= scale;
-    }
 
     // InvPark
     InvParkTransform(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
 
     // SVPWM
-    SVPWM_Update(valpha, vbeta, Uref);
+    SVPWM_Update(valpha, vbeta);
 }
 
 
