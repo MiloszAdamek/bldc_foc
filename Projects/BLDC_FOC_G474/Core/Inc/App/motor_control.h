@@ -15,12 +15,15 @@ typedef enum {
     STATE_ALIGNMENT,    	// Trwa kalibracja (FOC_AlignSensor)
     STATE_TORQUE_CONTROL, 	// Tryb regulacji momentu
     STATE_SPEED_CONTROL,  	// Tryb regulacji prędkości
+	STATE_POSITION_CONTROL, // Tryb regulacji pozycji
     STATE_FAULT         	// Błąd krytyczny
 } MotorState_t;
 
 extern volatile MotorState_t g_motor_state;
 
-void MotorControl_Init(TIM_HandleTypeDef* control_htim, TIM_HandleTypeDef* commander_htim);
+void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef* position_control_htim, TIM_HandleTypeDef* commander_htim);
+
+void MotorControl_SetPosition(float position);
 
 void MotorControl_SetSpeed(float rpm);
 
@@ -33,5 +36,7 @@ void MotorControl_Start(void);
 void MotorControl_Stop(void);
 
 void MotorControl_Reboot(void);
+
+void MotorControl_SetState(MotorState_t new_state);
 
 #endif /* INC_MOTOR_CONTROL_H_ */

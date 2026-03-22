@@ -65,6 +65,13 @@ static void process_command(char* cmd) {
     char command_char = command_token[0];
 	char* args = strtok(NULL, ""); // Pobierz resztę stringa jako argumenty
 	switch(command_char){
+		case 'P':
+		case 'p': {
+			float position = atof(args);
+			printf("CMD: Set Position -> %.2f deg\r\n", position);
+			MotorControl_SetPosition(position);
+			break;
+		}
 		case 'V':
 		case 'v': {
 			float velocity = atof(args);

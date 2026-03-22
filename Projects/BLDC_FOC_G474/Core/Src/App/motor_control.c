@@ -10,25 +10,30 @@
 #include "App/commander.h"
 #include "FOC/foc_loop.h"
 #include "FOC/speed_control.h"
+#include "FOC/position_control.h"
 #include "BSP/as5048a.h"
 #include "gpio.h"
 
-static TIM_HandleTypeDef* ctrl_htim;
+static TIM_HandleTypeDef* speed_ctrl_htim;
+static TIM_HandleTypeDef* position_ctrl_htim;
 static TIM_HandleTypeDef* cmd_htim;
 
 volatile uint32_t spi_ready_err = 0;
 volatile uint32_t spi_ready_ok = 0;
 
 volatile MotorState_t g_motor_state = STATE_IDLE;
+static float target_position = 0.0f;
 static float target_speed_rpm = 0.0f;
 static float target_torque_iq = 0.0f;
 
-void MotorControl_Init(TIM_HandleTypeDef* control_htim, TIM_HandleTypeDef* commander_htim)
+void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef* position_control_htim, TIM_HandleTypeDef* commander_htim)
 {
-	ctrl_htim = control_htim;
+	speed_ctrl_htim = speed_control_htim;
 	cmd_htim = commander_htim;
-	HAL_TIM_Base_Start_IT(ctrl_htim);
+	HAL_TIM_Base_Start_IT(speed_ctrl_htim);
+//	HAL_TIM_Base_Start_IT(position_control_htim);
 	HAL_TIM_Base_Start_IT(cmd_htim);
+	PositionController_Init(POSITION_UNIT_RAD); //Wybór jednostki w regulatorze pozycji
 	MotorControl_Start();
 }
 
@@ -48,6 +53,9 @@ void MotorControl_Run(void)
         case STATE_SPEED_CONTROL:
         	SpeedController_Update();
             break;
+
+        case STATE_POSITION_CONTROL:
+        	break;
 
         case STATE_FAULT:
             break;
@@ -83,6 +91,17 @@ void MotorControl_Stop(void)
     g_motor_state = STATE_IDLE;
 }
 
+void MotorControl_SetPosition(float position)
+{
+	if (g_motor_state == STATE_IDLE) {
+	    FOC_Start();
+	}
+    target_position = position;
+    PositionController_Reset();
+    PositionController_SetTarget(target_position); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
+    g_motor_state = STATE_POSITION_CONTROL;
+}
+
 void MotorControl_SetSpeed(float rpm)
 {
 	if (g_motor_state == STATE_IDLE) {
@@ -109,6 +128,10 @@ void MotorControl_Reboot()
 	HAL_NVIC_SystemReset();
 }
 
+void MotorControl_SetState(MotorState_t new_state){
+	g_motor_state = new_state;
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == foc_htim->Instance) // 40 kHz update
@@ -128,7 +151,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			}
 		}
 	}
-	if (htim->Instance == enc_htim->Instance) // Odczyt z enkodera 10 kHz
+	else if (htim->Instance == enc_htim->Instance) // Odczyt z enkodera 10 kHz
 	{
         if (spi_ready) {
             spi_ready = false;
@@ -137,11 +160,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             AS5048_ReadAngleDMA();
         }
 	}
-	if (htim->Instance == ctrl_htim->Instance) // Pętla regulacji prędkości 1 kHz
+	else if (htim->Instance == speed_ctrl_htim->Instance) // Pętla regulacji prędkości 1 kHz
 	{
-		MotorControl_Run();
+//		MotorControl_Run();
+		SpeedController_Update(); // TODO: to jest źle, i tak nadpisuje wartość iq
 	}
-	if (htim->Instance == cmd_htim->Instance) // Pętla obsługi wiersza poleceń 100 Hz
+	else if (htim->Instance == position_ctrl_htim->Instance) // Pętla regulacji pozycji 200 Hz
+	{
+//		MotorControl_Run();
+		PositionController_Update();
+	}
+	else if (htim->Instance == cmd_htim->Instance) // Pętla obsługi wiersza poleceń 100 Hz
 	{
 		Commander_Process();
 	}

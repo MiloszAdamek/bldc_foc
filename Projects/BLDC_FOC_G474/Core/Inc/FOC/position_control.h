@@ -10,7 +10,14 @@
 
 #include <stdint.h>
 
-void PositionController_Init(void);
+typedef enum
+{
+    POSITION_UNIT_RAD = 0,
+    POSITION_UNIT_DEG
+} PositionUnit_t;
+
+
+void PositionController_Init(PositionUnit_t unit);
 
 // Aktualizacja regulatora pozycji (wywoływane w pętli 1 kHz)
 void PositionController_Update();
