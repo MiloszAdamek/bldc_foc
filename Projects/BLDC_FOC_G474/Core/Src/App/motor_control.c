@@ -23,7 +23,8 @@ volatile MotorState_t g_motor_state = STATE_IDLE;
 static float target_speed_rpm = 0.0f;
 static float target_torque_iq = 0.0f;
 
-void MotorControl_Init(TIM_HandleTypeDef* control_htim, TIM_HandleTypeDef* commander_htim){
+void MotorControl_Init(TIM_HandleTypeDef* control_htim, TIM_HandleTypeDef* commander_htim)
+{
 	ctrl_htim = control_htim;
 	cmd_htim = commander_htim;
 	HAL_TIM_Base_Start_IT(ctrl_htim);
@@ -45,7 +46,6 @@ void MotorControl_Run(void)
             break;
 
         case STATE_SPEED_CONTROL:
-
         	SpeedController_Update();
             break;
 
@@ -54,28 +54,40 @@ void MotorControl_Run(void)
     }
 }
 
-void MotorControl_Start(void) {
+void MotorControl_Start(void)
+{
     if (g_motor_state == STATE_IDLE) {
         g_motor_state = STATE_ALIGNMENT;
 
         // Uruchom kalibrację
-        if (FOC_AlignSensor())
-        {
-            FOC_Start(); // Włącz PWM/ADC
-            MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
-        } else {
-        	FOC_Stop();
-            g_motor_state = STATE_FAULT; // Błąd kalibracji
+        if(sensor_aligned){
+            if (FOC_AlignSensor())
+            {
+                FOC_Start(); // Włącz PWM/ADC
+                MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
+            } else {
+            	FOC_Stop();
+                g_motor_state = STATE_FAULT; // Błąd kalibracji
+            }
+        }
+        else{
+        	FOC_Start();
+        	MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
         }
     }
 }
 
-void MotorControl_Stop(void) {
+void MotorControl_Stop(void)
+{
     FOC_Stop();
     g_motor_state = STATE_IDLE;
 }
 
-void MotorControl_SetSpeed(float rpm) {
+void MotorControl_SetSpeed(float rpm)
+{
+	if (g_motor_state == STATE_IDLE) {
+	    FOC_Start();
+	}
     target_speed_rpm = rpm;
     SpeedController_Reset();
     SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
@@ -84,6 +96,9 @@ void MotorControl_SetSpeed(float rpm) {
 
 void MotorControl_SetTorque(float iq)
 {
+	if (g_motor_state == STATE_IDLE) {
+	    FOC_Start();
+	}
     target_torque_iq = iq;
     FOC_SetIqTarget_Ramp(iq); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_TORQUE_CONTROL;

@@ -147,7 +147,27 @@ void FOC_Stop()
     HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
 
-    HAL_ADCEx_InjectedStop(foc_hadc);
+    HAL_ADCEx_InjectedStop_IT(foc_hadc);
+
+    new_current_data_ready = false;
+    encoder_prev_ready = false;
+    spi_ready = false;
+
+    ramp_active = false;
+
+#ifdef ENABLE_RAMP
+	iq_ramp_out = i_ref.q;
+#endif
+
+    i_ref.q = 0.0f;
+    i_ref.d = 0.0f;
+
+    pi_id.integral = 0.0f;
+    pi_iq.integral = 0.0f;
+
+    foc_loop_ok = 0;
+    foc_loop_err = 0;
+    err_current = 0;
 }
 
 void FOC_LinearRamp()
