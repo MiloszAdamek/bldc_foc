@@ -29,6 +29,9 @@
 #define SPEED_FREQ_HZ		  1000.0f				// 1kHz - pętla regulatora prędkości
 #define SPEED_PERIOD_SEC      (1.0f / SPEED_FREQ_HZ)
 
+#define POSITION_FREQ_HZ	  1000.0f				// 1kHz - pętla regulatora pozycji
+#define POSITION_PERIOD_SEC   (1.0f / SPEED_FREQ_HZ)
+
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        12.0f
 #define VOLTAGE_LIMIT         10.0f
@@ -68,6 +71,10 @@
 #define PI_KP_V 0.001f
 #define PI_KI_V 0.01f
 #define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
+
+#define PI_KP_P 0.001f
+#define PI_KI_P 0.01f
+#define PI_LIMIT_P 1800.0f
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)
