@@ -1,5 +1,12 @@
-Projects/BLDC_FOC/Debug/
-Projects/BLDC_FOC/.settings/
-Projects/BLDC_FOC_G474/Debug/
-Projects/BLDC_FOC_G474/.settings/
-Projects/.metadata
+# Build / debug
+Debug/
+*/Debug/
+
+# Eclipse / IDE settings
+.settings/
+*/.settings/
+
+# Eclipse workspace metadata
+.metadata/
+
+datasheets/
