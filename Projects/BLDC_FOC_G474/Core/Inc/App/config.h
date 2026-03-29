@@ -26,21 +26,21 @@
 #define FOC_FREQ_HZ      	  10000.0f              // 10 kHz - pętla algorytmu FOC
 #define FOC_PERIOD_SEC        (1.0f / FOC_FREQ_HZ)
 
-#define SPEED_FREQ_HZ		  1000.0f				// 1kHz - pętla regulatora prędkości
+#define SPEED_FREQ_HZ		  1000.0f				// 1 kHz - pętla regulatora prędkości
 #define SPEED_PERIOD_SEC      (1.0f / SPEED_FREQ_HZ)
 
-#define POSITION_FREQ_HZ	  1000.0f				// 1kHz - pętla regulatora pozycji
-#define POSITION_PERIOD_SEC   (1.0f / SPEED_FREQ_HZ)
+#define POSITION_FREQ_HZ	  200.0f				// 200 Hz - pętla regulatora pozycji
+#define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        12.0f
 #define VOLTAGE_LIMIT         10.0f
 
 // Rezystor pomiarowy i wzmocnienie
-#define SHUNT_RESISTOR        0.33f // Ohm
+#define SHUNT_RESISTOR        0.33f      // Ohm
 #define CURRENT_SENSE_GAIN    1.528f
-#define ADC_REF_VOLTAGE   3.3f       // Vref zasilania ADC
-#define ADC_RESOLUTION    4096.0f    // 12-bit ADC
+#define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
+#define ADC_RESOLUTION        4096.0f    // 12-bit ADC
 
 /* =========================================================================
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
@@ -68,13 +68,13 @@
 #define PI_KI_IQ 600.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_V 0.001f
-#define PI_KI_V 0.01f
+#define PI_KP_V 0.02f
+#define PI_KI_V 0.5f
 #define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_P 0.001f
-#define PI_KI_P 0.01f
-#define PI_LIMIT_P 1800.0f
+#define PI_KP_P 2.0f
+#define PI_KI_P 0.05f
+#define PI_LIMIT_P (500.0f * 2.0f * M_PI / 60.0f) // 1000 RPM -> rad/s
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)
@@ -98,6 +98,9 @@ typedef struct {
     float speed_ref;
     float theta_el;
     float theta_mech;
+    float position_ref;
+    float position_err;
+    float position_reg_out;
 } MonitorData_t;
 
 #endif /* MOTOR_CONFIG_H_ */

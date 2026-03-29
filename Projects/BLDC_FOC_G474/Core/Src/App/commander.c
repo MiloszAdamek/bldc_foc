@@ -68,7 +68,7 @@ static void process_command(char* cmd) {
 		case 'P':
 		case 'p': {
 			float position = atof(args);
-			printf("CMD: Set Position -> %.2f deg\r\n", position);
+			printf("CMD: Set Position -> %.2f rad\r\n", position);
 			MotorControl_SetPosition(position);
 			break;
 		}

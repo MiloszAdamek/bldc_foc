@@ -10,12 +10,15 @@
 
 #include <stdint.h>
 
+extern volatile float position_err;
+extern volatile float position_reg_out;
+extern volatile float position_ref;
+
 typedef enum
 {
     POSITION_UNIT_RAD = 0,
     POSITION_UNIT_DEG
 } PositionUnit_t;
-
 
 void PositionController_Init(PositionUnit_t unit);
 

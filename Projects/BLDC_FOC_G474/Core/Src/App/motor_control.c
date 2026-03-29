@@ -26,41 +26,45 @@ static float target_position = 0.0f;
 static float target_speed_rpm = 0.0f;
 static float target_torque_iq = 0.0f;
 
+volatile bool speed_loop_enabled = false;
+volatile bool position_loop_enabled = false;
+
 void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef* position_control_htim, TIM_HandleTypeDef* commander_htim)
 {
 	speed_ctrl_htim = speed_control_htim;
+	position_ctrl_htim = position_control_htim;
 	cmd_htim = commander_htim;
 	HAL_TIM_Base_Start_IT(speed_ctrl_htim);
-//	HAL_TIM_Base_Start_IT(position_control_htim);
+	HAL_TIM_Base_Start_IT(position_ctrl_htim);
 	HAL_TIM_Base_Start_IT(cmd_htim);
 	PositionController_Init(POSITION_UNIT_RAD); //Wybór jednostki w regulatorze pozycji
 	MotorControl_Start();
 }
 
-void MotorControl_Run(void)
-{
-    switch (g_motor_state)
-    {
-        case STATE_IDLE:
-            break;
-
-        case STATE_ALIGNMENT:
-            break;
-
-        case STATE_TORQUE_CONTROL:
-            break;
-
-        case STATE_SPEED_CONTROL:
-        	SpeedController_Update();
-            break;
-
-        case STATE_POSITION_CONTROL:
-        	break;
-
-        case STATE_FAULT:
-            break;
-    }
-}
+//void MotorControl_Run(void)
+//{
+//    switch (g_motor_state)
+//    {
+//        case STATE_IDLE:
+//            break;
+//
+//        case STATE_ALIGNMENT:
+//            break;
+//
+//        case STATE_TORQUE_CONTROL:
+//            break;
+//
+//        case STATE_SPEED_CONTROL:
+//        	SpeedController_Update();
+//            break;
+//
+//        case STATE_POSITION_CONTROL:
+//        	break;
+//
+//        case STATE_FAULT:
+//            break;
+//    }
+//}
 
 void MotorControl_Start(void)
 {
@@ -96,10 +100,13 @@ void MotorControl_SetPosition(float position)
 	if (g_motor_state == STATE_IDLE) {
 	    FOC_Start();
 	}
+    speed_loop_enabled = true;
+    position_loop_enabled = true;
+
     target_position = position;
     PositionController_Reset();
     PositionController_SetTarget(target_position); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
-    g_motor_state = STATE_POSITION_CONTROL;
+    g_motor_state = STATE_RUN;
 }
 
 void MotorControl_SetSpeed(float rpm)
@@ -107,10 +114,14 @@ void MotorControl_SetSpeed(float rpm)
 	if (g_motor_state == STATE_IDLE) {
 	    FOC_Start();
 	}
+    speed_loop_enabled = true;
+    position_loop_enabled = false;
+
     target_speed_rpm = rpm;
     SpeedController_Reset();
-    SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
-    g_motor_state = STATE_SPEED_CONTROL;
+    SpeedController_SetTarget(rpm);
+//    SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
+    g_motor_state = STATE_RUN;
 }
 
 void MotorControl_SetTorque(float iq)
@@ -118,9 +129,12 @@ void MotorControl_SetTorque(float iq)
 	if (g_motor_state == STATE_IDLE) {
 	    FOC_Start();
 	}
+    speed_loop_enabled = false;
+    position_loop_enabled = false;
+
     target_torque_iq = iq;
     FOC_SetIqTarget_Ramp(iq); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
-    g_motor_state = STATE_TORQUE_CONTROL;
+    g_motor_state = STATE_RUN;
 }
 
 void MotorControl_Reboot()
@@ -162,13 +176,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	else if (htim->Instance == speed_ctrl_htim->Instance) // Pętla regulacji prędkości 1 kHz
 	{
-//		MotorControl_Run();
-		SpeedController_Update(); // TODO: to jest źle, i tak nadpisuje wartość iq
+		if (speed_loop_enabled){
+			SpeedEstimator_Update_1khz();
+			SpeedController_Update();
+		}
 	}
 	else if (htim->Instance == position_ctrl_htim->Instance) // Pętla regulacji pozycji 200 Hz
 	{
-//		MotorControl_Run();
-		PositionController_Update();
+		if (position_loop_enabled){
+			PositionController_Update();
+		}
 	}
 	else if (htim->Instance == cmd_htim->Instance) // Pętla obsługi wiersza poleceń 100 Hz
 	{

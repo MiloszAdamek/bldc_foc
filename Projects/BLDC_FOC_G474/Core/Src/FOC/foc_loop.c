@@ -10,6 +10,7 @@
 #include "FOC/foc_loop.h"
 #include "FOC/controller_utils.h"
 #include "FOC/speed_control.h"
+#include "FOC/position_control.h"
 #include "BSP/as5048a.h"
 #include "math.h"
 #include "main.h"
@@ -69,6 +70,11 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
     monitor_data.id_ref = i_ref.d;
     monitor_data.speed_ref = speed_ramp_out;
     monitor_data.speed = estimated_speed_rpm;
+
+    monitor_data.position_err = position_err;
+    monitor_data.position_ref = position_ref;
+    monitor_data.position_reg_out = position_reg_out;
+
 }
 
 void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi)
@@ -215,10 +221,10 @@ void FOC_RunLoop()
 		encoder_prev_ready = false;
 
 		theta_mech_latest = AS5048_GetMechanicalAngle();
-		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
+//		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
 		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
 		// Estymacja predkosci
-		SpeedEstimator_Update(theta_mech_latest_shifed);
+//		SpeedEstimator_Update(theta_mech_latest_shifed);
 	}
 
 	// Prąd (zapisany przez ADC ISR)

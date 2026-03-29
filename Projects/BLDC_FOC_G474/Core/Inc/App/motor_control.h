@@ -14,6 +14,7 @@ typedef enum {
     STATE_IDLE,         	// Czeka na polecenia, PWM wyłączone
     STATE_ALIGNMENT,    	// Trwa kalibracja (FOC_AlignSensor)
     STATE_TORQUE_CONTROL, 	// Tryb regulacji momentu
+	STATE_RUN,
     STATE_SPEED_CONTROL,  	// Tryb regulacji prędkości
 	STATE_POSITION_CONTROL, // Tryb regulacji pozycji
     STATE_FAULT         	// Błąd krytyczny
