@@ -149,8 +149,8 @@ void Kalman_Init(KalmanState *s, KalmanParams *p, float dt){
 	p->H[0][1] = 0.0;
 
 	// Q = diag(q_theta, q_omega)
-	p->Q[0][0] = 1e-4; p->Q[0][1] = 0.0;
-	p->Q[1][0] = 0.0;  p->Q[1][1] = 1e-1;
+	p->Q[0][0] = 1e-8; p->Q[0][1] = 0.0;
+	p->Q[1][0] = 0.0;  p->Q[1][1] = 8e-3;
 
 	// Encoder noise
 	p->R = 5e-5;
