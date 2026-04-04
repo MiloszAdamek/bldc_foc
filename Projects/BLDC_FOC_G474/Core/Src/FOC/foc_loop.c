@@ -13,6 +13,7 @@
 #include "FOC/position_control.h"
 #include "App/config.h"
 #include "BSP/as5048a.h"
+#include "BSP/encoder_hub.h"
 #include "math.h"
 #include "main.h"
 
@@ -69,7 +70,7 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
     monitor_data.theta_mech = theta_mech_latest;
 
 //    monitor_data.id_ref = i_ref.d;
-    monitor_data.speed_ref = speed_ramp_out;
+//    monitor_data.speed_ref = speed_ramp_out;
     monitor_data.speed = SpeedEstimator_GetOmegaRPM();
 //
 //    monitor_data.position_err = position_err;
@@ -206,26 +207,29 @@ void FOC_LinearRamp()
 }
 void FOC_RunLoop()
 {
-	if (!new_current_data_ready)
-	    {
-	        foc_loop_err++;
-	        return;
-	    }
-
+	if (!new_current_data_ready){ foc_loop_err++; return;}
 	new_current_data_ready = false;
 
 	// --- Pętla FOC ---
 
 	// Kąt (zapisany przez SPI DMA)
-	if (encoder_prev_ready){
-		encoder_prev_ready = false;
+	EncoderSample_t enc;
+	if(EncoderHub_ConsumeSample(&enc)){
+		theta_mech_latest = enc.theta_mech;
+		theta_el_latest = FOC_GetElecticalAngle(enc.theta_mech);
 
-		theta_mech_latest = AS5048_GetMechanicalAngle();
-//		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
-		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
-		// Estymacja predkosci
-//		SpeedEstimator_Update(theta_mech_latest_shifed);
+		EncoderHub_PublishAngle(theta_mech_latest, theta_el_latest);
 	}
+
+//	if (encoder_prev_ready){
+//		encoder_prev_ready = false;
+//
+//		theta_mech_latest = AS5048_GetMechanicalAngle();
+////		theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
+//		theta_el_latest = FOC_GetElecticalAngle(theta_mech_latest);
+//		// Estymacja predkosci
+////		SpeedEstimator_Update(theta_mech_latest_shifed);
+//	}
 
 	// Prąd (zapisany przez ADC ISR)
 	CurrentSense_CalculatePhases();

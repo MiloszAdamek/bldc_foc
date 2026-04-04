@@ -30,7 +30,7 @@
 
 #define AS5048_RESOLUTION   16384
 
-# define AS5048_DECIMATION	4 // 14 bit -> 12 bit
+#define AS5048_DECIMATION	4 	    // 14 bit -> 12 bit
 
 extern volatile bool spi_ready;
 extern volatile bool new_encoder_data_ready;
@@ -58,15 +58,9 @@ typedef struct {
     AS5048_ErrorFlags errorFlags;
 } AS5048_ReadResult;
 
-extern volatile AS5048_ReadResult raw_angle;
-//extern volatile bool g_spi_ready;
-//extern volatile bool g_new_encoder_data_ready;
-
 AS5048_ErrorFlags AS5048_GetErrorDetails(void);
 
 void AS5048_GetRawPosition(void);
-
-extern float el_from_mech(float mech);
 
 float AS5048_GetAngleDeg(void);
 

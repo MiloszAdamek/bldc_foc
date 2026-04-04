@@ -43,31 +43,6 @@ void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef*
 	MotorControl_Start();
 }
 
-//void MotorControl_Run(void)
-//{
-//    switch (g_motor_state)
-//    {
-//        case STATE_IDLE:
-//            break;
-//
-//        case STATE_ALIGNMENT:
-//            break;
-//
-//        case STATE_TORQUE_CONTROL:
-//            break;
-//
-//        case STATE_SPEED_CONTROL:
-//        	SpeedController_Update();
-//            break;
-//
-//        case STATE_POSITION_CONTROL:
-//        	break;
-//
-//        case STATE_FAULT:
-//            break;
-//    }
-//}
-
 void MotorControl_Start(void)
 {
     if (g_motor_state == STATE_IDLE) {
@@ -150,52 +125,56 @@ void MotorControl_SetState(MotorState_t new_state){
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Instance == foc_htim->Instance) // 40 kHz update
+	/* FOC 10 kHz - priority 0 */
+	if (htim->Instance == foc_htim->Instance) // 40 kHz
 	{
 		static bool foc_toggle = false;
-
 		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim)) // 20kHz
 		{
 			foc_toggle = !foc_toggle;
-
-			if (foc_toggle)                // Pętla FOC 10 kHz
-			{
-				// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
-				FOC_Flag_GPIO_Port->BSRR = FOC_Flag_Pin; // GPIO_PIN_SET
+			if (foc_toggle){ // Loop FOC 10 kHz
+				// FOC_Flag_GPIO_Port->BSRR = FOC_Flag_Pin; // GPIO_PIN_SET
 				FOC_RunLoop();
-				FOC_Flag_GPIO_Port->BSRR = (uint32_t)FOC_Flag_Pin << 16; // GPIO_PIN_RESET
+				// FOC_Flag_GPIO_Port->BSRR = (uint32_t)FOC_Flag_Pin << 16; // GPIO_PIN_RESET
 			}
 		}
+		return;
 	}
-	else if (htim->Instance == enc_htim->Instance) // Odczyt z enkodera 10 kHz
+
+	/* Encoder SPI 10 kHz - priority 1 */
+	else if (htim->Instance == enc_htim->Instance)
 	{
         if (spi_ready) {
-            spi_ready = false;
-            // Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
-            SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET
+            // SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET
             AS5048_ReadAngleDMA();
+            /* CS_HIGH and spi_ready=true in DMA callback */
         }
+        return;
 	}
-	else if (htim->Instance == speed_ctrl_htim->Instance) // Pętla regulacji prędkości 1 kHz
+
+	/* Speed 1 kHz - priority 2 */
+	else if (htim->Instance == speed_ctrl_htim->Instance)
 	{
-//		SpeedEstimator_Update_1khz();
-//		SpeedEstimator_Update();
-		float theta;
-		if (AS5048_TryGetMechanicalAngle(&theta)) {
-		    SpeedEstimator_Update(theta);
-		}
-		if (speed_loop_enabled){
-			SpeedController_Update();
-		}
+        SpeedEstimator_Update();          /* Prediction or corection */
+        if (speed_loop_enabled){
+        	SpeedController_Update();
+        }
+        return;
 	}
-	else if (htim->Instance == position_ctrl_htim->Instance) // Pętla regulacji pozycji 200 Hz
+
+	/* Position 200 Hz - priority 3 */
+	else if (htim->Instance == position_ctrl_htim->Instance)
 	{
 		if (position_loop_enabled){
 			PositionController_Update();
 		}
+		return;
 	}
-	else if (htim->Instance == cmd_htim->Instance) // Pętla obsługi wiersza poleceń 100 Hz
+
+	/* Commander CLI 100 Hz - priority 4 */
+	else if (htim->Instance == cmd_htim->Instance)
 	{
 		Commander_Process();
+		return;
 	}
 }
