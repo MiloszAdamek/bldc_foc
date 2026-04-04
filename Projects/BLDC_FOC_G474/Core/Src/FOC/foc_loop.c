@@ -6,11 +6,12 @@
  */
 
 #include <FOC/lut_sincos.h>
-#include "App/config.h"
 #include "FOC/foc_loop.h"
 #include "FOC/controller_utils.h"
 #include "FOC/speed_control.h"
+#include "FOC/speed_estimator.h"
 #include "FOC/position_control.h"
+#include "App/config.h"
 #include "BSP/as5048a.h"
 #include "math.h"
 #include "main.h"
@@ -56,24 +57,24 @@ volatile uint32_t err_current = 0;
 
 static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 {
-    monitor_data.current_a = currents.a;
-    monitor_data.current_b = currents.b;
-    monitor_data.current_c = currents.c;
+//    monitor_data.current_a = currents.a;
+//    monitor_data.current_b = currents.b;
+//    monitor_data.current_c = currents.c;
+//
+//    monitor_data.id = id;
+//    monitor_data.iq = iq;
+//    monitor_data.iq_ref = target_iq;
 
-    monitor_data.id = id;
-    monitor_data.iq = iq;
-    monitor_data.iq_ref = target_iq;
-
-    monitor_data.theta_el = theta_el_latest;
+//    monitor_data.theta_el = theta_el_latest;
     monitor_data.theta_mech = theta_mech_latest;
 
-    monitor_data.id_ref = i_ref.d;
+//    monitor_data.id_ref = i_ref.d;
     monitor_data.speed_ref = speed_ramp_out;
-    monitor_data.speed = estimated_speed_rpm;
-
-    monitor_data.position_err = position_err;
-    monitor_data.position_ref = position_ref;
-    monitor_data.position_reg_out = position_reg_out;
+    monitor_data.speed = SpeedEstimator_GetOmegaRPM();
+//
+//    monitor_data.position_err = position_err;
+//    monitor_data.position_ref = position_ref;
+//    monitor_data.position_reg_out = position_reg_out;
 
 }
 
@@ -129,7 +130,6 @@ void FOC_Start(){
 
 	// Pobranie danych przed uruchomieniem pętli FOC
 	new_current_data_ready = false;
-	new_encoder_data_ready = false;
     spi_ready = true;
 
     err_current = 0;

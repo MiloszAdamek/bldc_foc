@@ -10,6 +10,7 @@
 #include "App/commander.h"
 #include "FOC/foc_loop.h"
 #include "FOC/speed_control.h"
+#include "FOC/speed_estimator.h"
 #include "FOC/position_control.h"
 #include "BSP/as5048a.h"
 #include "gpio.h"
@@ -37,7 +38,8 @@ void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef*
 	HAL_TIM_Base_Start_IT(speed_ctrl_htim);
 	HAL_TIM_Base_Start_IT(position_ctrl_htim);
 	HAL_TIM_Base_Start_IT(cmd_htim);
-	PositionController_Init(POSITION_UNIT_RAD); //Wybór jednostki w regulatorze pozycji
+	PositionController_Init(POSITION_UNIT_RAD); // Wybór jednostki w regulatorze pozycji
+	SpeedEstimator_Init(SPEED_PERIOD_SEC);
 	MotorControl_Start();
 }
 
@@ -176,8 +178,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	else if (htim->Instance == speed_ctrl_htim->Instance) // Pętla regulacji prędkości 1 kHz
 	{
+//		SpeedEstimator_Update_1khz();
+//		SpeedEstimator_Update();
+		float theta;
+		if (AS5048_TryGetMechanicalAngle(&theta)) {
+		    SpeedEstimator_Update(theta);
+		}
 		if (speed_loop_enabled){
-			SpeedEstimator_Update_1khz();
 			SpeedController_Update();
 		}
 	}

@@ -21,10 +21,10 @@ typedef enum {
 
 void SpeedControl_Init(void);
 
-// Aktualizacja estymatora prędkości, pętla 10 kHz
-void SpeedEstimator_Update(float theta_mech);
-
-void SpeedEstimator_Update_1khz();
+//// Aktualizacja estymatora prędkości, pętla 10 kHz
+//void SpeedEstimator_Update(float theta_mech);
+//
+//void SpeedEstimator_Update_1khz();
 
 // Aktualizacja regulatora prędkości (wywoływane w pętli 1 kHz)
 void SpeedController_Update();

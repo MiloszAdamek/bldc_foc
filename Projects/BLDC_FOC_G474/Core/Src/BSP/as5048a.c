@@ -208,6 +208,16 @@ void AS5048_ReadAngleDMA(void)
 	HAL_SPI_TransmitReceive_DMA(as5048_hspi, spi_tx_buf, spi_rx_buf, 2);
 }
 
+bool AS5048_TryGetMechanicalAngle(float *theta_rad)
+{
+    if (!new_encoder_data_ready) return false;
+    if (raw_angle.status != AS5048_OK) return false;
+
+    new_encoder_data_ready = false; // „konsumujesz” próbkę
+    *theta_rad = (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;
+    return true;
+}
+
 float AS5048_GetMechanicalAngle(void) {return (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;}
 
 float AS5048_GetMechanicalAngleShifted(void) {return ((float)raw_angle.shifted_pos / (AS5048_RESOLUTION >> AS5048_DECIMATION)) * M_TWOPI;}
@@ -218,8 +228,10 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 	if (hspi == as5048_hspi)
 	{
 		AS5048_CS_HIGH();
+
 		uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
-		spi_ready = true;
+
+//		spi_ready = true;
 
 		if (frame & AS_ERROR_BIT) {
 //			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
@@ -229,11 +241,12 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
 			raw_angle.status = AS5048_OK;
 
+			new_encoder_data_ready = true;
 			encoder_prev_ready = true;
 		}
 
-		// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
-		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug
+		spi_ready = true;
+//		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug
 	}
 }
 

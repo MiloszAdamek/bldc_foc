@@ -59,8 +59,8 @@ typedef struct {
 } AS5048_ReadResult;
 
 extern volatile AS5048_ReadResult raw_angle;
-extern volatile bool g_spi_ready;
-extern volatile bool g_new_encoder_data_ready;
+//extern volatile bool g_spi_ready;
+//extern volatile bool g_new_encoder_data_ready;
 
 AS5048_ErrorFlags AS5048_GetErrorDetails(void);
 
@@ -75,6 +75,8 @@ float AS5048_GetAngleRad(void);
 void AS5048_Diagnose(void);
 
 void AS5048_ReadAngleDMA(void);
+
+bool AS5048_TryGetMechanicalAngle(float *theta_rad);
 
 float AS5048_GetMechanicalAngle(void);
 
