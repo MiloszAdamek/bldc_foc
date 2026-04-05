@@ -14,13 +14,12 @@
 static SPI_HandleTypeDef* s_hspi;
 
 volatile bool spi_ready = false;
+volatile bool theta_ready = false;
 
 static uint8_t s_tx[2];
 static uint8_t s_rx[2];
 
 volatile AS5048_ReadResult raw_angle;
-
-volatile bool new_encoder_data_ready = false;
 
 static inline void CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
 static inline void CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
@@ -220,10 +219,10 @@ void AS5048_ReadAngleDMA(void)
 
 bool AS5048_TryGetMechanicalAngle(float *theta_rad)
 {
-    if (!new_encoder_data_ready) return false;
+    if (!theta_ready) return false;
     if (raw_angle.status != AS5048_OK) return false;
 
-    new_encoder_data_ready = false; // „konsumujesz” próbkę
+    theta_ready = false; // „konsumujesz” próbkę
     *theta_rad = (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;
     return true;
 }
@@ -254,7 +253,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 //			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
 //			raw_angle.status = AS5048_OK;
 //
-//			new_encoder_data_ready = true;
+//			theta_ready = true;
 //			encoder_prev_ready = true;
 //		}
 

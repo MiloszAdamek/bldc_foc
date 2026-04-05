@@ -13,9 +13,9 @@
 
 static ADC_HandleTypeDef *s_hadc;
 
-static uint16_t adc_raw_phase_a = 0;
-static uint16_t adc_raw_phase_b = 0;
-static uint16_t adc_raw_phase_c = 0;
+static volatile uint16_t adc_raw_phase_a = 0;
+static volatile uint16_t adc_raw_phase_b = 0;
+static volatile uint16_t adc_raw_phase_c = 0;
 
 static float current_a = 0.0f;
 static float current_b = 0.0f;
@@ -112,10 +112,10 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == ADC1) // 20 kHz
     {
-    	if (__HAL_TIM_IS_TIM_COUNTING_DOWN(foc_htim)) // 10 kHz
+    	if (__HAL_TIM_IS_TIM_COUNTING_DOWN(FOC_GetPwmTimer())) // 10 kHz
 		{
 			CurrentSense_Process_ISR();
-			new_current_data_ready = true;
+			currents_ready = true;
 
 			// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
 //			ADC_Conv_Flag_GPIO_Port->BSRR = ADC_Conv_Flag_Pin; // GPIO_PIN_SET

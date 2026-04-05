@@ -49,20 +49,32 @@ void MotorControl_Start(void)
         g_motor_state = STATE_ALIGNMENT;
 
         // Uruchom kalibrację
-        if(sensor_aligned){
-            if (FOC_AlignSensor())
-            {
-                FOC_Start(); // Włącz PWM/ADC
-                MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
-            } else {
-            	FOC_Stop();
-                g_motor_state = STATE_FAULT; // Błąd kalibracji
+
+        if (!FOC_IsSensorAligned()) {
+            if (!FOC_AlignSensor()) {
+                FOC_Stop();
+                g_motor_state = STATE_FAULT;
+                return;
             }
         }
-        else{
-        	FOC_Start();
-        	MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
-        }
+
+        FOC_Start();
+        MotorControl_SetTorque(0.0f);
+
+//        if(sensor_aligned){
+//            if (FOC_AlignSensor())
+//            {
+//                FOC_Start(); // Włącz PWM/ADC
+//                MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
+//            } else {
+//            	FOC_Stop();
+//                g_motor_state = STATE_FAULT; // Błąd kalibracji
+//            }
+//        }
+//        else{
+//        	FOC_Start();
+//        	MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
+//        }
     }
 }
 
@@ -126,7 +138,7 @@ void MotorControl_SetState(MotorState_t new_state){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	/* FOC 10 kHz - priority 0 */
-	if (htim->Instance == foc_htim->Instance) // 40 kHz
+	if (htim->Instance == FOC_GetPwmTimer()->Instance) // 40 kHz
 	{
 		static bool foc_toggle = false;
 		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim)) // 20kHz
@@ -142,7 +154,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 
 	/* Encoder SPI 10 kHz - priority 1 */
-	else if (htim->Instance == enc_htim->Instance)
+	else if (htim->Instance == FOC_GetEncTimer()->Instance)
 	{
         if (spi_ready) {
             // SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET

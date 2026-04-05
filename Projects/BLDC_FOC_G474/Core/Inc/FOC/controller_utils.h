@@ -16,6 +16,7 @@
 #define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
 #define ONE_OVER_TWO_PI (1.0f / (2 * M_TWOPI))
 #define _SQRT3_2 		(M_SQRT3 / 2.0f)
+#define _3PI_2 4.71238898038f
 
 // Parametry regulatorów PI
 typedef struct {
