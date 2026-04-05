@@ -1,0 +1,93 @@
+/*
+ * motor_config.h
+ *
+ *  Created on: Nov 7, 2025
+ *      Author: Miloush
+ */
+
+#ifndef MOTOR_CONFIG_H_
+#define MOTOR_CONFIG_H_
+
+#include "stm32g4xx_hal.h"
+#include <math.h>
+
+#define ENABLE_SERIAL_DEBUGGING
+//#define TEST_MODE
+
+/* =========================================================================
+ * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
+ * ========================================================================= */
+
+#define PWM_FREQ_HZ			  20000.0f				// 20 kHz - PWM
+#define PWM_PERIOD_SEC		  (1.0f / PWM_FREQ_HZ)
+#define PWM_PERIOD_ARR        4249
+
+#define FOC_FREQ_HZ      	  10000.0f              // 10 kHz - pętla algorytmu FOC
+#define FOC_PERIOD_SEC        (1.0f / FOC_FREQ_HZ)
+
+#define SPEED_FREQ_HZ		  1000.0f				// 1kHz - pętla regulatora prędkości
+#define SPEED_PERIOD_SEC      (1.0f / SPEED_FREQ_HZ)
+
+// Napięcie zasilania i limity napięcia dla FOC
+#define VOLTAGE_SUPPLY        12.0f
+#define VOLTAGE_LIMIT         10.0f
+
+// Rezystor pomiarowy i wzmocnienie
+#define SHUNT_RESISTOR        0.33f // Ohm
+#define CURRENT_SENSE_GAIN    1.528f
+
+/* =========================================================================
+ * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
+ * ========================================================================= */
+
+#define MOTOR_POLE_PAIRS      	7           // liczba par biegunów silnika
+#define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
+#define MOTOR_VELOCITY_CONSTANT 168		    // Kv
+
+#define VOLTAGE_SENSOR_ALIGN  	4.0f
+#define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
+
+#define SENSOR_DIRECTION_CW   1
+#define SENSOR_DIRECTION_CCW -1
+
+/* =========================================================================
+ * ----------------  PARAMETRY REGULATORÓW PI  -----------------------------
+ * ========================================================================= */
+
+#define PI_KP_ID 3.0f
+#define PI_KI_ID 250.0f
+#define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
+
+#define PI_KP_IQ 3.0f
+#define PI_KI_IQ 250.0f
+#define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
+
+#define PI_KP_V 0.001f
+#define PI_KI_V 0.01f
+#define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
+
+#ifdef ENABLE_SERIAL_DEBUGGING
+    #define LOG(format, ...) printf(format, ##__VA_ARGS__)
+#else
+    #define LOG(format, ...) do {} while (0)
+#endif
+
+/* =========================================================================
+ * ----------------  DEBUG I LOGOWANIE DANYCH  -----------------------------
+ * ========================================================================= */
+
+typedef struct {
+    float current_a;
+    float current_b;
+    float current_c;
+    float iq;
+    float iq_ref;
+    float id;
+    float id_ref;
+    float speed;
+    float speed_ref;
+    float theta_el;
+    float theta_mech;
+} MonitorData_t;
+
+#endif /* MOTOR_CONFIG_H_ */

@@ -1,0 +1,26 @@
+/*
+ * svpwm.h
+ *
+ *  Created on: Mar 30, 2025
+ *      Author: Miloush
+ */
+
+#ifndef INC_SVPWM_H_
+#define INC_SVPWM_H_
+
+#include "main.h"
+#include "stm32g4xx.h"
+
+extern volatile uint16_t debug_Ta;
+extern volatile uint16_t debug_Tb;
+extern volatile uint16_t debug_Tc;
+
+void SVPWM_Update(float Valpha, float Vbeta, float Vref);
+
+void SVPWM_Update_Dot(float Valpha, float Vbeta);
+
+void SVPWM_Init();
+
+void SVPWM_Test_Run(float freq);
+
+#endif /* INC_SVPWM_H_ */
