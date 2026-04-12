@@ -119,9 +119,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  FOC_Init(&hadc1, &htim1, &htim4, &hspi3);
-  Commander_Init(&huart2);
-  MotorControl_Init(&htim2, &htim5, &htim3);
+//  FOC_Init(&hadc1, &htim1, &htim4, &hspi3);
+//  Commander_Init(&huart2);
+//  MotorControl_Init(&htim2, &htim5, &htim3);
   /* USER CODE END 2 */
 
   /* Infinite loop */

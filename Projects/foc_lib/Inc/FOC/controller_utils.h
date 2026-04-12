@@ -11,11 +11,13 @@
 #include "stm32g4xx_hal.h"
 #include <math.h>
 #include <stdint.h>
+#include "tim.h"
 #include "App/config.h"
 
 #define ONE_OVER_SQRT_3 (1.0f / M_SQRT3)
 #define ONE_OVER_TWO_PI (1.0f / (2 * M_TWOPI))
 #define _SQRT3_2 		(M_SQRT3 / 2.0f)
+#define _3PI_2 4.71238898038f
 
 // Parametry regulatorów PI
 typedef struct {
@@ -25,6 +27,12 @@ typedef struct {
     float limit;
     float dt;
 } PI_Controller;
+
+void start_pwm(TIM_HandleTypeDef *htim);
+void stop_pwm(TIM_HandleTypeDef *htim);
+void enable_driver(void);
+void disable_driver(void);
+
 
 static inline float pi_control(PI_Controller *pi, float error){
 

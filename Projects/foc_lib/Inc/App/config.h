@@ -11,6 +11,8 @@
 #include "stm32g4xx_hal.h"
 #include <math.h>
 
+//#define MODE_3PWM
+
 #define ENABLE_SERIAL_DEBUGGING
 //#define ENABLE_RAMP
 //#define TEST_MODE
@@ -18,9 +20,6 @@
 /* =========================================================================
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
  * ========================================================================= */
-
-//#define MODE_3PWM
-#define MODE_6PWM
 
 #define PWM_FREQ_HZ			  20000.0f				// 20 kHz - PWM
 #define PWM_PERIOD_SEC		  (1.0f / PWM_FREQ_HZ)
@@ -63,21 +62,21 @@
  * ----------------  PARAMETRY REGULATORÓW PI  -----------------------------
  * ========================================================================= */
 
-#define PI_KP_ID 7.0f
-#define PI_KI_ID 600.0f
+#define PI_KP_ID 3.0f
+#define PI_KI_ID 300.0f
 #define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_IQ 7.0f
-#define PI_KI_IQ 600.0f
+#define PI_KP_IQ 3.0f
+#define PI_KI_IQ 300.0f
 #define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_V 0.01f
-#define PI_KI_V 0.3f
-#define PI_LIMIT_V 0.3f * (VOLTAGE_SUPPLY / M_SQRT3)
+#define PI_KP_V 0.003f
+#define PI_KI_V 0.005f
+#define PI_LIMIT_V 0.4f * (VOLTAGE_SUPPLY / M_SQRT3)
 
-#define PI_KP_P 2.0f
-#define PI_KI_P 0.05f
-#define PI_LIMIT_P (500.0f * 2.0f * M_PI / 60.0f) // 1000 RPM -> rad/s
+#define PI_KP_P 10.0f
+#define PI_KI_P 2.0f
+#define PI_LIMIT_P (1000.0f * 2.0f * M_PI / 60.0f) // 500 RPM -> rad/s
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)

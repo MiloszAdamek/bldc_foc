@@ -6,29 +6,32 @@
  */
 
 #include "BSP/as5048a.h"
+#include "BSP/encoder_hub.h"
 #include "App/config.h"
 #include "FOC/foc_loop.h"
 #include <stdio.h>
 
-static SPI_HandleTypeDef* as5048_hspi;
+static SPI_HandleTypeDef* s_hspi;
 
 volatile bool spi_ready = false;
+volatile bool theta_ready = false;
 
-static uint8_t spi_tx_buf[2];
-static uint8_t spi_rx_buf[2];
+static uint8_t s_tx[2];
+static uint8_t s_rx[2];
 
 volatile AS5048_ReadResult raw_angle;
 
-volatile bool new_encoder_data_ready = false;
-
-static inline void AS5048_CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
-static inline void AS5048_CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
+static inline void CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
+static inline void CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
 
 void AS5048_Init(SPI_HandleTypeDef *hspi)
 {
-	as5048_hspi = hspi;
+	s_hspi = hspi;
 	DWT_Init();
-	AS5048_CS_HIGH();
+	EncoderHub_Init();
+
+	CS_HIGH();
+
 	spi_ready = true;
 }
 
@@ -50,20 +53,26 @@ static bool AS5048_HasError(uint16_t response) {return (response & AS_ERROR_BIT)
 
 static AS5048_Status AS5048_TransceiveReceive(const uint8_t *tx, uint8_t *rx)
 {
-    AS5048_CS_LOW();
+    CS_LOW();
+
     delay_us(AS_US_DELAY/2);
-    HAL_StatusTypeDef result = HAL_SPI_TransmitReceive(as5048_hspi, tx, rx, 2, HAL_MAX_DELAY);
-    AS5048_CS_HIGH();
+    HAL_StatusTypeDef result = HAL_SPI_TransmitReceive(s_hspi, tx, rx, 2, HAL_MAX_DELAY);
+
+    CS_HIGH();
+
     delay_us(AS_US_DELAY);
     return (result == HAL_OK) ? AS5048_OK : AS5048_ERR_SPI;
 }
 
 static AS5048_Status AS5048_Transceive(const uint8_t *tx)
 {
-    AS5048_CS_LOW();
+    CS_LOW();
+
     delay_us(AS_US_DELAY/2);
-    HAL_StatusTypeDef result = HAL_SPI_Transmit(as5048_hspi, tx, 2, HAL_MAX_DELAY);
-    AS5048_CS_HIGH();
+    HAL_StatusTypeDef result = HAL_SPI_Transmit(s_hspi, tx, 2, HAL_MAX_DELAY);
+
+    CS_HIGH();
+
     delay_us(AS_US_DELAY);
     return (result == HAL_OK) ? AS5048_OK : AS5048_ERR_SPI;
 }
@@ -201,11 +210,21 @@ void AS5048_ReadAngleDMA(void)
 	uint16_t cmd = AS_READ | AS_ANGLE;
 	cmd  = AS5048_AddParity(cmd);
 
-	spi_tx_buf[0] = (uint8_t)(cmd >> 8);
-	spi_tx_buf[1] = (uint8_t)(cmd & 0xFF);
+	s_tx[0] = (uint8_t)(cmd >> 8);
+	s_tx[1] = (uint8_t)(cmd & 0xFF);
 
-	AS5048_CS_LOW();
-	HAL_SPI_TransmitReceive_DMA(as5048_hspi, spi_tx_buf, spi_rx_buf, 2);
+	CS_LOW();
+	HAL_SPI_TransmitReceive_DMA(s_hspi, s_tx, s_rx, 2);
+}
+
+bool AS5048_TryGetMechanicalAngle(float *theta_rad)
+{
+    if (!theta_ready) return false;
+    if (raw_angle.status != AS5048_OK) return false;
+
+    theta_ready = false; // „konsumujesz” próbkę
+    *theta_rad = (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;
+    return true;
 }
 
 float AS5048_GetMechanicalAngle(void) {return (float)raw_angle.position / AS5048_RESOLUTION * M_TWOPI;}
@@ -215,25 +234,31 @@ float AS5048_GetMechanicalAngleShifted(void) {return ((float)raw_angle.shifted_p
 // Callback wywoływany po zakończeniu transmisji po DMA
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-	if (hspi == as5048_hspi)
+	if (hspi == s_hspi)
 	{
-		AS5048_CS_HIGH();
-		uint16_t frame = ((uint16_t)spi_rx_buf[0] << 8) | spi_rx_buf[1];
+		CS_HIGH();
+
+		EncoderHub_OnDmaComplete(s_rx);
+
+
+//		uint16_t frame = ((uint16_t)s_rx[0] << 8) | s_rx[1];
+//
+////		spi_ready = true;
+//
+//		if (frame & AS_ERROR_BIT) {
+////			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
+//			raw_angle.status = AS5048_ERR_FLAG;
+//		} else {
+//			raw_angle.position = frame & AS_ANGLE;
+//			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
+//			raw_angle.status = AS5048_OK;
+//
+//			theta_ready = true;
+//			encoder_prev_ready = true;
+//		}
+
 		spi_ready = true;
-
-		if (frame & AS_ERROR_BIT) {
-//			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
-			raw_angle.status = AS5048_ERR_FLAG;
-		} else {
-			raw_angle.position = frame & AS_ANGLE;
-			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
-			raw_angle.status = AS5048_OK;
-
-			encoder_prev_ready = true;
-		}
-
-		// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
-		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug
+//		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug
 	}
 }
 

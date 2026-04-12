@@ -7,7 +7,7 @@
 #include "FOC/position_control.h"
 #include "FOC/speed_control.h"
 #include "FOC/controller_utils.h"
-#include "BSP/as5048a.h"
+#include "BSP/encoder_hub.h"
 #include "math.h"
 #include <stdio.h>
 
@@ -29,12 +29,12 @@ volatile float position_current_pos;
 
 static float PositionController_GetPosition(void)
 {
-    float angle_rad = AS5048_GetMechanicalAngle();
+	AngleSnapshot_t snap = EncoderHub_GetAngleSnapshot();
 
     if (position_unit == POSITION_UNIT_RAD)
-        return angle_rad;
+        return snap.theta_mech;
     else
-        return angle_rad * RAD_TO_DEG;
+        return snap.theta_mech * RAD_TO_DEG;
 }
 
 void PositionController_Init(PositionUnit_t unit)

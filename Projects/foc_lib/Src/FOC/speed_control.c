@@ -8,17 +8,12 @@
 #include "FOC/speed_control.h"
 #include "FOC/controller_utils.h"
 #include "FOC/foc_loop.h"
+#include "FOC/speed_estimator.h"
 #include "math.h"
 
-#define VELOCITY_ALPHA      0.95f           // filtr LPF
-#define MAX_DTHETA_RAD      0.2f            // ochrona przed glitchami AS5048A
 #define RAD_TO_RPM          (60.0f / (2.0f * M_PI))
 
-static float last_angle = 0.0f;
-static float omega_lpf = 0.0f;
-volatile float estimated_speed_rpm = 0.0f;
 volatile float speed_ref_rpm = 0.0f;
-
 static SpeedMode_t speed_mode = SPEED_MODE_DIRECT;
 
 // RAMPA
@@ -27,35 +22,6 @@ static const float speed_step = 1.0f; // przyrost prędkości na 1 krok przy akt
 volatile float speed_ramp_out = 0.0f;
 
 static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
-
-void SpeedEstimator_Update(float theta_mech)
-{
-    float dtheta = wrap_pi(theta_mech - last_angle);
-
-    if (fabsf(dtheta) > MAX_DTHETA_RAD) {
-        return;
-    }
-
-    float omega_raw = dtheta / FOC_PERIOD_SEC; // Estymator działa w pętli FOC 10 kHz
-    omega_lpf = VELOCITY_ALPHA * omega_lpf + (1.0f - VELOCITY_ALPHA) * omega_raw;
-    last_angle = theta_mech;
-    estimated_speed_rpm = omega_lpf * RAD_TO_RPM;
-}
-
-void SpeedEstimator_Update_1khz()
-{
-	float theta_mech_latest_shifed = AS5048_GetMechanicalAngleShifted();
-    float dtheta = wrap_pi(theta_mech_latest_shifed - last_angle);
-
-    if (fabsf(dtheta) > MAX_DTHETA_RAD) {
-        return;
-    }
-
-    float omega_raw = dtheta / SPEED_PERIOD_SEC; // Estymator działa w pętli FOC 10 kHz
-    omega_lpf = VELOCITY_ALPHA * omega_lpf + (1.0f - VELOCITY_ALPHA) * omega_raw;
-    last_angle = theta_mech_latest_shifed;
-    estimated_speed_rpm = omega_lpf * RAD_TO_RPM;
-}
 
 void SpeedController_Update()
 {
@@ -67,6 +33,7 @@ void SpeedController_Update()
                    ? speed_ramp_out
                    : speed_ref_rpm;
 
+    float estimated_speed_rpm = SpeedEstimator_GetOmegaRPM();
     float error = target - estimated_speed_rpm;
 
     float iq_ref = pi_control(&pi_speed, error);
@@ -76,7 +43,7 @@ void SpeedController_Update()
 void SpeedController_SetTarget_Ramp(float new_target_rpm)
 {
 	speed_mode = SPEED_MODE_RAMP;
-	speed_ramp_out = estimated_speed_rpm; //start rampy od aktualnej prędkości
+	speed_ramp_out = SpeedEstimator_GetOmegaRPM(); //start rampy od aktualnej prędkości
     speed_ref_rpm = new_target_rpm;
     speed_ramp_active = true;
 }
