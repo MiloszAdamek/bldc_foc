@@ -19,6 +19,9 @@
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
  * ========================================================================= */
 
+//#define MODE_3PWM
+#define MODE_6PWM
+
 #define PWM_FREQ_HZ			  20000.0f				// 20 kHz - PWM
 #define PWM_PERIOD_SEC		  (1.0f / PWM_FREQ_HZ)
 #define PWM_PERIOD_ARR        4249

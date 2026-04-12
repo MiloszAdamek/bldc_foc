@@ -148,10 +148,12 @@ void FOC_Stop()
     HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_2);
     HAL_TIM_PWM_Stop(foc_htim, TIM_CHANNEL_3);
 
+#ifdef MODE_3PWM
     HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
+#endif
 
     HAL_ADCEx_InjectedStop_IT(foc_hadc);
 
