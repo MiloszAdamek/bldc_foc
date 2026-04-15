@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    adc.h
+  * @file    opamp.h
   * @brief   This file contains all the function prototypes for
-  *          the adc.c file
+  *          the opamp.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __ADC_H__
-#define __ADC_H__
+#ifndef __OPAMP_H__
+#define __OPAMP_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,16 +32,19 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern ADC_HandleTypeDef hadc1;
+extern OPAMP_HandleTypeDef hopamp1;
 
-extern ADC_HandleTypeDef hadc2;
+extern OPAMP_HandleTypeDef hopamp2;
+
+extern OPAMP_HandleTypeDef hopamp3;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_ADC1_Init(void);
-void MX_ADC2_Init(void);
+void MX_OPAMP1_Init(void);
+void MX_OPAMP2_Init(void);
+void MX_OPAMP3_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -51,5 +54,5 @@ void MX_ADC2_Init(void);
 }
 #endif
 
-#endif /* __ADC_H__ */
+#endif /* __OPAMP_H__ */
 

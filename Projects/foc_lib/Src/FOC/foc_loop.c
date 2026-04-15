@@ -44,9 +44,9 @@ static void FocStats_Reset(void);
 
 static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 {
-//    monitor_data.current_a = s_foc.currents.a;
-//    monitor_data.current_b = s_foc.currents.b;
-//    monitor_data.current_c = s_foc.currents.c;
+    monitor_data.current_a = s_foc.currents.a;
+    monitor_data.current_b = s_foc.currents.b;
+    monitor_data.current_c = s_foc.currents.c;
 //
 //    monitor_data.id = id;
 //    monitor_data.iq = iq;
@@ -97,11 +97,11 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTy
 
 	HAL_TIM_Base_Start(s_foc.htim_pwm);
 	HAL_TIM_Base_Start_IT(s_foc.htim_enc);
-//	HAL_TIM_OC_Start(s_foc.htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+	HAL_TIM_OC_Start(s_foc.htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 //
-//	HAL_Delay(50);
+	HAL_Delay(50);
 //
-//	CurrentSense_Init(s_foc.hadc);
+	CurrentSense_Init(s_foc.hadc);
 
 //    SVPWM_Init(s_foc.htim_pwm);
 //    FOC_AlignSensor();
@@ -186,8 +186,8 @@ void FOC_RunLoop()
 	Log_To_CubeMonitor(0.0f, 0.0f, 0.0f);
 
 	// Prąd (zapisany przez ADC ISR)
-//	CurrentSense_CalculatePhases();
-//	CurrentSense_Read(&s_foc.currents);
+	CurrentSense_CalculatePhases();
+	CurrentSense_Read(&s_foc.currents);
 
 	// Algorytm FOC
 //	FOC_Update(s_foc.angles.theta_el);

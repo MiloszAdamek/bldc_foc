@@ -19,7 +19,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "comp.h"
+#include "dac.h"
 #include "dma.h"
+#include "opamp.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -115,10 +118,18 @@ int main(void)
   MX_TIM15_Init();
   MX_SPI3_Init();
   MX_USART1_UART_Init();
+  MX_ADC2_Init();
+  MX_COMP1_Init();
+  MX_COMP2_Init();
+  MX_COMP4_Init();
+  MX_DAC3_Init();
+  MX_OPAMP1_Init();
+  MX_OPAMP2_Init();
+  MX_OPAMP3_Init();
   /* USER CODE BEGIN 2 */
-    FOC_Init(&hadc1, &htim1, &htim4, &hspi3);
-    Commander_Init(&huart1);
-    MotorControl_Init(&htim2, &htim15, &htim3);
+	FOC_Init(&hadc1, &htim1, &htim4, &hspi3);
+	Commander_Init(&huart1);
+	MotorControl_Init(&htim2, &htim15, &htim3);
   /* USER CODE END 2 */
 
   /* Infinite loop */

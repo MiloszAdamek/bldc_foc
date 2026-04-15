@@ -12,10 +12,13 @@
 #include <math.h>
 
 //#define MODE_3PWM
+#define G431_ESC
 
 #define ENABLE_SERIAL_DEBUGGING
 //#define ENABLE_RAMP
 //#define TEST_MODE
+
+//#define CURR_MES_3PHASE
 
 /* =========================================================================
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
@@ -39,10 +42,16 @@
 #define VOLTAGE_LIMIT         10.0f
 
 // Rezystor pomiarowy i wzmocnienie
-#define SHUNT_RESISTOR        0.33f      // Ohm
-#define CURRENT_SENSE_GAIN    1.528f
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION        4096.0f    // 12-bit ADC
+
+#ifdef G431_ESC
+#define SHUNT_RESISTOR        0.003f     // Ohm
+#define CURRENT_SENSE_GAIN    16.0f
+#else
+#define SHUNT_RESISTOR        0.33f      // Ohm
+#define CURRENT_SENSE_GAIN    1.528f
+#endif
 
 /* =========================================================================
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
