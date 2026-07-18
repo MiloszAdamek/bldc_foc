@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "math.h"
-#include "FOC/controller_utils.h"
+#include "FOC/foc_utils.h"
 #include "FOC/svpwm.h"
 #include "BSP/current_sense.h"
 #include "BSP/as5048a.h"

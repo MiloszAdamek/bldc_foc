@@ -8,7 +8,8 @@
 #include <FOC/lut_sincos.h>
 #include "App/config.h"
 #include "FOC/svpwm.h"
-#include "FOC/controller_utils.h"
+#include "FOC/foc_utils.h"
+#include "BSP/powerstage.h"
 #include "math.h"
 #include "main.h"
 
@@ -27,8 +28,8 @@ void SVPWM_Init(TIM_HandleTypeDef *htim)
 
     svpwm_htim = htim;
 
-    enable_driver();
-    start_pwm(svpwm_htim);
+    PowerStage_On();
+    PowerStage_StartPWM(svpwm_htim);
 }
 
 /* ======== svpwm.h ======== */

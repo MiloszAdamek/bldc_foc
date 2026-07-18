@@ -6,7 +6,7 @@
  */
 #include "FOC/position_control.h"
 #include "FOC/speed_control.h"
-#include "FOC/controller_utils.h"
+#include "FOC/foc_utils.h"
 #include "BSP/encoder_hub.h"
 #include "math.h"
 #include <stdio.h>

@@ -5,10 +5,10 @@
  *      Author: Milosz Adamek
  */
 
-//#include "App/config.h"
 #include "BSP/current_sense.h"
 #include "FOC/foc_loop.h"
 #include "App/config.h"
+#include "BSP/powerstage.h"
 #include "stdbool.h"
 
 static ADC_HandleTypeDef *s_hadc;
@@ -34,29 +34,23 @@ static void CurrentSense_CalibrateOffset(void)
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
     const int samples = 1000;
 
-#ifdef MODE_3PWM
-    HAL_GPIO_WritePin(PWM_EN_FAULT_GPIO_Port, PWM_EN_FAULT_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PWM_EN_W_GPIO_Port, PWM_EN_W_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PWM_EN_V_GPIO_Port, PWM_EN_V_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(PWM_EN_U_GPIO_Port, PWM_EN_U_Pin, GPIO_PIN_RESET);
-#endif
+    PowerStage_MosfetsOff();
 
     for (int i = 0; i < samples; ++i)
     {
         HAL_ADCEx_InjectedPollForConversion(s_hadc, HAL_MAX_DELAY);
-
         sum_a += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_1);
         sum_b += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_2);
-#ifdef CURR_MES_3PHASE
-        sum_c += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
-#endif
+        #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+            sum_c += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
+        #endif
     }
 
     offset_a = sum_a / samples;
     offset_b = sum_b / samples;
-#ifdef CURR_MES_3PHASE
-    offset_c = sum_c / samples;
-#endif
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        offset_c = sum_c / samples;
+    #endif
 
     is_calibrated = true;
     printf("Offset A: %u, B: %u, C: %u \r\n", offset_a, offset_b, offset_c);
@@ -81,9 +75,9 @@ void CurrentSense_Process_ISR() {
 
 	adc_raw_phase_a = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_1);
 	adc_raw_phase_b = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_2);
-#ifdef CURR_MES_3PHASE
-	adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
-#endif
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
+    #endif
 }
 
 void CurrentSense_CalculatePhases(){
@@ -91,35 +85,35 @@ void CurrentSense_CalculatePhases(){
 
     int32_t diff_a = (int32_t)adc_raw_phase_a - (int32_t)offset_a;
     int32_t diff_b = (int32_t)adc_raw_phase_b - (int32_t)offset_b;
-#ifdef CURR_MES_3PHASE
-    int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
-#endif
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
+    #endif
 
     current_a = -(float)diff_a * ADC_TO_CURRENT;
     current_b = -(float)diff_b * ADC_TO_CURRENT;
-#ifdef CURR_MES_3PHASE
-    current_c = -(float)diff_c * ADC_TO_CURRENT;
-#else
-    current_c = -(current_a + current_b);
-#endif
-}
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        current_c = -(float)diff_c * ADC_TO_CURRENT;
+    #else
+        current_c = -(current_a + current_b);
+    #endif
+    }
 
 void CurrentSense_Read(abc_current_t *currents)
 {
     currents->a = current_a;
     currents->b = current_b;
-#ifdef CURR_MES_3PHASE
-    currents->c = current_c;
-#endif
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        currents->c = current_c;
+    #endif
 }
 
 void CurrentSense_GetRaw(abc_raw_t *raw)
 {
     raw->a = adc_raw_phase_a;
     raw->b = adc_raw_phase_b;
-#ifdef CURR_MES_3PHASE
-    raw->c = adc_raw_phase_c;
-#endif
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        raw->c = adc_raw_phase_c;
+    #endif
 }
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)

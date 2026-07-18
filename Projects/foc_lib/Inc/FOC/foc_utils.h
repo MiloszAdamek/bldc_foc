@@ -28,12 +28,6 @@ typedef struct {
     float dt;
 } PI_Controller;
 
-void start_pwm(TIM_HandleTypeDef *htim);
-void stop_pwm(TIM_HandleTypeDef *htim);
-void enable_driver(void);
-void disable_driver(void);
-
-
 static inline float pi_control(PI_Controller *pi, float error){
 
     float u_p = pi->kp * error;

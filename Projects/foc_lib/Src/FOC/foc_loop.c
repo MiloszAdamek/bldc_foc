@@ -7,7 +7,7 @@
 
 #include <FOC/lut_sincos.h>
 #include "FOC/foc_loop.h"
-#include "FOC/controller_utils.h"
+#include "FOC/foc_utils.h"
 #include "FOC/speed_control.h"
 #include "FOC/speed_estimator.h"
 #include "FOC/position_control.h"

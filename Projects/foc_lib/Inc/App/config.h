@@ -11,14 +11,26 @@
 #include "stm32g4xx_hal.h"
 #include <math.h>
 
-//#define MODE_3PWM
-#define G431_ESC
+/* BOARD */ 
+
+#define DRV8353
+// #define G431_ESC
+// #define IHM03
+
+/* PWM MODE */ 
+
+#define MODE_3PWM
+//#define MODE_6PWM
+
+/* CURRENT SENSE MODE */ 
+
+// #define CURRENT_SENSE_DOUBLE_SHUNT
+#define CURRENT_SENSE_TRIPLE_SHUNT
+
 
 #define ENABLE_SERIAL_DEBUGGING
 //#define ENABLE_RAMP
 //#define TEST_MODE
-
-//#define CURR_MES_3PHASE
 
 /* =========================================================================
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------
@@ -38,20 +50,12 @@
 #define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
-#define VOLTAGE_SUPPLY        12.0f
-#define VOLTAGE_LIMIT         10.0f
+#define VOLTAGE_SUPPLY        16.0f
+#define VOLTAGE_LIMIT         12.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION        4096.0f    // 12-bit ADC
-
-#ifdef G431_ESC
-#define SHUNT_RESISTOR        0.003f     // Ohm
-#define CURRENT_SENSE_GAIN    16.0f
-#else
-#define SHUNT_RESISTOR        0.33f      // Ohm
-#define CURRENT_SENSE_GAIN    1.528f
-#endif
 
 /* =========================================================================
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------

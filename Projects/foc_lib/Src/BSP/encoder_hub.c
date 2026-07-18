@@ -9,7 +9,7 @@
 #include <stdbool.h>
 
 #include "BSP/encoder_hub.h"
-#include "FOC/controller_utils.h"
+#include "FOC/foc_utils.h"
 #include "App/config.h"
 #include "main.h"
 #include <string.h>

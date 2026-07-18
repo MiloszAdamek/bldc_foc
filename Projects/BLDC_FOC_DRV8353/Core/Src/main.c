@@ -27,7 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "drv8353.h"
+#include "BSP/powerstage.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -119,23 +119,8 @@ int main(void)
   MX_ADC1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-
-  printf("DRV8353 nFAULT pin state: %d\r\n", HAL_GPIO_ReadPin(DRV8353_nFAULT_GPIO_Port,DRV8353_nFAULT_Pin));
-
-  DRV8353_HandleTypeDef drv;
-  DRV8353_Init(&drv, &hspi2, &htim1);
-
-  // DRV8353_SetPWMMode(&drv, DRV8353_PWM_MODE_3PWM);
-  // DRV8353_PrintPWMMode(&drv);
-
-  // DRV8353_SetPWMMode(&drv, DRV8353_PWM_MODE_1PWM);
-  // DRV8353_PrintPWMMode(&drv);
-
-  // DRV8353_SetPWMMode(&drv, DRV8353_PWM_MODE_INDEPENDENT);
-  // DRV8353_PrintPWMMode(&drv);
-
+  PowerStage_Init();
   HAL_Delay(10);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */

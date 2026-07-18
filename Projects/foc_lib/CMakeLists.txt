@@ -12,9 +12,10 @@ target_sources(foc_lib PRIVATE
     Src/BSP/delay_us.c
     Src/BSP/encoder_hub.c
     Src/BSP/drv8353.c
+    Src/BSP/powerstage_drv8353.c
+    Src/BSP/powerstage_ihm03.c
 
     # FOC
-    Src/FOC/controller_utils.c
     Src/FOC/foc_loop.c
     Src/FOC/lut_sin_cos.c
     Src/FOC/position_control.c

@@ -6,7 +6,7 @@
  */
 
 #include "FOC/speed_control.h"
-#include "FOC/controller_utils.h"
+#include "FOC/foc_utils.h"
 #include "FOC/foc_loop.h"
 #include "FOC/speed_estimator.h"
 #include "math.h"

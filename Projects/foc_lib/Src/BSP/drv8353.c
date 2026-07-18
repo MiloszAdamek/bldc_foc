@@ -1,7 +1,7 @@
 /*
  * drv8353.c
  *
- *  Created on: Jul 7, 2026
+ *  Created on: Jul 17, 2026
  *      Author: Milosz Adamek
  */
 
@@ -58,7 +58,7 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
         .idriven_ls = DRV8353_IDRIVEN_2000mA,
         .idrivep_ls = DRV8353_IDRIVEP_1000mA,
         .dead_time  = DRV8353_DEADTIME_100ns,
-        .ocp_level  = DRV8353_VDS_OCP_300mV,
+        .ocp_level  = DRV8353_VDS_OCP_60mV,
         .drive_time = DRV8353_DRIVETIME_1000ns
     };
 

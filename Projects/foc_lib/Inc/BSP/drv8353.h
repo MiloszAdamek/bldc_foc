@@ -1,7 +1,7 @@
 /*
  * drv8353.h
  *
- *  Created on: Jul 7, 2026
+ *  Created on: Jul 17, 2026
  *      Author: Milosz Adamek
  */
 
