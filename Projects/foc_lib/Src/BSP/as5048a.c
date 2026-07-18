@@ -21,8 +21,8 @@ static uint8_t s_rx[2];
 
 volatile AS5048_ReadResult raw_angle;
 
-static inline void CS_LOW(void)  { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET); }
-static inline void CS_HIGH(void) { HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET); }
+static inline void CS_LOW(void)  { HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_RESET); }
+static inline void CS_HIGH(void) { HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_SET); }
 
 void AS5048_Init(SPI_HandleTypeDef *hspi)
 {

@@ -1,0 +1,17 @@
+# Build files
+build/
+
+# STM32CubeMX temporary files
+mx.scratch/
+
+# IDE
+.vscode/
+
+# CubeIDE
+.settings/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
