@@ -68,6 +68,6 @@ add_subdirectory(
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     foc_lib
-
+    m
     # Add user defined libraries
 )

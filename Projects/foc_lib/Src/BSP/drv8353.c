@@ -54,14 +54,15 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
     }
 
     DRV8353_Config_t default_config = {
-        .pwm_mode   = DRV8353_PWM_MODE_3PWM,
+        .pwm_mode   = DRV8353_PWM_MODE_6PWM,
         .csa_gain   = DRV8353_CSA_GAIN_20V,
-        .idriven_hs = DRV8353_IDRIVEN_2000mA,
-        .idrivep_hs = DRV8353_IDRIVEP_1000mA,
-        .idriven_ls = DRV8353_IDRIVEN_2000mA,
-        .idrivep_ls = DRV8353_IDRIVEP_1000mA,
+        .idriven_hs = DRV8353_IDRIVEN_300mA,
+        .idrivep_hs = DRV8353_IDRIVEP_150mA,
+        .idriven_ls = DRV8353_IDRIVEN_300mA,
+        .idrivep_ls = DRV8353_IDRIVEP_150mA,
         .dead_time  = DRV8353_DEADTIME_100ns,
         .ocp_level  = DRV8353_VDS_OCP_60mV,
+        .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
         .drive_time = DRV8353_DRIVETIME_1000ns
     };
 
@@ -137,7 +138,7 @@ DRV8353_Status_t DRV8353_InitConfig(DRV8353_HandleTypeDef *drv, DRV8353_Config_t
         return DRV8353_ERROR;
     }
 
-    status = DRV8353_SetOvercurrentProtection(drv, config->ocp_level);
+    status = DRV8353_SetOvercurrentProtection(drv, config->ocp_level, config->ocp_mode);
     if(status != DRV8353_OK)
     {
         return DRV8353_ERROR;
@@ -453,16 +454,19 @@ DRV8353_Status_t DRV8353_SetDeadTime(
 
 DRV8353_Status_t DRV8353_SetOvercurrentProtection(
         DRV8353_HandleTypeDef *drv,
-        DRV8353_VDS_OCP_t ocp)
+        DRV8353_VDS_OCP_t ocp,
+        DRV8353_OCP_Mode_t ocp_mode)
 {
     if(drv == NULL)
         return DRV8353_ERROR;
 
+    uint16_t ocp_value = ((uint16_t)ocp << DRV8353_VDS_OCP_Pos) | ((uint16_t)ocp_mode << DRV8353_OCP_MODE_Pos);
+
     return DRV8353_UpdateRegisterBits(
             drv,
             DRV8353_REG_OCP_CONTROL,
-            DRV8353_VDS_OCP_Msk,
-            ((uint16_t)ocp << DRV8353_VDS_OCP_Pos));
+            DRV8353_VDS_OCP_Msk | DRV8353_OCP_MODE_Msk,
+            ocp_value);
 }
 
 DRV8353_Status_t DRV8353_SetOutputState(

@@ -32,10 +32,6 @@ void SVPWM_Init(TIM_HandleTypeDef *htim)
     PowerStage_StartPWM(svpwm_htim);
 }
 
-/* ======== svpwm.h ======== */
-
-
-/* ======== svpwm.c ======== */
 void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,
                          float *dc_a, float *dc_b, float *dc_c)
 {
@@ -97,7 +93,6 @@ void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,
 
 }
 
-// Zmodyfikuj SVPWM_Update żeby używał SVPWM_GetDutyCycles:
 void SVPWM_Update(float Ualpha, float Ubeta)
 {
     float dc_a, dc_b, dc_c;

@@ -86,7 +86,7 @@ void FOC_Init(BoardHandleTypeDef *board)
     s_foc.ramp.active = false;
 #endif
 
-	AS5048_Init(s_foc.board->hspi_enc);
+	// AS5048_Init(s_foc.board->hspi_enc);
     PowerStage_Init();
 
 	HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
@@ -103,8 +103,8 @@ void FOC_Init(BoardHandleTypeDef *board)
 
 	CurrentSense_Init(s_foc.board->hadc_curr);
 
-//    SVPWM_Init(s_foc.board->htim_pwm);
-//    FOC_AlignSensor();
+    // SVPWM_Init(s_foc.board->htim_pwm);
+    // FOC_AlignSensor();
 
     // Odczyt kąta przed uruchomieniem pętli FOC
 //    float mech0 = AS5048_GetAngleRad();

@@ -30,6 +30,8 @@
 #include "App/config.h"
 #include "FOC/foc_loop.h"
 #include "BSP/board.h"
+#include "BSP/drv8353.h"
+#include "BSP/powerstage.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +60,8 @@ BoardHandleTypeDef board = {
     .hspi_enc = &hspi2,
     .hspi_drv = &hspi3
 };
+
+DRV8353_Faults_t drv8353_faults;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,12 +137,15 @@ int main(void)
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
   FOC_Init(&board);
+  PowerStage_Tests();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    HAL_Delay(1000);
+    PowerStage_CheckFaults();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

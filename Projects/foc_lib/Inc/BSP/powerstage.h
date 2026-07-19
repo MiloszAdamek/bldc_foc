@@ -34,6 +34,13 @@
 #ifdef DRV8353
     #define SHUNT_RESISTOR        0.005f
     #define CURRENT_SENSE_GAIN    20.0f
+
+    typedef enum
+    {
+        POWERSTATE_ALL_LOW = 0,   // LS ON
+        POWERSTATE_ALL_HIGH       // HS ON
+    } PowerTestState_t;
+
 #endif
 
 void PowerStage_Init(void);
@@ -41,5 +48,7 @@ void PowerStage_On(void);
 void PowerStage_Off(void);
 void PowerStage_StartPWM(TIM_HandleTypeDef *htim);
 void PowerStage_StopPWM(TIM_HandleTypeDef *htim);
-
+void PowerStage_Tests(void);
+void PowerStage_CheckFaults(void);
+void Force_AllHalfBridges(PowerTestState_t state);
 #endif /* POWERSTAGE_H */
