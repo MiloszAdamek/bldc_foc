@@ -58,7 +58,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, PWM_EN_FAULT_Pin|PWM_EN_U_Pin|PWM_EN_V_Pin|PWM_EN_W_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : ADC_Conv_Flag_Pin FOC_Flag_Pin SPI_Flag_Pin */
   GPIO_InitStruct.Pin = ADC_Conv_Flag_Pin|FOC_Flag_Pin|SPI_Flag_Pin;
@@ -81,12 +81,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SPI3_CS_Pin */
-  GPIO_InitStruct.Pin = SPI3_CS_Pin;
+  /*Configure GPIO pin : AS5048A_CS_Pin */
+  GPIO_InitStruct.Pin = AS5048A_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(SPI3_CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(AS5048A_CS_GPIO_Port, &GPIO_InitStruct);
 
 }
 

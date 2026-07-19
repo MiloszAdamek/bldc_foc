@@ -5,9 +5,12 @@
  *      Author: Milosz Adamek
  */
 
-#include "drv8353.h"
+#include "BSP/drv8353.h"
+#include "App/config.h"
 #include "main.h"
 #include <stdio.h>
+
+#ifdef DRV8353
 
 DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim)
 {
@@ -572,3 +575,5 @@ DRV8353_Status_t DRV8353_VerifyConfig(
 
     return DRV8353_OK;
 }
+
+#endif

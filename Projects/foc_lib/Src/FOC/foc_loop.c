@@ -14,6 +14,7 @@
 #include "App/config.h"
 #include "BSP/as5048a.h"
 #include "BSP/encoder_hub.h"
+#include "BSP/powerstage.h"
 #include "math.h"
 #include "main.h"
 #include <string.h>
@@ -22,7 +23,7 @@
 //#define SVPWM_PHASE_SWAP_BC
 //#define CALIB_SVPWM
 
-static FocContext_t s_foc;
+static FOC_HandleTypeDef s_foc;
 
 #define ENCODER_TIMEOUT_LIMIT 100
 // RAMPA
@@ -64,12 +65,10 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 //    monitor_data.position_reg_out = position_reg_out;
 }
 
-void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi)
+void FOC_Init(BoardHandleTypeDef *board)
 {
 	printf("FOC: Init...\n");
-	s_foc.htim_pwm = htim_foc;
-	s_foc.htim_enc = htim_enc;
-	s_foc.hadc = hadc;
+    s_foc.board = board;
 
     s_foc.pi_id = (PI_Controller){
         .kp = PI_KP_ID, .ki = PI_KI_ID,
@@ -87,39 +86,40 @@ void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTy
     s_foc.ramp.active = false;
 #endif
 
-	AS5048_Init(hspi);
+	AS5048_Init(s_foc.board->hspi_enc);
+    PowerStage_Init();
 
-	HAL_TIM_Base_Stop_IT(s_foc.htim_pwm);
-	HAL_TIM_Base_Stop_IT(s_foc.htim_enc);
+	HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
+	HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
 
-	__HAL_TIM_SET_COUNTER(s_foc.htim_pwm, 0);
-	__HAL_TIM_SET_COUNTER(s_foc.htim_enc, 0);
+	__HAL_TIM_SET_COUNTER(s_foc.board->htim_pwm, 0);
+	__HAL_TIM_SET_COUNTER(s_foc.board->htim_enc, 0);
 
-	HAL_TIM_Base_Start(s_foc.htim_pwm);
-	HAL_TIM_Base_Start_IT(s_foc.htim_enc);
-	HAL_TIM_OC_Start(s_foc.htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
-//
+	HAL_TIM_Base_Start(s_foc.board->htim_pwm);
+	HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
+	HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+
 	HAL_Delay(50);
-//
-	CurrentSense_Init(s_foc.hadc);
 
-//    SVPWM_Init(s_foc.htim_pwm);
+	CurrentSense_Init(s_foc.board->hadc_curr);
+
+//    SVPWM_Init(s_foc.board->htim_pwm);
 //    FOC_AlignSensor();
 
     // Odczyt kąta przed uruchomieniem pętli FOC
-    float mech0 = AS5048_GetAngleRad();
-    if (mech0 >= 0.0f) {
-        s_foc.angles.theta_mech = mech0;
-        s_foc.angles.theta_el = FOC_GetElecticalAngle(mech0);
-    }
+//    float mech0 = AS5048_GetAngleRad();
+//    if (mech0 >= 0.0f) {
+//        s_foc.angles.theta_mech = mech0;
+//        s_foc.angles.theta_el = FOC_GetElecticalAngle(mech0);
+//    }
 
-    HAL_TIM_Base_Stop(s_foc.htim_pwm);
+    HAL_TIM_Base_Stop(s_foc.board->htim_pwm);
 }
 
 void FOC_Start(){
 
-//    HAL_TIM_OC_Start(s_foc.htim_pwm, TIM_CHANNEL_4);
-//	HAL_ADCEx_InjectedStart_IT(s_foc.hadc);
+//    HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
+//	HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
 
 //	FOC_EnableOutputs();
 
@@ -131,14 +131,14 @@ void FOC_Start(){
 
     AS5048_ReadAngleDMA();
 
-    HAL_TIM_Base_Start_IT(s_foc.htim_pwm);
+    HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm);
 }
 
 void FOC_Stop(){
 
     FOC_DisableOutputs();
 
-    HAL_ADCEx_InjectedStop_IT(s_foc.hadc);
+    HAL_ADCEx_InjectedStop_IT(s_foc.board->hadc_curr);
 
     Flags_Reset(&s_foc.flags);
 
@@ -323,9 +323,9 @@ void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el)
     if (pwm_c > PWM_PERIOD_ARR) pwm_c = PWM_PERIOD_ARR;
 
     // Ustawienie wartości w rejestrach timera
-    __HAL_TIM_SET_COMPARE(s_foc.htim_pwm, TIM_CHANNEL_1, pwm_a);
-    __HAL_TIM_SET_COMPARE(s_foc.htim_pwm, TIM_CHANNEL_2, pwm_b);
-    __HAL_TIM_SET_COMPARE(s_foc.htim_pwm, TIM_CHANNEL_3, pwm_c);
+    __HAL_TIM_SET_COMPARE(s_foc.board->htim_pwm, TIM_CHANNEL_1, pwm_a);
+    __HAL_TIM_SET_COMPARE(s_foc.board->htim_pwm, TIM_CHANNEL_2, pwm_b);
+    __HAL_TIM_SET_COMPARE(s_foc.board->htim_pwm, TIM_CHANNEL_3, pwm_c);
 }
 
 static void FOC_ApplyVoltageVector(float Uq, float Ud, float theta_el)
@@ -496,14 +496,14 @@ static void FOC_LinearRamp(void)
 
 static void FOC_EnableOutputs(void)
 {
-	start_pwm(s_foc.htim_pwm);
-	enable_driver();
+	PowerStage_StartPWM(s_foc.board->htim_pwm);
+	PowerStage_On();
 }
 
 static void FOC_DisableOutputs(void)
 {
-	stop_pwm(s_foc.htim_pwm);
-	disable_driver();
+	PowerStage_StopPWM(s_foc.board->htim_pwm);
+	PowerStage_Off();
 }
 
 static void PI_Reset(PI_Controller *pi)
@@ -529,6 +529,6 @@ static void FocStats_Reset(void)
     s_foc.stats.err_current = 0;
 }
 
-TIM_HandleTypeDef* FOC_GetPwmTimer(void) {return s_foc.htim_pwm;};
-TIM_HandleTypeDef* FOC_GetEncTimer(void) {return s_foc.htim_enc;};
+TIM_HandleTypeDef* FOC_GetPwmTimer(void) {return s_foc.board->htim_pwm;};
+TIM_HandleTypeDef* FOC_GetEncTimer(void) {return s_foc.board->htim_enc;};
 

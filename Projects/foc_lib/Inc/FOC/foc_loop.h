@@ -16,6 +16,7 @@
 #include "FOC/svpwm.h"
 #include "BSP/current_sense.h"
 #include "BSP/as5048a.h"
+#include "BSP/board.h"
 
 extern volatile MonitorData_t monitor_data;
 
@@ -63,9 +64,11 @@ typedef struct {
 
 /* -------- Główny kontekst FOC -------- */
 typedef struct {
-    TIM_HandleTypeDef *htim_pwm;
-    TIM_HandleTypeDef *htim_enc;
-    ADC_HandleTypeDef *hadc;
+    // TIM_HandleTypeDef *htim_pwm;
+    // TIM_HandleTypeDef *htim_enc;
+    // ADC_HandleTypeDef *hadc;
+
+    BoardHandleTypeDef *board;
 
     PI_Controller  pi_id;
     PI_Controller  pi_iq;
@@ -77,12 +80,12 @@ typedef struct {
     FocFlags_t     flags;
     FocAngles_t    angles;
     FocStats_t	   stats;
-} FocContext_t;
+} FOC_HandleTypeDef;
 
 // Flagi
 extern volatile bool currents_ready;
 
-void FOC_Init(ADC_HandleTypeDef *hadc, TIM_HandleTypeDef *htim_foc, TIM_HandleTypeDef *htim_enc, SPI_HandleTypeDef *hspi);
+void FOC_Init(BoardHandleTypeDef *board);
 void FOC_RunLoop(void); // Główna pętla FOC
 void FOC_Update(float theta_el);
 void FOC_SetIqTarget(float new_target);

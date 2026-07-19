@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>Debug_BLDC_FOC_DRV8353.elf</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.cdt.core.cnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>BLDC_FOC_DRV8353.elf</name>
+			<type>1</type>
+			<location>E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/BLDC_FOC_DRV8353/build/Debug/BLDC_FOC_DRV8353.elf</location>
+		</link>
+	</linkedResources>
+</projectDescription>

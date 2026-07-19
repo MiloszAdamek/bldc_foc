@@ -89,8 +89,8 @@ void Error_Handler(void);
 #define PWM_VH_GPIO_Port GPIOA
 #define PWM_WH_Pin GPIO_PIN_10
 #define PWM_WH_GPIO_Port GPIOA
-#define SPI3_CS_Pin GPIO_PIN_2
-#define SPI3_CS_GPIO_Port GPIOD
+#define AS5048A_CS_Pin GPIO_PIN_2
+#define AS5048A_CS_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

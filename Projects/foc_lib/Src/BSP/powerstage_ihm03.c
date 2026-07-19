@@ -10,7 +10,7 @@
  #ifdef IHM03
 
  #include "gpio.h"
- #include "powerstage.h"
+ #include "BSP/powerstage.h"
 
  void PowerStage_Init(void)
 {

@@ -9,8 +9,8 @@
 
 #ifdef DRV8353
 
-#include "powerstage.h"
-#include "drv8353.h"
+#include "BSP/powerstage.h"
+#include "BSP/drv8353.h"
 #include "spi.h"
 #include "tim.h"
 
@@ -19,6 +19,7 @@ static DRV8353_HandleTypeDef g_drv;
 void PowerStage_Init(void)
 {
     DRV8353_Init(&g_drv, &hspi2, &htim1);
+    PowerStage_Off();
 }
 
 void PowerStage_Off(void)
