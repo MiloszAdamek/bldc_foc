@@ -532,3 +532,18 @@ static void FocStats_Reset(void)
 TIM_HandleTypeDef* FOC_GetPwmTimer(void) {return s_foc.board->htim_pwm;};
 TIM_HandleTypeDef* FOC_GetEncTimer(void) {return s_foc.board->htim_enc;};
 
+void Motor_Motion_Test(void)
+{
+    static float angle = 0.0f;
+
+    float Uq = 0.2f * (VOLTAGE_SUPPLY / M_SQRT3);
+    float Ud = 0.0f;
+
+    angle += 0.001f;   // im mniejsze, tym wolniej
+
+    if (angle > 2.0f * M_PI)
+        angle -= 2.0f * M_PI;
+
+    FOC_SetPhaseVoltage(Uq, Ud, angle);
+}
+

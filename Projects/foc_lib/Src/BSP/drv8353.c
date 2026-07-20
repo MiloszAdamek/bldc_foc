@@ -54,7 +54,7 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
     }
 
     DRV8353_Config_t default_config = {
-        .pwm_mode   = DRV8353_PWM_MODE_6PWM,
+        .pwm_mode   = DRV8353_PWM_MODE_3PWM,
         .csa_gain   = DRV8353_CSA_GAIN_20V,
         .idriven_hs = DRV8353_IDRIVEN_300mA,
         .idrivep_hs = DRV8353_IDRIVEP_150mA,
@@ -202,9 +202,9 @@ DRV8353_Status_t DRV8353_ReadRegister(DRV8353_HandleTypeDef *drv,
         return DRV8353_ERROR;
     }
 
-    // printf("READ REG 0x%02X\r\n", reg);
-    // printf("TX: 0x%04X\r\n", tx);
-    // printf("RX: 0x%04X\r\n", rx);
+    printf("READ REG 0x%02X\r\n", reg);
+    printf("TX: 0x%04X\r\n", tx);
+    printf("RX: 0x%04X\r\n", rx);
 
     *data = rx & 0x07FF;
 
@@ -388,18 +388,6 @@ DRV8353_Status_t DRV8353_ClearFaults(DRV8353_HandleTypeDef *drv)
             DRV8353_CLR_FLT_Msk,
             DRV8353_CLR_FLT_Msk);
 }   
-
-DRV8353_Status_t DRV8353_PWMDisable(DRV8353_HandleTypeDef *drv)
-{
-    if(drv == NULL)
-        return DRV8353_ERROR;
-
-    HAL_TIM_PWM_Stop(drv->htim, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Stop(drv->htim, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Stop(drv->htim, TIM_CHANNEL_3);
-    
-    return DRV8353_OK;
-}
 
 DRV8353_Status_t DRV8353_SetGateDriveCurrent(
         DRV8353_HandleTypeDef *drv,

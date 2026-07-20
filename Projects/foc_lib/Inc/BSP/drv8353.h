@@ -253,8 +253,6 @@ DRV8353_Status_t DRV8353_Enable(DRV8353_HandleTypeDef *drv);
 
 DRV8353_Status_t DRV8353_Disable(DRV8353_HandleTypeDef *drv);
 
-DRV8353_Status_t DRV8353_PWMDisable(DRV8353_HandleTypeDef *drv);
-
 DRV8353_Status_t DRV8353_CheckFaultPin(DRV8353_HandleTypeDef *drv);
 
 DRV8353_Status_t DRV8353_GetFaults(DRV8353_HandleTypeDef *drv, DRV8353_Faults_t *faults);

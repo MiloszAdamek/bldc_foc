@@ -8,6 +8,8 @@
  #ifndef BOARD_H
  #define BOARD_H
 
+ #include "BSP/powerstage.h"
+
  typedef enum
 {    
     BOARD_G431_ESC = 0,
@@ -18,11 +20,24 @@
 typedef struct
 {
     BoardType_t type;
+
+    // Peripherals handlers
     TIM_HandleTypeDef *htim_pwm;
     TIM_HandleTypeDef *htim_enc;
     ADC_HandleTypeDef *hadc_curr;
     SPI_HandleTypeDef *hspi_enc;
     SPI_HandleTypeDef *hspi_drv;
+
+    // Powerstage handler
+    PowerStage_HandleTypeDef *powerstage;
+
 } BoardHandleTypeDef;
+
+void Board_Init(BoardHandleTypeDef *board)
+{
+    PowerStage_Init(&board->powerstage,
+                    board->hspi_drv,
+                    board->htim_pwm);
+}
 
  #endif /* BOARD_H */

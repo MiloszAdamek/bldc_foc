@@ -52,16 +52,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-BoardHandleTypeDef board = {
-    .type = BOARD_DRV8353,
-    .htim_pwm = &htim1,
-    .htim_enc = &htim2,
-    .hadc_curr = &hadc1,
-    .hspi_enc = &hspi2,
-    .hspi_drv = &hspi3
-};
 
-DRV8353_Faults_t drv8353_faults;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -136,8 +127,73 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  FOC_Init(&board);
-  PowerStage_Tests();
+  // FOC_Init(&drv_board);
+  // PowerStage_Tests();
+
+  // PowerStage_Init();
+
+  // Final FOC Init
+
+  BoardHandleTypeDef drv_board = {
+    .type = BOARD_DRV8353,
+    .htim_pwm = &htim1,
+    .htim_enc = &htim2,
+    .hadc_curr = &hadc1,
+    .hspi_enc = &hspi2,
+    .hspi_drv = &hspi3
+  };
+
+  DRV8353_Faults_t drv8353_faults;
+
+
+
+
+
+
+  // End FOC Init
+
+static DRV8353_HandleTypeDef g_drv;
+
+if (DRV8353_Init(&g_drv, &hspi2, &htim1) != DRV8353_OK)
+{
+    Error_Handler();
+}
+
+/* Upewnij się że jest RUN */
+DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
+DRV8353_PrintPWMMode(&g_drv);
+
+/* 2️⃣ Ustaw wypełnienia */
+__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3000);  // ~70%
+__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1000);  // ~25%
+__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 2000);  // ~50%
+
+/* Wymuś załadowanie CCR */
+__HAL_TIM_SET_COUNTER(&htim1, 0);
+// __HAL_TIM_GENERATE_EVENT(&htim1, TIM_EVENTSOURCE_UPDATE);
+
+/* 3️⃣ Start timera i PWM */
+HAL_TIM_Base_Start(&htim1);
+
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+// HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+// HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+
+HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+// HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+
+/* 4️⃣ Wymuś MOE (na wszelki wypadek) */
+htim1.Instance->BDTR |= TIM_BDTR_MOE;
+
+/* 5️⃣ Debug */
+uint16_t reg;
+DRV8353_ReadRegister(&g_drv, DRV8353_REG_DRIVER_CONTROL, &reg);
+printf("DRIVER_CONTROL: 0x%04X\r\n", reg);
+
+/* --- KONIEC TESTU --- */
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
