@@ -34,8 +34,7 @@ static void CurrentSense_CalibrateOffset(void)
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
     const int samples = 1000;
 
-    PowerStage_Off();
-    HAL_Delay(2);
+    // Make sure to shut down inverter before calibration to avoid current flow
 
     for (int i = 0; i < samples; ++i)
     {

@@ -14,6 +14,7 @@ target_sources(foc_lib PRIVATE
     Src/BSP/drv8353.c
     Src/BSP/powerstage_drv8353.c
     Src/BSP/powerstage_ihm03.c
+    Src/BSP/board.c
 
     # FOC
     Src/FOC/foc_loop.c

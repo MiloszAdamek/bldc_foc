@@ -14,7 +14,7 @@
 #include "App/config.h"
 #include "BSP/as5048a.h"
 #include "BSP/encoder_hub.h"
-#include "BSP/powerstage.h"
+#include "BSP/board.h"
 #include "math.h"
 #include "main.h"
 #include <string.h>
@@ -36,12 +36,10 @@ volatile bool currents_ready = false;
 volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
 
 static void FOC_LinearRamp(void);
-static void FOC_EnableOutputs(void);
-static void FOC_DisableOutputs(void);
 static void PI_Reset(PI_Controller *pi);
 static void Ramp_Reset(Ramp_t *ramp);
 static void Flags_Reset(FocFlags_t *flags);
-static void FocStats_Reset(void);
+static void FOCStats_Reset(void);
 
 static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 {
@@ -71,23 +69,28 @@ void FOC_Init(BoardHandleTypeDef *board)
     s_foc.board = board;
 
     s_foc.pi_id = (PI_Controller){
-        .kp = PI_KP_ID, .ki = PI_KI_ID,
-        .limit = PI_LIMIT_ID, .integral = 0.0f, .dt = PWM_PERIOD_SEC
+        .kp = PI_KP_ID,
+        .ki = PI_KI_ID,
+        .limit = PI_LIMIT_ID,
+        .integral = 0.0f,
+        .dt = PWM_PERIOD_SEC
     };
+
     s_foc.pi_iq = (PI_Controller){
-        .kp = PI_KP_IQ, .ki = PI_KI_IQ,
-        .limit = PI_LIMIT_IQ, .integral = 0.0f, .dt = PWM_PERIOD_SEC
+        .kp = PI_KP_IQ,
+        .ki = PI_KI_IQ,
+        .limit = PI_LIMIT_IQ,
+        .integral = 0.0f,
+        .dt = PWM_PERIOD_SEC
     };
+
     s_foc.i_ref = (dq_ref_t){0.0f, 0.0f};
 
-#ifdef ENABLE_RAMP
-    s_foc.ramp.step = RAMP_STEP_DEFAULT;
-    s_foc.ramp.output = 0.0f;
-    s_foc.ramp.active = false;
-#endif
-
-	// AS5048_Init(s_foc.board->hspi_enc);
-    PowerStage_Init();
+    #ifdef ENABLE_RAMP
+        s_foc.ramp.step = RAMP_STEP_DEFAULT;
+        s_foc.ramp.output = 0.0f;
+        s_foc.ramp.active = false;
+    #endif
 
 	HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
 	HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
@@ -101,17 +104,15 @@ void FOC_Init(BoardHandleTypeDef *board)
 
 	HAL_Delay(50);
 
-	CurrentSense_Init(s_foc.board->hadc_curr);
-
     // SVPWM_Init(s_foc.board->htim_pwm);
     // FOC_AlignSensor();
 
     // Odczyt kąta przed uruchomieniem pętli FOC
-//    float mech0 = AS5048_GetAngleRad();
-//    if (mech0 >= 0.0f) {
-//        s_foc.angles.theta_mech = mech0;
-//        s_foc.angles.theta_el = FOC_GetElecticalAngle(mech0);
-//    }
+    //    float mech0 = AS5048_GetAngleRad();
+    //    if (mech0 >= 0.0f) {
+    //        s_foc.angles.theta_mech = mech0;
+    //        s_foc.angles.theta_el = FOC_GetElecticalAngle(mech0);
+    //    }
 
     HAL_TIM_Base_Stop(s_foc.board->htim_pwm);
 }
@@ -127,7 +128,7 @@ void FOC_Start(){
 	currents_ready = false;
     spi_ready = true;
 
-    FocStats_Reset();
+    FOCStats_Reset();
 
     AS5048_ReadAngleDMA();
 
@@ -136,7 +137,7 @@ void FOC_Start(){
 
 void FOC_Stop(){
 
-    FOC_DisableOutputs();
+    Board_StopMotor(s_foc.board);
 
     HAL_ADCEx_InjectedStop_IT(s_foc.board->hadc_curr);
 
@@ -153,7 +154,7 @@ void FOC_Stop(){
     PI_Reset(&s_foc.pi_id);
     PI_Reset(&s_foc.pi_iq);
 
-    FocStats_Reset();
+    FOCStats_Reset();
 }
 
 void FOC_RunLoop()
@@ -345,7 +346,7 @@ bool FOC_AlignSensor()
         return true;
     }
 
-    FOC_EnableOutputs();
+    Board_StartMotor(s_foc.board);
 
     printf("\n--- Start kalibracji sensora (SimpleFOC) ---\n");
     printf("Krok 1: Wykrywanie kierunku...\n");
@@ -494,18 +495,6 @@ static void FOC_LinearRamp(void)
 #endif
 }
 
-static void FOC_EnableOutputs(void)
-{
-	PowerStage_StartPWM(s_foc.board->htim_pwm);
-	PowerStage_On();
-}
-
-static void FOC_DisableOutputs(void)
-{
-	PowerStage_StopPWM(s_foc.board->htim_pwm);
-	PowerStage_Off();
-}
-
 static void PI_Reset(PI_Controller *pi)
 {
     pi->integral = 0.0f;
@@ -522,7 +511,7 @@ static void Flags_Reset(FocFlags_t *flags)
     memset(flags, 0, sizeof(*flags));
 }
 
-static void FocStats_Reset(void)
+static void FOCStats_Reset(void)
 {
     s_foc.stats.loop_ok  = 0;
     s_foc.stats.loop_err = 0;

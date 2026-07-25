@@ -239,7 +239,7 @@ void DRV8353_PrintFaults(DRV8353_Faults_t *faults);
 
 void DRV8353_PrintPWMMode(DRV8353_HandleTypeDef *drv);
 
-DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim);
+DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, DRV8353_PWM_Mode_t pwm_mode);
 
 DRV8353_Status_t DRV8353_InitConfig(DRV8353_HandleTypeDef *drv, DRV8353_Config_t *config);
 

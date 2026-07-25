@@ -9,6 +9,7 @@
 #define POWERSTAGE_H
 
 #include "App/config.h"
+#include "BSP/drv8353.h"
 #include "tim.h"
 
 #if !defined(DRV8353) && !defined(IHM03)
@@ -49,6 +50,12 @@ typedef enum
     POWERSTAGE_ERROR
 } PowerStage_Status_t;
 
+typedef enum
+{
+    POWERSTAGE_PWM_MODE_3PWM = DRV8353_PWM_MODE_3PWM,
+    POWERSTAGE_PWM_MODE_6PWM = DRV8353_PWM_MODE_6PWM
+} PowerStage_PWM_Mode_t;
+
 typedef struct
 {
     GPIO_TypeDef *port;
@@ -70,26 +77,17 @@ typedef struct
 
 typedef struct
 {
-    PowerStage_Pins_t pins;
-    TIM_HandleTypeDef *htim;  // Timer do generowania PWM
+    TIM_HandleTypeDef *htim;      // Timer PWM
+    PowerStage_Pins_t pins;       // Piny IN_H / IN_L
+    PowerStage_PWM_Mode_t pwm_mode;   // 3PWM / 6PWM
     PowerStage_Status_t status;
-    PowerStage_PWM_Mode_t pwm_mode;
+    DRV8353_HandleTypeDef drv;    // DRV8353 handle
 } PowerStage_HandleTypeDef;
 
-typedef enum
-{
-    POWERSTAGE_PWM_MODE_3PWM = 0,
-    POWERSTAGE_PWM_MODE_6PWM
-} PowerStage_PWM_Mode_t;
-
-PowerStage_Status_t PowerStage_Init(void);
-PowerStage_Status_t PowerStage_On(void);
-PowerStage_Status_t PowerStage_Off(void);
-PowerStage_Status_t PowerStage_StartPWM(TIM_HandleTypeDef *htim);
-PowerStage_Status_t PowerStage_StopPWM(TIM_HandleTypeDef *htim);
-PowerStage_Status_t PowerStage_Tests(void);
-PowerStage_Status_t PowerStage_CheckFaults(void);
-PowerStage_Status_t PowerStage_SetPWMMode(PowerStage_PWM_Mode_t pwm_mode);
-PowerStage_Status_t Force_AllHalfBridges(PowerTestState_t state);
+PowerStage_Status_t PowerStage_Init(PowerStage_HandleTypeDef *ps, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, const PowerStage_Pins_t *pins);
+PowerStage_Status_t PowerStage_On(PowerStage_HandleTypeDef *ps);
+PowerStage_Status_t PowerStage_Off(PowerStage_HandleTypeDef *ps);
+PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps);
+PowerStage_Status_t PowerStage_CheckFaults(PowerStage_HandleTypeDef *ps);
 
 #endif /* POWERSTAGE_H */

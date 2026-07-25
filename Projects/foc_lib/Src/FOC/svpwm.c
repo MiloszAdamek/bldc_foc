@@ -28,8 +28,8 @@ void SVPWM_Init(TIM_HandleTypeDef *htim)
 
     svpwm_htim = htim;
 
-    PowerStage_On();
-    PowerStage_StartPWM(svpwm_htim);
+    // PowerStage_On();
+    // PowerStage_StartPWM(svpwm_htim);
 }
 
 void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,

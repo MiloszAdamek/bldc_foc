@@ -6,6 +6,7 @@
  */
     
 #include "App/config.h"
+#include "main.h"
 
 #ifdef DRV8353
 
@@ -16,227 +17,147 @@
 #include "tim.h"
 #include "stdio.h"
 
-static DRV8353_HandleTypeDef g_drv;
+static PowerStage_Status_t PowerStage_TestPWM(PowerStage_HandleTypeDef *ps,float duty_a, float duty_b, float duty_c);
 
-static PowerStage_Pins_t ps_pins =
+PowerStage_Status_t PowerStage_Init(
+    PowerStage_HandleTypeDef *ps,
+    SPI_HandleTypeDef *hspi,
+    TIM_HandleTypeDef *htim,
+    const PowerStage_Pins_t *pins)
 {
-    .IN_H_A = {IN_H_A_GPIO_Port, IN_H_A_Pin, GPIO_AF6_TIM1},
-    .IN_H_B = {IN_H_B_GPIO_Port, IN_H_B_Pin, GPIO_AF6_TIM1},
-    .IN_H_C = {IN_H_C_GPIO_Port, IN_H_C_Pin, GPIO_AF6_TIM1},
+    ps->htim = htim;
+    ps->pins = *pins;
+    ps->status = POWERSTAGE_OK;
 
-    .IN_L_A = {IN_L_A_GPIO_Port, IN_L_A_Pin, GPIO_AF6_TIM1},
-    .IN_L_B = {IN_L_B_GPIO_Port, IN_L_B_Pin, GPIO_AF6_TIM1},
-    .IN_L_C = {IN_L_C_GPIO_Port, IN_L_C_Pin, GPIO_AF6_TIM1},
-};
+    if (DRV8353_Init(&ps->drv, hspi, htim, ps->pwm_mode) != DRV8353_OK)
+    {
+        ps->status = POWERSTAGE_ERROR;
+        return POWERSTAGE_ERROR;
+    }
 
-static void PowerStage_SetPinsToPWM(PowerStage_Pins_t *pins);
-static void PowerStage_SetPinsToGPIO(PowerStage_Pins_t *pins);
-static void PowerStage_DisableAllHalfBridges(void);
-static void PowerStage_TestPWM(float duty_a, float duty_b, float duty_c);
-
-PowerStage_Status_t PowerStage_Init(void)
-{
-    DRV8353_Init(&g_drv, &hspi2, &htim1);
-    DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
-    // PowerStage_Off();
     return POWERSTAGE_OK;
 }
 
-void PowerStage_Off(void)
+PowerStage_Status_t PowerStage_Off(PowerStage_HandleTypeDef *ps)
 {
-    DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_COAST);
-    PowerStage_StopPWM(&htim1);
-    PowerStage_SetPinsToGPIO(&ps_pins);
-    PowerStage_DisableAllHalfBridges();
+    __HAL_TIM_MOE_DISABLE(ps->htim);
+
+    __HAL_TIM_SET_COMPARE(ps->htim, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(ps->htim, TIM_CHANNEL_2, 0);
+    __HAL_TIM_SET_COMPARE(ps->htim, TIM_CHANNEL_3, 0);
+
+    DRV8353_SetOutputState(&ps->drv, DRV_OUTPUT_COAST);
+
+    return POWERSTAGE_OK;
 }
 
-void PowerStage_On(void)
+PowerStage_Status_t PowerStage_On(PowerStage_HandleTypeDef *ps)
 {
-    // DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
-    // PowerStage_SetPinsToPWM(&ps_pins);
-    // DRV8353_PWMEnable(&g_drv);
+    __HAL_TIM_MOE_ENABLE(ps->htim);
+
+    DRV8353_SetOutputState(&ps->drv, DRV_OUTPUT_RUN);
+
+    return POWERSTAGE_OK;
 }
 
-void PowerStage_StartPWM(TIM_HandleTypeDef *htim)
+PowerStage_Status_t PowerStage_CheckFaults(PowerStage_HandleTypeDef *ps)
 {
-    __HAL_TIM_SET_COUNTER(htim, 0);
-    HAL_TIM_Base_Start(htim);
+    DRV8353_GetFaults(&ps->drv, &ps->drv.faults);
+    DRV8353_PrintFaults(&ps->drv.faults);
 
-    HAL_TIM_PWM_Start(htim, TIM_CHANNEL_1);
-    HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
-
-    HAL_TIM_PWM_Start(htim, TIM_CHANNEL_2);
-    HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-
-    HAL_TIM_PWM_Start(htim, TIM_CHANNEL_3);
-    HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+    return POWERSTAGE_OK;
 }
 
-void PowerStage_StopPWM(TIM_HandleTypeDef *htim)
+PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps)
 {
-    HAL_TIM_PWM_Stop(htim, TIM_CHANNEL_1);
-    HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_1);
-
-    HAL_TIM_PWM_Stop(htim, TIM_CHANNEL_2);
-    HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_2);
-
-    HAL_TIM_PWM_Stop(htim, TIM_CHANNEL_3);
-    HAL_TIMEx_PWMN_Stop(&htim1, TIM_CHANNEL_3);
-}
-
-void PowerStage_SetPWMMode(PowerStage_PWM_Mode_t pwm_mode){
-    
-    if (pwm_mode == POWERSTAGE_PWM_MODE_3PWM) {
-        DRV8353_SetPWMMode(&g_drv, DRV8353_PWM_MODE_3PWM);
-    } else if (pwm_mode == POWERSTAGE_PWM_MODE_6PWM) {
-        DRV8353_SetPWMMode(&g_drv, DRV8353_PWM_MODE_6PWM);
-    }
-}
-
-void PowerStage_CheckFaults(void)
-{
-    DRV8353_GetFaults(&g_drv, &g_drv.faults);
-    DRV8353_PrintFaults(&g_drv.faults);
-}
-
-void PowerStage_Tests(void)
-{
-    DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
-    // DRV8353_PWMDisable(&g_drv);
+    DRV8353_SetOutputState(&ps->drv, DRV_OUTPUT_RUN);
+    // DRV8353_PWMDisable(&ps->drv);
 
     // // Test 1: Force all low side MOSFETs ON for a short duration to charge bootstrap capacitors
     // Force_AllHalfBridges(POWERSTATE_ALL_HIGH);
 
     // Test 2: PWM duty cycle test
-    PowerStage_TestPWM(0.4f, 0.5f, 0.6f); 
+    PowerStage_TestPWM(ps,  0.4f, 0.5f, 0.6f);
+
+    return POWERSTAGE_OK;
 }
 
-static void PowerStage_DisableAllHalfBridges(void)
-{
-    HAL_GPIO_WritePin(IN_H_A_GPIO_Port, IN_H_A_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(IN_H_B_GPIO_Port, IN_H_B_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(IN_H_C_GPIO_Port, IN_H_C_Pin, GPIO_PIN_RESET);
 
-    HAL_GPIO_WritePin(IN_L_A_GPIO_Port, IN_L_A_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(IN_L_B_GPIO_Port, IN_L_B_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(IN_L_C_GPIO_Port, IN_L_C_Pin, GPIO_PIN_RESET);
-}
+// PowerStage_Status_t Force_AllHalfBridges(PowerStage_HandleTypeDef *ps, PowerTestState_t state)
+// {
+//     PowerStage_StopPWM(ps);
 
-static void PowerStage_SetPinsToGPIO(PowerStage_Pins_t *pins)
-{
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+//     HAL_Delay(1);
 
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//     PowerStage_SetPinsToGPIO(ps);
 
-    PowerPin_t *all[] =
-    {
-        &pins->IN_H_A, &pins->IN_H_B, &pins->IN_H_C,
-        &pins->IN_L_A, &pins->IN_L_B, &pins->IN_L_C
-    };
+//     // Turn off all half-bridges to ensure a safe starting point
+//     PowerStage_DisableAllHalfBridges(ps);
 
-    for (int i = 0; i < 6; i++)
-    {
-        GPIO_InitStruct.Pin = all[i]->pin;
-        HAL_GPIO_Init(all[i]->port, &GPIO_InitStruct);
-    }
-}
+//     HAL_Delay(1);  // deadtime bezpieczeństwa
 
-static void PowerStage_SetPinsToPWM(PowerStage_Pins_t *pins)
-{
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+//     // Set state
+//     if (state == POWERSTATE_ALL_LOW)
+//     {
+//         HAL_GPIO_WritePin(ps->pins.IN_L_A.port, ps->pins.IN_L_A.pin, GPIO_PIN_SET);
+//         HAL_GPIO_WritePin(ps->pins.IN_L_B.port, ps->pins.IN_L_B.pin, GPIO_PIN_SET);
+//         HAL_GPIO_WritePin(ps->pins.IN_L_C.port, ps->pins.IN_L_C.pin, GPIO_PIN_SET);
+//     }
+//     else if (state == POWERSTATE_ALL_HIGH)
+//     {
+//         // Bootstrap capacitors need to be charged first, so we first turn on the low side MOSFETs for a short time
 
-    GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull  = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//         HAL_GPIO_WritePin(ps->pins.IN_L_A.port, ps->pins.IN_L_A.pin, GPIO_PIN_SET);
+//         HAL_GPIO_WritePin(ps->pins.IN_L_B.port, ps->pins.IN_L_B.pin, GPIO_PIN_SET);
+//         HAL_GPIO_WritePin(ps->pins.IN_L_C.port, ps->pins.IN_L_C.pin, GPIO_PIN_SET);
 
-    PowerPin_t *all[] =
-    {
-        &pins->IN_H_A, &pins->IN_H_B, &pins->IN_H_C,
-        &pins->IN_L_A, &pins->IN_L_B, &pins->IN_L_C
-    };
+//         HAL_Delay(2);
 
-    for (int i = 0; i < 6; i++)
-    {
-        GPIO_InitStruct.Pin       = all[i]->pin;
-        GPIO_InitStruct.Alternate = all[i]->alternate;
-        HAL_GPIO_Init(all[i]->port, &GPIO_InitStruct);
-    }
-}
+//         HAL_GPIO_WritePin(ps->pins.IN_L_A.port, ps->pins.IN_L_A.pin, GPIO_PIN_RESET);
+//         HAL_GPIO_WritePin(ps->pins.IN_L_B.port, ps->pins.IN_L_B.pin, GPIO_PIN_RESET);
+//         HAL_GPIO_WritePin(ps->pins.IN_L_C.port, ps->pins.IN_L_C.pin, GPIO_PIN_RESET);
 
-void Force_AllHalfBridges(PowerTestState_t state)
-{
-    PowerStage_StopPWM(&htim1);
+//         HAL_Delay(1);  // deadtime
 
-    HAL_Delay(1);
+//         HAL_GPIO_WritePin(ps->pins.IN_H_A.port, ps->pins.IN_H_A.pin, GPIO_PIN_SET);
+//         HAL_GPIO_WritePin(ps->pins.IN_H_B.port, ps->pins.IN_H_B.pin, GPIO_PIN_SET);
+//         HAL_GPIO_WritePin(ps->pins.IN_H_C.port, ps->pins.IN_H_C.pin, GPIO_PIN_SET);
+//     }
 
-    PowerStage_SetPinsToGPIO(&ps_pins);
+//     printf("All half-bridges forced to %s state.\n", (state == POWERSTATE_ALL_LOW) ? "LOW" : "HIGH");
+//     return POWERSTAGE_OK;
+// }
 
-    // Turn off all half-bridges to ensure a safe starting point
-    PowerStage_DisableAllHalfBridges();
+// PowerStage_Status_t PowerStage_TestPWM(PowerStage_HandleTypeDef *ps, float duty_a, float duty_b, float duty_c)
+// {
+//     // Ograniczenie zakresu 0.0–1.0
 
-    HAL_Delay(1);  // deadtime bezpieczeństwa
+//     if (duty_a < 0.0f) duty_a = 0.0f;
+//     if (duty_a > 1.0f) duty_a = 1.0f;
 
-    // Set state
-    if (state == POWERSTATE_ALL_LOW)
-    {
-        HAL_GPIO_WritePin(IN_L_A_GPIO_Port, IN_L_A_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(IN_L_B_GPIO_Port, IN_L_B_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(IN_L_C_GPIO_Port, IN_L_C_Pin, GPIO_PIN_SET);
-    }
-    else if (state == POWERSTATE_ALL_HIGH)
-    {
-        // Bootstrap capacitors need to be charged first, so we first turn on the low side MOSFETs for a short time
+//     if (duty_b < 0.0f) duty_b = 0.0f;
+//     if (duty_b > 1.0f) duty_b = 1.0f;
 
-        HAL_GPIO_WritePin(IN_L_A_GPIO_Port, IN_L_A_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(IN_L_B_GPIO_Port, IN_L_B_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(IN_L_C_GPIO_Port, IN_L_C_Pin, GPIO_PIN_SET);
+//     if (duty_c < 0.0f) duty_c = 0.0f;
+//     if (duty_c > 1.0f) duty_c = 1.0f;
 
-        HAL_Delay(2);
+//     // PowerStage_SetPinsToPWM(&ps_pins);
 
-        HAL_GPIO_WritePin(IN_L_A_GPIO_Port, IN_L_A_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(IN_L_B_GPIO_Port, IN_L_B_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(IN_L_C_GPIO_Port, IN_L_C_Pin, GPIO_PIN_RESET);
-
-        HAL_Delay(1);  // deadtime
-
-        HAL_GPIO_WritePin(IN_H_A_GPIO_Port, IN_H_A_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(IN_H_B_GPIO_Port, IN_H_B_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(IN_H_C_GPIO_Port, IN_H_C_Pin, GPIO_PIN_SET);
-    }
-
-    printf("All half-bridges forced to %s state.\n", (state == POWERSTATE_ALL_LOW) ? "LOW" : "HIGH");
-}
-
-void PowerStage_TestPWM(float duty_a, float duty_b, float duty_c)
-{
-    // Ograniczenie zakresu 0.0–1.0
-
-    if (duty_a < 0.0f) duty_a = 0.0f;
-    if (duty_a > 1.0f) duty_a = 1.0f;
-
-    if (duty_b < 0.0f) duty_b = 0.0f;
-    if (duty_b > 1.0f) duty_b = 1.0f;
-
-    if (duty_c < 0.0f) duty_c = 0.0f;
-    if (duty_c > 1.0f) duty_c = 1.0f;
-
-    // PowerStage_SetPinsToPWM(&ps_pins);
-
-    DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
+//     DRV8353_SetOutputState(&ps->drv, DRV_OUTPUT_RUN);
     
-    uint32_t ccr1 = (uint32_t)(duty_a * PWM_PERIOD_ARR);
-    uint32_t ccr2 = (uint32_t)(duty_b * PWM_PERIOD_ARR);
-    uint32_t ccr3 = (uint32_t)(duty_c * PWM_PERIOD_ARR);
+//     uint32_t ccr1 = (uint32_t)(duty_a * PWM_PERIOD_ARR);
+//     uint32_t ccr2 = (uint32_t)(duty_b * PWM_PERIOD_ARR);
+//     uint32_t ccr3 = (uint32_t)(duty_c * PWM_PERIOD_ARR);
 
-    // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr1);
-    // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, ccr2);
-    // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, ccr3);
+//     // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, ccr1);
+//     // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, ccr2);
+//     // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, ccr3);
 
-    PowerStage_StartPWM(&htim1);
+//     PowerStage_StartPWM(ps);
 
-    printf("PWM Test: Duty A: %.2f, Duty B: %.2f, Duty C: %.2f\n", duty_a, duty_b, duty_c);
-}
+//     printf("PWM Test: Duty A: %.2f, Duty B: %.2f, Duty C: %.2f\n", duty_a, duty_b, duty_c);
+
+//     return POWERSTAGE_OK;
+// }
 
 #endif

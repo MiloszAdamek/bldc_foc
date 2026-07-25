@@ -17,6 +17,7 @@
     BOARD_DRV8353 = 2
 } BoardType_t;
 
+
 typedef struct
 {
     BoardType_t type;
@@ -29,15 +30,13 @@ typedef struct
     SPI_HandleTypeDef *hspi_drv;
 
     // Powerstage handler
-    PowerStage_HandleTypeDef *powerstage;
+    PowerStage_HandleTypeDef powerstage;
 
 } BoardHandleTypeDef;
 
-void Board_Init(BoardHandleTypeDef *board)
-{
-    PowerStage_Init(&board->powerstage,
-                    board->hspi_drv,
-                    board->htim_pwm);
-}
+void Board_Init(BoardHandleTypeDef *board);
+void Board_StartMotor(BoardHandleTypeDef *board);
+void Board_StopMotor(BoardHandleTypeDef *board);
+void Board_CheckFaults(BoardHandleTypeDef *board);
 
  #endif /* BOARD_H */

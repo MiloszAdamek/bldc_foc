@@ -127,70 +127,65 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  // FOC_Init(&drv_board);
-  // PowerStage_Tests();
 
-  // PowerStage_Init();
-
-  // Final FOC Init
-
-  BoardHandleTypeDef drv_board = {
+  static BoardHandleTypeDef drv_board = {
     .type = BOARD_DRV8353,
+    .powerstage.pwm_mode = POWERSTAGE_PWM_MODE_6PWM,
     .htim_pwm = &htim1,
     .htim_enc = &htim2,
     .hadc_curr = &hadc1,
-    .hspi_enc = &hspi2,
-    .hspi_drv = &hspi3
+    .hspi_enc = &hspi3,
+    .hspi_drv = &hspi2,
   };
 
-  DRV8353_Faults_t drv8353_faults;
+  Board_Init(&drv_board);
 
+  // FOC_Init(&drv_board);
+  
+  // PowerStage_SetPWMMode(&drv_board.powerstage, POWERSTAGE_PWM_MODE_3PWM);
+  // PowerStage_StartPWM(&drv_board.powerstage);
+  
+//   // End FOC Init
 
+// static DRV8353_HandleTypeDef g_drv;
 
+// if (DRV8353_Init(&g_drv, &hspi2, &htim1, POWERSTAGE_PWM_MODE_3PWM) != DRV8353_OK)
+// {
+//     Error_Handler();
+// }
 
+// // /* Upewnij się że jest RUN */
+// // DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
+// DRV8353_PrintPWMMode(&g_drv);
 
+// /* 2️⃣ Ustaw wypełnienia */
+// __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3000);  // ~70%
+// __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1000);  // ~25%
+// __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 2000);  // ~50%
 
-  // End FOC Init
+// /* Wymuś załadowanie CCR */
+// __HAL_TIM_SET_COUNTER(&htim1, 0);
+// // __HAL_TIM_GENERATE_EVENT(&htim1, TIM_EVENTSOURCE_UPDATE);
 
-static DRV8353_HandleTypeDef g_drv;
+// /* 3️⃣ Start timera i PWM */
+// HAL_TIM_Base_Start(&htim1);
 
-if (DRV8353_Init(&g_drv, &hspi2, &htim1) != DRV8353_OK)
-{
-    Error_Handler();
-}
+// HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+// // HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
 
-/* Upewnij się że jest RUN */
-DRV8353_SetOutputState(&g_drv, DRV_OUTPUT_RUN);
-DRV8353_PrintPWMMode(&g_drv);
+// HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+// // HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
 
-/* 2️⃣ Ustaw wypełnienia */
-__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 3000);  // ~70%
-__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 1000);  // ~25%
-__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 2000);  // ~50%
+// HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+// // HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
-/* Wymuś załadowanie CCR */
-__HAL_TIM_SET_COUNTER(&htim1, 0);
-// __HAL_TIM_GENERATE_EVENT(&htim1, TIM_EVENTSOURCE_UPDATE);
+// /* 4️⃣ Wymuś MOE (na wszelki wypadek) */
+// htim1.Instance->BDTR |= TIM_BDTR_MOE;
 
-/* 3️⃣ Start timera i PWM */
-HAL_TIM_Base_Start(&htim1);
-
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-// HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
-
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-// HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-// HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
-
-/* 4️⃣ Wymuś MOE (na wszelki wypadek) */
-htim1.Instance->BDTR |= TIM_BDTR_MOE;
-
-/* 5️⃣ Debug */
-uint16_t reg;
-DRV8353_ReadRegister(&g_drv, DRV8353_REG_DRIVER_CONTROL, &reg);
-printf("DRIVER_CONTROL: 0x%04X\r\n", reg);
+// /* 5️⃣ Debug */
+// uint16_t reg;
+// DRV8353_ReadRegister(&g_drv, DRV8353_REG_DRIVER_CONTROL, &reg);
+// printf("DRIVER_CONTROL: 0x%04X\r\n", reg);
 
 /* --- KONIEC TESTU --- */
 
@@ -201,7 +196,9 @@ printf("DRIVER_CONTROL: 0x%04X\r\n", reg);
   while (1)
   {
     HAL_Delay(1000);
-    PowerStage_CheckFaults();
+    Board_CheckFaults(&drv_board);
+    // DRV8353_GetFaults(&g_drv, &g_drv.faults);
+    // DRV8353_PrintFaults(&g_drv.faults);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

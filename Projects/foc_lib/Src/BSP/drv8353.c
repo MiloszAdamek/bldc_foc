@@ -12,7 +12,7 @@
 
 #ifdef DRV8353
 
-DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim)
+DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, DRV8353_PWM_Mode_t pwm_mode)
 {
     if(drv == NULL || hspi == NULL || htim == NULL)
     {
@@ -54,7 +54,7 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
     }
 
     DRV8353_Config_t default_config = {
-        .pwm_mode   = DRV8353_PWM_MODE_3PWM,
+        .pwm_mode   = pwm_mode,
         .csa_gain   = DRV8353_CSA_GAIN_20V,
         .idriven_hs = DRV8353_IDRIVEN_300mA,
         .idrivep_hs = DRV8353_IDRIVEP_150mA,
@@ -355,11 +355,13 @@ DRV8353_Status_t DRV8353_SetPWMMode(
     if(drv == NULL)
         return DRV8353_ERROR;
 
-    return DRV8353_UpdateRegisterBits(
-            drv,
-            DRV8353_REG_DRIVER_CONTROL,
-            DRV8353_PWM_MODE_Msk,
-            (uint16_t)pwm_mode << DRV8353_PWM_MODE_Pos);
+    DRV8353_UpdateRegisterBits(
+        drv,
+        DRV8353_REG_DRIVER_CONTROL,
+        DRV8353_PWM_MODE_Msk,
+        (uint16_t)pwm_mode << DRV8353_PWM_MODE_Pos);
+
+    return DRV8353_OK;
 }
 
 DRV8353_Status_t DRV8353_SetAmplifierGain(
@@ -504,15 +506,6 @@ DRV8353_Status_t DRV8353_VerifyConfig(
 
     uint16_t reg;
 
-    // DRIVER_CONTROL (PWM_MODE)
-    if(DRV8353_ReadRegister(drv, DRV8353_REG_DRIVER_CONTROL, &reg) != DRV8353_OK)
-        return DRV8353_ERROR;
-
-    uint16_t pwm_mode = (reg & DRV8353_PWM_MODE_Msk) >> DRV8353_PWM_MODE_Pos;
-    if(pwm_mode != cfg->pwm_mode)
-        return DRV8353_ERROR;
-
-
     // CSA_CONTROL (GAIN)
     if(DRV8353_ReadRegister(drv, DRV8353_REG_CSA_CONTROL, &reg) != DRV8353_OK)
         return DRV8353_ERROR;
@@ -520,7 +513,6 @@ DRV8353_Status_t DRV8353_VerifyConfig(
     uint16_t gain = (reg & DRV8353_CSA_GAIN_Msk) >> DRV8353_CSA_GAIN_Pos;
     if(gain != cfg->csa_gain)
         return DRV8353_ERROR;
-
 
     // GATE_DRIVE_HS
     if(DRV8353_ReadRegister(drv, DRV8353_REG_GATE_DRIVE_HS, &reg) != DRV8353_OK)
@@ -532,7 +524,6 @@ DRV8353_Status_t DRV8353_VerifyConfig(
     if(idrivep_hs != cfg->idrivep_hs ||
        idriven_hs != cfg->idriven_hs)
         return DRV8353_ERROR;
-
 
     // GATE_DRIVE_LS
     if(DRV8353_ReadRegister(drv, DRV8353_REG_GATE_DRIVE_LS, &reg) != DRV8353_OK)
@@ -547,7 +538,6 @@ DRV8353_Status_t DRV8353_VerifyConfig(
        drive_time != cfg->drive_time)
         return DRV8353_ERROR;
 
-
     // DRIVER_CONF (DEADTIME)
     if(DRV8353_ReadRegister(drv, DRV8353_REG_DRIVER_CONF, &reg) != DRV8353_OK)
         return DRV8353_ERROR;
@@ -556,13 +546,20 @@ DRV8353_Status_t DRV8353_VerifyConfig(
     if(dead_time != cfg->dead_time)
         return DRV8353_ERROR;
 
-
     // OCP_CONTROL
     if(DRV8353_ReadRegister(drv, DRV8353_REG_OCP_CONTROL, &reg) != DRV8353_OK)
         return DRV8353_ERROR;
 
     uint16_t ocp = (reg & DRV8353_VDS_OCP_Msk) >> DRV8353_VDS_OCP_Pos;
     if(ocp != cfg->ocp_level)
+        return DRV8353_ERROR;
+
+    // DRIVER_CONTROL (PWM_MODE)
+    if(DRV8353_ReadRegister(drv, DRV8353_REG_DRIVER_CONTROL, &reg) != DRV8353_OK)
+        return DRV8353_ERROR;
+
+    uint16_t pwm_mode = (reg & DRV8353_PWM_MODE_Msk) >> DRV8353_PWM_MODE_Pos;
+    if(pwm_mode != cfg->pwm_mode)
         return DRV8353_ERROR;
 
     return DRV8353_OK;
