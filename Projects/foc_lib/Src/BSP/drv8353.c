@@ -55,7 +55,7 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
 
     DRV8353_Config_t default_config = {
         .pwm_mode   = pwm_mode,
-        .csa_gain   = DRV8353_CSA_GAIN_20V,
+        .csa_gain   = DRV8353_CSA_GAIN_40V,
         .idriven_hs = DRV8353_IDRIVEN_300mA,
         .idrivep_hs = DRV8353_IDRIVEP_150mA,
         .idriven_ls = DRV8353_IDRIVEN_300mA,

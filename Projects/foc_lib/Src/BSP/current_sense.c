@@ -125,6 +125,12 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 			CurrentSense_Process_ISR();
 			currents_ready = true;
 
+            // Tylko do debugu, to ma zniknąć stąd
+            CurrentSense_CalculatePhases();
+
+
+
+
 			// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
 //			ADC_Conv_Flag_GPIO_Port->BSRR = ADC_Conv_Flag_Pin; // GPIO_PIN_SET
 //			ADC_Conv_Flag_GPIO_Port->BSRR = (uint32_t)ADC_Conv_Flag_Pin << 16; // GPIO_PIN_RESET

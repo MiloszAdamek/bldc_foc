@@ -104,6 +104,12 @@ void FOC_Init(BoardHandleTypeDef *board)
 
 	HAL_Delay(50);
 
+
+    // Testowo - do pomiaru prądu
+    HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
+	HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
+    // Testowo - end
+
     // SVPWM_Init(s_foc.board->htim_pwm);
     // FOC_AlignSensor();
 
@@ -114,7 +120,7 @@ void FOC_Init(BoardHandleTypeDef *board)
     //        s_foc.angles.theta_el = FOC_GetElecticalAngle(mech0);
     //    }
 
-    HAL_TIM_Base_Stop(s_foc.board->htim_pwm);
+    // HAL_TIM_Base_Stop(s_foc.board->htim_pwm);
 }
 
 void FOC_Start(){
@@ -523,16 +529,19 @@ TIM_HandleTypeDef* FOC_GetEncTimer(void) {return s_foc.board->htim_enc;};
 
 void Motor_Motion_Test(void)
 {
-    static float angle = 0.0f;
+    static uint32_t t0 = 0;
 
-    float Uq = 0.2f * (VOLTAGE_SUPPLY / M_SQRT3);
+    float Uq = 0.6f * (VOLTAGE_SUPPLY / M_SQRT3);
     float Ud = 0.0f;
 
-    angle += 0.001f;   // im mniejsze, tym wolniej
+    uint32_t t_ms = HAL_GetTick() - t0;   // czas od startu w ms
+    float t = t_ms * 0.001f;              // sekundy
 
-    if (angle > 2.0f * M_PI)
-        angle -= 2.0f * M_PI;
+    float freq = 20.0f;                   // 20 Hz elektryczne
+    float angle = 2.0f * M_PI * freq * t;
+
+    // zawijanie kąta (opcjonalne)
+    angle = fmodf(angle, 2.0f * M_PI);
 
     FOC_SetPhaseVoltage(Uq, Ud, angle);
 }
-

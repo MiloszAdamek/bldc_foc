@@ -74,13 +74,12 @@ void Board_Init(BoardHandleTypeDef *board)
 
     Board_StartPWM(board);
 
-    __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_1, 3000);  // ~70%
-    __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_2, 1000);  // ~25%
-    __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_3, 2000);  // ~50%
+    // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_1, 3000);  // ~70%
+    // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_2, 1000);  // ~25%
+    // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_3, 2000);  // ~50%
 
-    /* Wymuś załadowanie CCR */
-    __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
-    // __HAL_TIM_GENERATE_EVENT(&htim1, TIM_EVENTSOURCE_UPDATE);
+    // /* Wymuś załadowanie CCR */
+    // __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
 
 }
 
@@ -96,7 +95,6 @@ void Board_StopMotor(BoardHandleTypeDef *board)
 
 static void Board_StartPWM(BoardHandleTypeDef *board)
 {
-
     Board_SetPinsToPWM(board);
 
     if (board->powerstage.pwm_mode == POWERSTAGE_PWM_MODE_3PWM) {
@@ -113,12 +111,10 @@ static void Board_StartPWM(BoardHandleTypeDef *board)
         HAL_TIM_PWM_Start(board->powerstage.htim, TIM_CHANNEL_3);
         HAL_TIMEx_PWMN_Start(board->powerstage.htim, TIM_CHANNEL_3);
     }
-
 }
 
 static void Board_StopPWM(BoardHandleTypeDef *board)
 {
-
     if (board->powerstage.pwm_mode == POWERSTAGE_PWM_MODE_3PWM) {
         HAL_TIM_PWM_Stop(board->powerstage.htim, TIM_CHANNEL_1);
         HAL_TIM_PWM_Stop(board->powerstage.htim, TIM_CHANNEL_2);
@@ -133,7 +129,6 @@ static void Board_StopPWM(BoardHandleTypeDef *board)
         HAL_TIM_PWM_Stop(board->powerstage.htim, TIM_CHANNEL_3);
         HAL_TIMEx_PWMN_Stop(board->powerstage.htim, TIM_CHANNEL_3);
     }
-
 }
 
 void Board_SetPWMMode(BoardHandleTypeDef *board, PowerStage_PWM_Mode_t mode){

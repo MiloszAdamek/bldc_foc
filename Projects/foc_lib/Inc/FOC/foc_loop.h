@@ -101,4 +101,6 @@ bool FOC_IsSensorAligned(void);
 TIM_HandleTypeDef* FOC_GetPwmTimer(void);
 TIM_HandleTypeDef* FOC_GetEncTimer(void);
 
+void Motor_Motion_Test(void);
+
 #endif /* INC_FOC_LOOP_H_ */
