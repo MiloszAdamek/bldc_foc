@@ -65,12 +65,16 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 int _write(int file, char *ptr, int len)
 {
+    uint8_t cr = '\r';
     for (int i = 0; i < len; i++)
     {
         if (ptr[i] == '\n')
-            ITM_SendChar('\r');
+        
+            HAL_UART_Transmit(&huart3, &cr, 1, HAL_MAX_DELAY);
+            // ITM_SendChar('\r');
 
-        ITM_SendChar(ptr[i]);
+        // ITM_SendChar(ptr[i]);
+        HAL_UART_Transmit(&huart3, (uint8_t *)&ptr[i], 1, HAL_MAX_DELAY);
     }
     return len;
 }
