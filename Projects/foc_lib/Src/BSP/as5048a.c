@@ -95,6 +95,11 @@ static AS5048_Status AS5048_RegRead(const uint16_t regAddr, uint16_t *dst)
     s = AS5048_TransceiveReceive(txBuf2, rxBuf2);
     if (s != AS5048_OK) return s;
 
+    printf("CMD=%02X %02X\n", txBuf[0], txBuf[1]);
+    printf("regAddr=0x%04X\n", regAddr);
+    printf("RX1=%02X %02X\n", rxBuf[0], rxBuf[1]);
+    printf("RX2=%02X %02X\n", rxBuf2[0], rxBuf2[1]);
+
     uint16_t rx_data = ((uint16_t)rxBuf2[0] << 8) | rxBuf2[1];
     if (regAddr != AS_CLR_ERR && AS5048_HasError(rx_data))
         return AS5048_ERR_FLAG;
@@ -143,10 +148,10 @@ AS5048_ErrorFlags AS5048_GetErrorDetails(void)
     err.offsetFinished  = reg & (1 << 1);
     err.cordicOverflow  = reg & (1 << 2);
 
-//    printf("[ERROR] Rejestr błędów: 0x%04X\n", reg);
-//    printf("        → Watchdog: %s\n", err.watchdogError ? "TAK" : "nie");
-//    printf("        → Offset finished: %s\n", err.offsetFinished ? "TAK" : "nie");
-//    printf("        → CORDIC overflow: %s\n", err.cordicOverflow ? "TAK" : "nie");
+    printf("[ERROR] Rejestr błędów: 0x%04X\n", reg);
+    printf("        → Watchdog: %s\n", err.watchdogError ? "TAK" : "nie");
+    printf("        → Offset finished: %s\n", err.offsetFinished ? "TAK" : "nie");
+    printf("        → CORDIC overflow: %s\n", err.cordicOverflow ? "TAK" : "nie");
 
     // CLEAR ERROR FLAG mechanizm z dokumentacji: kolejny odczyt kasuje flagę
     uint16_t dummy;

@@ -66,13 +66,17 @@ void Board_Init(BoardHandleTypeDef *board)
 
     // Encoder initialization and calibration
 
-    // AS5048_Init(board->hspi_enc);
+    AS5048_Init(board->hspi_enc);
 
     // FOC initialization
+
+    SVPWM_Init(board->htim_pwm);
 
     PowerStage_On(&board->powerstage);
 
     Board_StartPWM(board);
+
+    // Alignment of the sensor (AS5048) with the motor's electrical angle
 
     // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_1, 3000);  // ~70%
     // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_2, 1000);  // ~25%

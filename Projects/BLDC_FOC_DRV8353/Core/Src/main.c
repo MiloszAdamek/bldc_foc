@@ -142,9 +142,13 @@ int main(void)
     .hspi_drv = &hspi2,
   };
 
-  Board_Init(&drv_board);
+  // Board_Init(&drv_board);
 
-  FOC_Init(&drv_board);
+  // FOC_Init(&drv_board);
+
+  HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
+  AS5048_Init(&hspi3);
+  AS5048_GetErrorDetails();
   
   /* USER CODE END 2 */
 
@@ -152,13 +156,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    HAL_Delay(1000);
+    printf("Kąt mechaniczny: %.2f deg\n", AS5048_GetAngleDeg());
+
     // HAL_Delay(5000);
     // Board_CheckFaults(&drv_board);
     // Board_StartMotor(&drv_board);
     // HAL_Delay(5000);
     // Board_StopMotor(&drv_board);
 
-    Motor_Motion_Test();
+    // Motor_Motion_Test();
+
     // DRV8353_GetFaults(&g_drv, &g_drv.faults);
     // DRV8353_PrintFaults(&g_drv.faults);
     /* USER CODE END WHILE */

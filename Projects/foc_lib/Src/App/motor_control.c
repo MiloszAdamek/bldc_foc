@@ -30,7 +30,9 @@ static float target_torque_iq = 0.0f;
 volatile bool speed_loop_enabled = false;
 volatile bool position_loop_enabled = false;
 
-void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef* position_control_htim, TIM_HandleTypeDef* commander_htim)
+void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, 
+						TIM_HandleTypeDef* position_control_htim, 
+						TIM_HandleTypeDef* commander_htim)
 {
 	speed_ctrl_htim = speed_control_htim;
 	position_ctrl_htim = position_control_htim;

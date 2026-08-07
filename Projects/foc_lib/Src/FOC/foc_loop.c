@@ -104,7 +104,6 @@ void FOC_Init(BoardHandleTypeDef *board)
 
 	HAL_Delay(50);
 
-
     // Testowo - do pomiaru prądu
     HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
 	HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
