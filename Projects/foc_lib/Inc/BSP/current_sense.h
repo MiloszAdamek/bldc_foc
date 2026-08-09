@@ -25,6 +25,9 @@ typedef struct {
 // Inicjalizacja pomiaru prądów
 void CurrentSense_Init(ADC_HandleTypeDef *hadc);
 
+// Start pomiaru prądów w trybie przerwań
+void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc);
+
 // Wyliczenie pradów
 void CurrentSense_CalculatePhases();
 

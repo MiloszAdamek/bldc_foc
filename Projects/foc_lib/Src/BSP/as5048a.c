@@ -95,10 +95,10 @@ static AS5048_Status AS5048_RegRead(const uint16_t regAddr, uint16_t *dst)
     s = AS5048_TransceiveReceive(txBuf2, rxBuf2);
     if (s != AS5048_OK) return s;
 
-    printf("CMD=%02X %02X\n", txBuf[0], txBuf[1]);
-    printf("regAddr=0x%04X\n", regAddr);
-    printf("RX1=%02X %02X\n", rxBuf[0], rxBuf[1]);
-    printf("RX2=%02X %02X\n", rxBuf2[0], rxBuf2[1]);
+    // printf("CMD=%02X %02X\n", txBuf[0], txBuf[1]);
+    // printf("regAddr=0x%04X\n", regAddr);
+    // printf("RX1=%02X %02X\n", rxBuf[0], rxBuf[1]);
+    // printf("RX2=%02X %02X\n", rxBuf2[0], rxBuf2[1]);
 
     uint16_t rx_data = ((uint16_t)rxBuf2[0] << 8) | rxBuf2[1];
     if (regAddr != AS_CLR_ERR && AS5048_HasError(rx_data))

@@ -9,7 +9,8 @@
  #include "BSP/board.h"
  #include "BSP/current_sense.h"
  #include "BSP/PowerStage.h"
-#include "powerstage.h"
+ #include "BSP/drv8353.h"
+ #include "BSP/as5048a.h"
 
  #ifdef DRV8353
 
@@ -56,10 +57,19 @@ void Board_Init(BoardHandleTypeDef *board)
     
     // Current sense initialization and calibration
 
-	__HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
 	HAL_TIM_Base_Start(board->htim_pwm);
-
 	HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+
+    // HAL_TIM_Base_Stop_IT(board->htim_pwm);
+	// HAL_TIM_Base_Stop_IT(board->htim_enc);
+
+	// __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
+	// __HAL_TIM_SET_COUNTER(board->htim_enc, 0);
+
+	// HAL_TIM_Base_Start(board->htim_pwm);
+	// HAL_TIM_Base_Start_IT(board->htim_enc);
+	// HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+
 	HAL_Delay(50);
 
     CurrentSense_Init(board->hadc_curr);
@@ -68,15 +78,11 @@ void Board_Init(BoardHandleTypeDef *board)
 
     AS5048_Init(board->hspi_enc);
 
-    // FOC initialization
-
-    SVPWM_Init(board->htim_pwm);
+    // Powerstage initialization
 
     PowerStage_On(&board->powerstage);
 
     Board_StartPWM(board);
-
-    // Alignment of the sensor (AS5048) with the motor's electrical angle
 
     // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_1, 3000);  // ~70%
     // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_2, 1000);  // ~25%
@@ -142,7 +148,6 @@ void Board_SetPWMMode(BoardHandleTypeDef *board, PowerStage_PWM_Mode_t mode){
     board->powerstage.pwm_mode = mode;
 
     if (mode == POWERSTAGE_PWM_MODE_3PWM) {
-        // DRV8353_SetPWMMode(&board->powerstage.drv, DRV8353_PWM_MODE_3PWM);
         Board_SetLowPinsToGPIO(board);
         HAL_GPIO_WritePin(board->powerstage.pins.IN_L_A.port, board->powerstage.pins.IN_L_A.pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(board->powerstage.pins.IN_L_B.port, board->powerstage.pins.IN_L_B.pin, GPIO_PIN_SET);
@@ -150,7 +155,6 @@ void Board_SetPWMMode(BoardHandleTypeDef *board, PowerStage_PWM_Mode_t mode){
         Board_SetPinsToPWM(board);
 
     } else if (mode == POWERSTAGE_PWM_MODE_6PWM) {
-        // DRV8353_SetPWMMode(&board->powerstage.drv, DRV8353_PWM_MODE_6PWM);
         Board_SetPinsToPWM(board);
     }
 }

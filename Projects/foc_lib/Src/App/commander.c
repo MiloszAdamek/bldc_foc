@@ -23,11 +23,11 @@ static volatile bool g_new_command_flag = false;
 
 static void process_command(char* cmd);
 
-void Commander_Init(void* huart_void) {
-    if (huart_void == NULL) {
+void Commander_Init(BoardHandleTypeDef* board) {
+    if (board == NULL) {
         Error_Handler();
     }
-    cmd_huart = (UART_HandleTypeDef*)huart_void;
+    cmd_huart = board->huart_com;
 
     HAL_UART_Receive_IT(cmd_huart, &g_uart_rx_char, 1);
 
@@ -109,7 +109,6 @@ static void process_command(char* cmd) {
 			break;
 	 }
 }
-
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == cmd_huart->Instance) {

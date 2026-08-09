@@ -8,6 +8,7 @@
 #include "App/motor_control.h"
 #include "App/config.h"
 #include "App/commander.h"
+#include "BSP/board.h"
 #include "FOC/foc_loop.h"
 #include "FOC/speed_control.h"
 #include "FOC/speed_estimator.h"
@@ -30,18 +31,17 @@ static float target_torque_iq = 0.0f;
 volatile bool speed_loop_enabled = false;
 volatile bool position_loop_enabled = false;
 
-void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, 
-						TIM_HandleTypeDef* position_control_htim, 
-						TIM_HandleTypeDef* commander_htim)
+void MotorControl_Init(BoardHandleTypeDef* board)
 {
-	speed_ctrl_htim = speed_control_htim;
-	position_ctrl_htim = position_control_htim;
-	cmd_htim = commander_htim;
+	speed_ctrl_htim = board->htim_speed;
+	position_ctrl_htim = board->htim_pos;
+	cmd_htim = board->htim_cmd;
 	HAL_TIM_Base_Start_IT(speed_ctrl_htim);
 	HAL_TIM_Base_Start_IT(position_ctrl_htim);
 	HAL_TIM_Base_Start_IT(cmd_htim);
 	PositionController_Init(POSITION_UNIT_RAD); // Wybór jednostki w regulatorze pozycji
 	SpeedEstimator_Init(SPEED_PERIOD_SEC);
+	Board_Init(board);
 	MotorControl_Start();
 }
 
@@ -52,32 +52,19 @@ void MotorControl_Start(void)
 
         // Uruchom kalibrację
 
-//        if (!FOC_IsSensorAligned()) {
-//            if (!FOC_AlignSensor()) {
-//                FOC_Stop();
-//                g_motor_state = STATE_FAULT;
-//                return;
-//            }
-//        }
+		if (!FOC_IsSensorAligned()) {
+			if (!FOC_AlignSensor()) {
+				// Błąd alignmentu FOC
+				FOC_Stop();
+				g_motor_state = STATE_FAULT;
+				return;
+			}
+		}
 
-        FOC_Start();
-//        MotorControl_SetTorque(0.0f);
+		// MotorControl_Stop();
 
-        // old
-//        if(sensor_aligned){
-//            if (FOC_AlignSensor())
-//            {
-//                FOC_Start(); // Włącz PWM/ADC
-//                MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
-//            } else {
-//            	FOC_Stop();
-//                g_motor_state = STATE_FAULT; // Błąd kalibracji
-//            }
-//        }
-//        else{
-//        	FOC_Start();
-//        	MotorControl_SetTorque(0.0f); // Przejdź do trybu momentu z zerowym prądem
-//        }
+		FOC_Start();	
+       	MotorControl_SetTorque(0.05f);
     }
 }
 

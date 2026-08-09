@@ -70,6 +70,12 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
 	}
 }
 
+void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc) {
+    if (hadc->Instance == ADC1){
+        HAL_ADCEx_InjectedStart_IT(s_hadc);
+    }
+}
+
 void CurrentSense_Process_ISR() {
 	if (!is_calibrated) return;
 

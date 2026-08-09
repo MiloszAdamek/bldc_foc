@@ -92,21 +92,23 @@ void FOC_Init(BoardHandleTypeDef *board)
         s_foc.ramp.active = false;
     #endif
 
-	HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
-	HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
+    SVPWM_Init(s_foc.board->htim_pwm);
 
-	__HAL_TIM_SET_COUNTER(s_foc.board->htim_pwm, 0);
-	__HAL_TIM_SET_COUNTER(s_foc.board->htim_enc, 0);
+	// HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
+	// HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
 
-	HAL_TIM_Base_Start(s_foc.board->htim_pwm);
-	HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
-	HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+	// __HAL_TIM_SET_COUNTER(s_foc.board->htim_pwm, 0);
+	// __HAL_TIM_SET_COUNTER(s_foc.board->htim_enc, 0);
 
-	HAL_Delay(50);
+	// HAL_TIM_Base_Start(s_foc.board->htim_pwm);
+	// HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
+	// HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
+
+	// HAL_Delay(50);
 
     // Testowo - do pomiaru prądu
-    HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
-	HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
+    // HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
+	// HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
     // Testowo - end
 
     // SVPWM_Init(s_foc.board->htim_pwm);
@@ -124,10 +126,9 @@ void FOC_Init(BoardHandleTypeDef *board)
 
 void FOC_Start(){
 
-//    HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
+//  HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
+//  CurrentSense_InjectedStart_IT(s_foc.board->hadc_curr);
 //	HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
-
-//	FOC_EnableOutputs();
 
 	// Pobranie danych przed uruchomieniem pętli FOC
 	currents_ready = false;
@@ -137,12 +138,24 @@ void FOC_Start(){
 
     AS5048_ReadAngleDMA();
 
-    HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm);
+    HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
+	HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
+
+    __HAL_TIM_SET_COUNTER(s_foc.board->htim_pwm, 0);
+    __HAL_TIM_SET_COUNTER(s_foc.board->htim_enc, 0);
+    
+    HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
+
+    HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
+    CurrentSense_InjectedStart_IT(s_foc.board->hadc_curr);
+    HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm); // Uruchomienie pętli FOC
 }
 
 void FOC_Stop(){
 
     Board_StopMotor(s_foc.board);
+
+    HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm);
 
     HAL_ADCEx_InjectedStop_IT(s_foc.board->hadc_curr);
 
@@ -196,7 +209,7 @@ void FOC_RunLoop()
 	CurrentSense_Read(&s_foc.currents);
 
 	// Algorytm FOC
-//	FOC_Update(s_foc.angles.theta_el);
+	FOC_Update(s_foc.angles.theta_el);
 
 //	s_foc.stats.loop_ok++;
 }
@@ -236,13 +249,13 @@ void FOC_Update(float theta_el)
     vd = pi_control(&s_foc.pi_id, s_foc.i_ref.d - id);
     vq = pi_control(&s_foc.pi_iq, target_iq - iq);
 
-    static uint32_t cnt = 0;
-    if (++cnt % 5000 == 0) {
-        printf("FOC: theta=%.2f id=%.3f iq=%.3f vd=%.2f vq=%.2f\n",
-               theta_el, id, iq, vd, vq);
-        printf("     Ia=%.3f Ib=%.3f Ic=%.3f\n",
-               s_foc.currents.a, s_foc.currents.b, s_foc.currents.c);
-    }
+    // static uint32_t cnt = 0;
+    // if (++cnt % 5000 == 0) {
+    //     printf("FOC: theta=%.2f id=%.3f iq=%.3f vd=%.2f vq=%.2f\n",
+    //            theta_el, id, iq, vd, vq);
+    //     printf("     Ia=%.3f Ib=%.3f Ic=%.3f\n",
+    //            s_foc.currents.a, s_foc.currents.b, s_foc.currents.c);
+    // }
 
     // CubeMonitor log data
     Log_To_CubeMonitor(id, iq, target_iq);

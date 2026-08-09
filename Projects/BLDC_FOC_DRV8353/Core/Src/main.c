@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -28,6 +29,8 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "App/config.h"
+#include "App/commander.h"
+#include "App/motor_control.h"
 #include "FOC/foc_loop.h"
 #include "BSP/board.h"
 #include "BSP/drv8353.h"
@@ -121,6 +124,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_SPI2_Init();
   MX_SPI3_Init();
@@ -136,19 +140,35 @@ int main(void)
     .type = BOARD_DRV8353,
     .powerstage.pwm_mode = POWERSTAGE_PWM_MODE_3PWM,
     .htim_pwm = &htim1,
-    .htim_enc = &htim2,
+    .htim_enc = &htim4,
+    .htim_speed = &htim2,
+    .htim_pos = &htim5,
+    .htim_cmd = &htim3,
     .hadc_curr = &hadc1,
     .hspi_enc = &hspi3,
     .hspi_drv = &hspi2,
+    .huart_com = &huart3,
   };
 
-  // Board_Init(&drv_board);
+  // Controller initialization BEGIN
 
-  // FOC_Init(&drv_board);
+  Board_Init(&drv_board);
 
-  HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
-  AS5048_Init(&hspi3);
-  AS5048_GetErrorDetails();
+  FOC_Init(&drv_board);
+
+  Commander_Init(&drv_board);
+
+  MotorControl_Init(&drv_board);
+
+  // Controller initialization END
+
+  // Tests BEGIN
+
+  // HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
+  // AS5048_Init(&hspi3);
+  // AS5048_GetErrorDetails();
+
+  // Tests END
   
   /* USER CODE END 2 */
 
@@ -156,8 +176,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_Delay(1000);
-    printf("Kąt mechaniczny: %.2f deg\n", AS5048_GetAngleDeg());
+    // HAL_Delay(1000);
+    // printf("Kąt mechaniczny: %.2f deg\n", AS5048_GetAngleDeg());
 
     // HAL_Delay(5000);
     // Board_CheckFaults(&drv_board);

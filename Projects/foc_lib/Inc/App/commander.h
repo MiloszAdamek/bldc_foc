@@ -8,7 +8,9 @@
 #ifndef INC_COMMANDER_H_
 #define INC_COMMANDER_H_
 
-void Commander_Init(void* huart_void);
+#include "BSP/board.h"
+
+void Commander_Init(BoardHandleTypeDef* board);
 
 //Funkcja do cyklicznego wywoływania w pętli głównej.
 //Sprawdza, czy nadeszła nowa komenda i ją przetwarza.

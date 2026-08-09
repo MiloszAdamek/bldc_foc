@@ -25,9 +25,13 @@ typedef struct
     // Peripherals handlers
     TIM_HandleTypeDef *htim_pwm;
     TIM_HandleTypeDef *htim_enc;
+    TIM_HandleTypeDef *htim_pos;
+    TIM_HandleTypeDef *htim_speed;
+    TIM_HandleTypeDef *htim_cmd;
     ADC_HandleTypeDef *hadc_curr;
     SPI_HandleTypeDef *hspi_enc;
     SPI_HandleTypeDef *hspi_drv;
+    UART_HandleTypeDef *huart_com;
 
     // Powerstage handler
     PowerStage_HandleTypeDef powerstage;

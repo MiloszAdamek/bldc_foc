@@ -8,7 +8,7 @@
 #ifndef INC_MOTOR_CONTROL_H_
 #define INC_MOTOR_CONTROL_H_
 
-#include "tim.h"
+#include "BSP/board.h"
 
 typedef enum {
     STATE_IDLE,         	// Czeka na polecenia, PWM wyłączone
@@ -22,7 +22,7 @@ typedef enum {
 
 extern volatile MotorState_t g_motor_state;
 
-void MotorControl_Init(TIM_HandleTypeDef* speed_control_htim, TIM_HandleTypeDef* position_control_htim, TIM_HandleTypeDef* commander_htim);
+void MotorControl_Init(BoardHandleTypeDef* board);
 
 void MotorControl_SetPosition(float position);
 

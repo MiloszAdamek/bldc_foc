@@ -202,9 +202,9 @@ DRV8353_Status_t DRV8353_ReadRegister(DRV8353_HandleTypeDef *drv,
         return DRV8353_ERROR;
     }
 
-    printf("READ REG 0x%02X\r\n", reg);
-    printf("TX: 0x%04X\r\n", tx);
-    printf("RX: 0x%04X\r\n", rx);
+    // printf("READ REG 0x%02X\r\n", reg);
+    // printf("TX: 0x%04X\r\n", tx);
+    // printf("RX: 0x%04X\r\n", rx);
 
     *data = rx & 0x07FF;
 
