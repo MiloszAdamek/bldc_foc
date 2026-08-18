@@ -51,7 +51,7 @@
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        13.0f
-#define VOLTAGE_LIMIT         10.0f
+#define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -75,21 +75,41 @@
  * ----------------  PARAMETRY REGULATORÓW PI  -----------------------------
  * ========================================================================= */
 
-#define PI_KP_ID 3.0f
-#define PI_KI_ID 300.0f
-#define PI_LIMIT_ID (VOLTAGE_SUPPLY / M_SQRT3)
+#ifdef DRV8353
+    #define PI_KP_ID 0.5f
+    #define PI_KI_ID 30.0f
+    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
 
-#define PI_KP_IQ 3.0f
-#define PI_KI_IQ 300.0f
-#define PI_LIMIT_IQ (VOLTAGE_SUPPLY / M_SQRT3)
+    #define PI_KP_IQ 0.5f
+    #define PI_KI_IQ 30.0f
+    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
 
-#define PI_KP_V 0.003f
-#define PI_KI_V 0.005f
-#define PI_LIMIT_V 0.4f * (VOLTAGE_SUPPLY / M_SQRT3)
+    #define PI_KP_V 0.0005f
+    #define PI_KI_V 0.0007f
+    #define PI_LIMIT_V 0.4f * (VOLTAGE_LIMIT / M_SQRT3)
 
-#define PI_KP_P 10.0f
-#define PI_KI_P 2.0f
-#define PI_LIMIT_P (1000.0f * 2.0f * M_PI / 60.0f) // 500 RPM -> rad/s
+    #define PI_KP_P 10.0f
+    #define PI_KI_P 2.0f
+    #define PI_LIMIT_P (1000.0f * 2.0f * M_PI / 60.0f) // 500 RPM -> rad/s
+#endif
+
+#ifdef IHM03
+    #define PI_KP_ID 5.0f
+    #define PI_KI_ID 300.0f
+    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_IQ 5.0f
+    #define PI_KI_IQ 300.0f
+    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_V 0.003f
+    #define PI_KI_V 0.005f
+    #define PI_LIMIT_V 0.4f * (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_P 10.0f
+    #define PI_KI_P 2.0f
+    #define PI_LIMIT_P (1000.0f * 2.0f * M_PI / 60.0f) // 500 RPM -> rad/s
+#endif  
 
 #ifdef ENABLE_SERIAL_DEBUGGING
     #define LOG(format, ...) printf(format, ##__VA_ARGS__)
