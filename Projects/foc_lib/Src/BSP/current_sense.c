@@ -86,6 +86,24 @@ void CurrentSense_Process_ISR() {
     #endif
 }
 
+// void CurrentSense_CalculatePhases(){
+//     if (!is_calibrated) return;
+
+//     int32_t diff_a = (int32_t)adc_raw_phase_a - (int32_t)offset_a;
+//     int32_t diff_b = (int32_t)adc_raw_phase_b - (int32_t)offset_b;
+//     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+//         int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
+//     #endif
+
+//     current_a = -(float)diff_a * ADC_TO_CURRENT;
+//     current_b = -(float)diff_b * ADC_TO_CURRENT;
+//     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+//         current_c = -(float)diff_c * ADC_TO_CURRENT;
+//     #else
+//         current_c = -(current_a + current_b);
+//     #endif
+// }
+
 void CurrentSense_CalculatePhases(){
     if (!is_calibrated) return;
 
@@ -95,14 +113,14 @@ void CurrentSense_CalculatePhases(){
         int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
     #endif
 
-    current_a = -(float)diff_a * ADC_TO_CURRENT;
-    current_b = -(float)diff_b * ADC_TO_CURRENT;
+    current_a = (float)diff_a * ADC_TO_CURRENT;
+    current_b = (float)diff_b * ADC_TO_CURRENT;
     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-        current_c = -(float)diff_c * ADC_TO_CURRENT;
+        current_c = (float)diff_c * ADC_TO_CURRENT;
     #else
         current_c = -(current_a + current_b);
     #endif
-    }
+}
 
 void CurrentSense_Read(abc_current_t *currents)
 {
@@ -134,8 +152,7 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
             // Tylko do debugu, to ma zniknąć stąd
             CurrentSense_CalculatePhases();
 
-
-
+            FOC_RunLoop();
 
 			// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem
 //			ADC_Conv_Flag_GPIO_Port->BSRR = ADC_Conv_Flag_Pin; // GPIO_PIN_SET

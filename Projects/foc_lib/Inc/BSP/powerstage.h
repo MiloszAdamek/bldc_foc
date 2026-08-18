@@ -33,7 +33,7 @@
 #endif
 
 #ifdef DRV8353
-    #define SHUNT_RESISTOR        0.005f
+    #define SHUNT_RESISTOR        0.0005f
     #define CURRENT_SENSE_GAIN    40.0f
 
     typedef enum

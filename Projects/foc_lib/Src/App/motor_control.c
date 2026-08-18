@@ -64,7 +64,7 @@ void MotorControl_Start(void)
 		// MotorControl_Stop();
 
 		FOC_Start();	
-       	MotorControl_SetTorque(0.05f);
+       	MotorControl_SetTorque(0.15f);
     }
 }
 
@@ -130,16 +130,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* FOC 10 kHz - priority 0 */
 	if (htim->Instance == FOC_GetPwmTimer()->Instance) // 40 kHz
 	{
-		static bool foc_toggle = false;
-		if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim)) // 20kHz
-		{
-			foc_toggle = !foc_toggle;
-			if (foc_toggle){ // Loop FOC 10 kHz
-				// FOC_Flag_GPIO_Port->BSRR = FOC_Flag_Pin; // GPIO_PIN_SET
-				FOC_RunLoop();
-				// FOC_Flag_GPIO_Port->BSRR = (uint32_t)FOC_Flag_Pin << 16; // GPIO_PIN_RESET
-			}
-		}
+		// static bool foc_toggle = false;
+		// if (!__HAL_TIM_IS_TIM_COUNTING_DOWN(htim)) // 20kHz
+		// {
+		// 	foc_toggle = !foc_toggle;
+		// 	if (foc_toggle){ // Loop FOC 10 kHz
+		// 		// FOC_Flag_GPIO_Port->BSRR = FOC_Flag_Pin; // GPIO_PIN_SET
+		// 		FOC_RunLoop();
+		// 		// FOC_Flag_GPIO_Port->BSRR = (uint32_t)FOC_Flag_Pin << 16; // GPIO_PIN_RESET
+		// 	}
+		// }
 		return;
 	}
 

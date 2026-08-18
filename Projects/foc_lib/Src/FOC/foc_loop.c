@@ -20,7 +20,7 @@
 #include <string.h>
 
 // Włącz jeśli SVPWM ma zamianę faz B↔C
-//#define SVPWM_PHASE_SWAP_BC
+// #define SVPWM_PHASE_SWAP_BC
 //#define CALIB_SVPWM
 
 static FOC_HandleTypeDef s_foc;
@@ -40,27 +40,28 @@ static void PI_Reset(PI_Controller *pi);
 static void Ramp_Reset(Ramp_t *ramp);
 static void Flags_Reset(FocFlags_t *flags);
 static void FOCStats_Reset(void);
+static inline float FOC_GetElectricalAngle(float mech);
 
 static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 {
     monitor_data.current_a = s_foc.currents.a;
     monitor_data.current_b = s_foc.currents.b;
     monitor_data.current_c = s_foc.currents.c;
-//
-//    monitor_data.id = id;
-//    monitor_data.iq = iq;
-//    monitor_data.iq_ref = target_iq;
 
-//    monitor_data.theta_el =  s_foc.angles.theta_el;
+    monitor_data.id = id;
+    monitor_data.iq = iq;
+    monitor_data.iq_ref = target_iq;
+
+    monitor_data.theta_el =  s_foc.angles.theta_el;
     monitor_data.theta_mech = s_foc.angles.theta_mech;
 
 //    monitor_data.id_ref = i_ref.d;
 //    monitor_data.speed_ref = speed_ramp_out;
-    monitor_data.speed = SpeedEstimator_GetOmegaRPM();
-//
-//    monitor_data.position_err = position_err;
-//    monitor_data.position_ref = position_ref;
-//    monitor_data.position_reg_out = position_reg_out;
+//    monitor_data.speed = SpeedEstimator_GetOmegaRPM();
+
+   monitor_data.position_err = position_err;
+   monitor_data.position_ref = position_ref;
+   monitor_data.position_reg_out = position_reg_out;
 }
 
 void FOC_Init(BoardHandleTypeDef *board)
@@ -118,7 +119,7 @@ void FOC_Init(BoardHandleTypeDef *board)
     //    float mech0 = AS5048_GetAngleRad();
     //    if (mech0 >= 0.0f) {
     //        s_foc.angles.theta_mech = mech0;
-    //        s_foc.angles.theta_el = FOC_GetElecticalAngle(mech0);
+    //        s_foc.angles.theta_el = FOC_GetElectricalAngle(mech0);
     //    }
 
     // HAL_TIM_Base_Stop(s_foc.board->htim_pwm);
@@ -184,7 +185,7 @@ void FOC_RunLoop()
 	EncoderSample_t enc;
 	if(EncoderHub_ConsumeSample(&enc)){
 		s_foc.angles.theta_mech = enc.theta_mech;
-		s_foc.angles.theta_el = FOC_GetElecticalAngle(enc.theta_mech);
+		s_foc.angles.theta_el = FOC_GetElectricalAngle(enc.theta_mech);
 		s_foc.stats.encoder_timeout = 0;
 
 		EncoderHub_PublishAngle(
@@ -201,8 +202,6 @@ void FOC_RunLoop()
 		}
 		// Użycie wartości kąta z poprzedniej iteracji
 	}
-
-	Log_To_CubeMonitor(0.0f, 0.0f, 0.0f);
 
 	// Prąd (zapisany przez ADC ISR)
 	CurrentSense_CalculatePhases();
@@ -264,7 +263,7 @@ void FOC_Update(float theta_el)
     SVPWM_Update(valpha, vbeta);
 }
 
-inline float FOC_GetElecticalAngle(float mech)
+static inline float FOC_GetElectricalAngle(float mech)
 {
     return normalize_angle((float)(s_foc.calib.direction * MOTOR_POLE_PAIRS) * mech - s_foc.calib.zero_electric_angle);
 }
@@ -366,7 +365,7 @@ bool FOC_AlignSensor()
 
     Board_StartMotor(s_foc.board);
 
-    printf("\n--- Start kalibracji sensora (SimpleFOC) ---\n");
+    printf("\n--- Start kalibracji sensora ---\n");
     printf("Krok 1: Wykrywanie kierunku...\n");
 
     // --- Obrót w przód ---

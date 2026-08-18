@@ -50,8 +50,8 @@
 #define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
-#define VOLTAGE_SUPPLY        16.0f
-#define VOLTAGE_LIMIT         12.0f
+#define VOLTAGE_SUPPLY        13.0f
+#define VOLTAGE_LIMIT         10.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
