@@ -54,6 +54,7 @@ void SpeedEstimator_Init(float dt_sec);
 void SpeedEstimator_Update();
 SpeedEstimate_t SpeedEstimator_Get(void);
 float SpeedEstimator_GetOmegaRPM(void);
+float SpeedEstimator_GetOmegaRPM_ISR(void);
 
 void  AngleUnwrap_Reset(AngleUnwrap_t *u, float theta_wrapped_rad);
 float AngleUnwrap_Update(AngleUnwrap_t *u, float theta_wrapped_rad);

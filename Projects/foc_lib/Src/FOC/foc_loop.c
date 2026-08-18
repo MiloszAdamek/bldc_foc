@@ -58,6 +58,7 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 //    monitor_data.id_ref = i_ref.d;
 //    monitor_data.speed_ref = speed_ramp_out;
 //    monitor_data.speed = SpeedEstimator_GetOmegaRPM();
+   monitor_data.speed = SpeedEstimator_GetOmegaRPM_ISR();
 
    monitor_data.position_err = position_err;
    monitor_data.position_ref = position_ref;

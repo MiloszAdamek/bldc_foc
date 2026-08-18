@@ -86,24 +86,27 @@ void CurrentSense_Process_ISR() {
     #endif
 }
 
-// void CurrentSense_CalculatePhases(){
-//     if (!is_calibrated) return;
+#ifdef IHM03
+void CurrentSense_CalculatePhases(){
+    if (!is_calibrated) return;
 
-//     int32_t diff_a = (int32_t)adc_raw_phase_a - (int32_t)offset_a;
-//     int32_t diff_b = (int32_t)adc_raw_phase_b - (int32_t)offset_b;
-//     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-//         int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
-//     #endif
+    int32_t diff_a = (int32_t)adc_raw_phase_a - (int32_t)offset_a;
+    int32_t diff_b = (int32_t)adc_raw_phase_b - (int32_t)offset_b;
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
+    #endif
 
-//     current_a = -(float)diff_a * ADC_TO_CURRENT;
-//     current_b = -(float)diff_b * ADC_TO_CURRENT;
-//     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-//         current_c = -(float)diff_c * ADC_TO_CURRENT;
-//     #else
-//         current_c = -(current_a + current_b);
-//     #endif
-// }
+    current_a = -(float)diff_a * ADC_TO_CURRENT;
+    current_b = -(float)diff_b * ADC_TO_CURRENT;
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        current_c = -(float)diff_c * ADC_TO_CURRENT;
+    #else
+        current_c = -(current_a + current_b);
+    #endif
+}
+#endif
 
+#ifdef DRV8353
 void CurrentSense_CalculatePhases(){
     if (!is_calibrated) return;
 
@@ -121,6 +124,7 @@ void CurrentSense_CalculatePhases(){
         current_c = -(current_a + current_b);
     #endif
 }
+#endif
 
 void CurrentSense_Read(abc_current_t *currents)
 {

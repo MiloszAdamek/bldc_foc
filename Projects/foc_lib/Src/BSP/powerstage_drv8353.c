@@ -82,6 +82,11 @@ PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps)
     return POWERSTAGE_OK;
 }
 
+PowerStage_Status_t PowerStage_SetCalibrationMode(PowerStage_HandleTypeDef *ps, bool enable)
+{
+    DRV8353_SetCalibrationMode(&ps->drv, enable);
+    return POWERSTAGE_OK;
+}
 
 // PowerStage_Status_t Force_AllHalfBridges(PowerStage_HandleTypeDef *ps, PowerTestState_t state)
 // {

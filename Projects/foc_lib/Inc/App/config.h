@@ -76,16 +76,16 @@
  * ========================================================================= */
 
 #ifdef DRV8353
-    #define PI_KP_ID 0.5f
-    #define PI_KI_ID 30.0f
+    #define PI_KP_ID 0.3f
+    #define PI_KI_ID 3.0f
     #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_IQ 0.5f
-    #define PI_KI_IQ 30.0f
+    #define PI_KI_IQ 3.0f
     #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_V 0.0005f
-    #define PI_KI_V 0.0007f
+    #define PI_KI_V 0.0001f
     #define PI_LIMIT_V 0.4f * (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_P 10.0f

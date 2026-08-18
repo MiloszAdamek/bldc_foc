@@ -89,5 +89,6 @@ PowerStage_Status_t PowerStage_On(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_Off(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_CheckFaults(PowerStage_HandleTypeDef *ps);
+PowerStage_Status_t PowerStage_SetCalibrationMode(PowerStage_HandleTypeDef *ps, bool enable);
 
 #endif /* POWERSTAGE_H */

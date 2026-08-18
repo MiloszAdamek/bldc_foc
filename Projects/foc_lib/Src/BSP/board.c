@@ -60,19 +60,19 @@ void Board_Init(BoardHandleTypeDef *board)
 	HAL_TIM_Base_Start(board->htim_pwm);
 	HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
-    // HAL_TIM_Base_Stop_IT(board->htim_pwm);
-	// HAL_TIM_Base_Stop_IT(board->htim_enc);
-
-	// __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
-	// __HAL_TIM_SET_COUNTER(board->htim_enc, 0);
-
-	// HAL_TIM_Base_Start(board->htim_pwm);
-	// HAL_TIM_Base_Start_IT(board->htim_enc);
-	// HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
-
-	HAL_Delay(50);
+    #ifdef DRV8353
+        PowerStage_SetCalibrationMode(&board->powerstage, true);
+    #elif defined(IHM03)
+        // Calibration for IHM03
+    #endif
 
     CurrentSense_Init(board->hadc_curr);
+
+    #ifdef DRV8353
+        PowerStage_SetCalibrationMode(&board->powerstage, false);
+    #elif defined(IHM03)
+        // Calibration for IHM03
+    #endif
 
     // Encoder initialization and calibration
 
@@ -83,14 +83,6 @@ void Board_Init(BoardHandleTypeDef *board)
     PowerStage_On(&board->powerstage);
 
     Board_StartPWM(board);
-
-    // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_1, 3000);  // ~70%
-    // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_2, 1000);  // ~25%
-    // __HAL_TIM_SET_COMPARE(board->htim_pwm, TIM_CHANNEL_3, 2000);  // ~50%
-
-    // /* Wymuś załadowanie CCR */
-    // __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
-
 }
 
 void Board_StartMotor(BoardHandleTypeDef *board)

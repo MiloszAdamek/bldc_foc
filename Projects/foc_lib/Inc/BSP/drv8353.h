@@ -73,6 +73,9 @@
 #define DRV8353_DRIVETIME_Pos  8U
 #define DRV8353_DRIVETIME_Msk  (0x03U << DRV8353_DRIVETIME_Pos)
 
+#define DRV8353_CSA_CAL_Pos    2U
+#define DRV8353_CSA_CAL_Msk    (0x07U << DRV8353_CSA_CAL_Pos)
+
 typedef enum {
     DRV8353_OK = 0,
     DRV8353_ERROR = 1
@@ -270,6 +273,8 @@ DRV8353_Status_t DRV8353_SetOvercurrentProtection(DRV8353_HandleTypeDef *drv, DR
 DRV8353_Status_t DRV8353_SetGateDriveCurrent(DRV8353_HandleTypeDef *drv, DRV8353_IDRIVEP_t idrivep_hs, DRV8353_IDRIVEN_t idriven_hs, DRV8353_IDRIVEP_t idrivep_ls, DRV8353_IDRIVEN_t idriven_ls, DRV8353_DriveTime_t drive_time);
 
 DRV8353_Status_t DRV8353_SetOutputState(DRV8353_HandleTypeDef *drv, DRV8353_OutputState_t state);
+
+DRV8353_Status_t DRV8353_SetCalibrationMode(DRV8353_HandleTypeDef *drv, bool enable);
 
 static inline void DRV8353_CS_LOW(DRV8353_HandleTypeDef *drv)  { drv->cs_port->BSRR = ((uint32_t)drv->cs_pin << 16U); }
 

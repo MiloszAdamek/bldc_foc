@@ -129,6 +129,11 @@ SpeedEstimate_t SpeedEstimator_Get(void)
     return tmp;
 }
 
+float SpeedEstimator_GetOmegaRPM_ISR(void)
+{
+    return s_out.omega_rpm;
+}
+
 float SpeedEstimator_GetOmegaRPM(void)
 {
     return SpeedEstimator_Get().omega_rpm;

@@ -497,6 +497,20 @@ DRV8353_Status_t DRV8353_SetOutputState(
             value);
 }
 
+DRV8353_Status_t DRV8353_SetCalibrationMode(DRV8353_HandleTypeDef *drv, bool enable)
+{
+    if(drv == NULL)
+        return DRV8353_ERROR;
+
+    uint16_t value = enable ? DRV8353_CSA_CAL_Msk : 0;
+
+    return DRV8353_UpdateRegisterBits(
+            drv,
+            DRV8353_REG_CSA_CONTROL,
+            DRV8353_CSA_CAL_Msk,
+            value);
+}
+
 DRV8353_Status_t DRV8353_VerifyConfig(
         DRV8353_HandleTypeDef *drv,
         DRV8353_Config_t *cfg)
