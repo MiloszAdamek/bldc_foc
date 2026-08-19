@@ -16,12 +16,6 @@
 #error "No power stage defined!"
 #endif
 
-// typedef enum
-// {
-//     POWERSTAGE_OK = 0,
-//     POWERSTAGE_ERROR
-// } PowerStage_Status_t;
-
 #ifdef G431_ESC
     #define SHUNT_RESISTOR        0.003f
     #define CURRENT_SENSE_GAIN    16.0f
@@ -72,16 +66,15 @@ typedef struct
     PowerPin_t IN_L_A;
     PowerPin_t IN_L_B;
     PowerPin_t IN_L_C;
-
 } PowerStage_Pins_t;
 
 typedef struct
 {
-    TIM_HandleTypeDef *htim;      // Timer PWM
-    PowerStage_Pins_t pins;       // Piny IN_H / IN_L
-    PowerStage_PWM_Mode_t pwm_mode;   // 3PWM / 6PWM
+    TIM_HandleTypeDef *htim;        // Timer PWM
+    PowerStage_Pins_t pins;         // Piny IN_H / IN_L
+    PowerStage_PWM_Mode_t pwm_mode; // 3PWM / 6PWM
     PowerStage_Status_t status;
-    DRV8353_HandleTypeDef drv;    // DRV8353 handle
+    DRV8353_HandleTypeDef drv;      // DRV8353 handle
 } PowerStage_HandleTypeDef;
 
 PowerStage_Status_t PowerStage_Init(PowerStage_HandleTypeDef *ps, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, const PowerStage_Pins_t *pins);

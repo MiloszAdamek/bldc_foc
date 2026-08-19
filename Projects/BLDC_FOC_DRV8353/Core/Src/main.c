@@ -152,6 +152,12 @@ int main(void)
 
   // Controller initialization BEGIN
 
+  /* Kalibracja offsetu przetwornika */
+  if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
   Board_Init(&drv_board);
 
   FOC_Init(&drv_board);

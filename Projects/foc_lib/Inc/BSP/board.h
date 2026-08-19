@@ -10,13 +10,12 @@
 
  #include "BSP/powerstage.h"
 
- typedef enum
+typedef enum
 {    
     BOARD_G431_ESC = 0,
     BOARD_IHM03 = 1,
     BOARD_DRV8353 = 2
 } BoardType_t;
-
 
 typedef struct
 {
@@ -36,11 +35,14 @@ typedef struct
     // Powerstage handler
     PowerStage_HandleTypeDef powerstage;
 
+    // VDD voltage
+    float vdd_voltage;
+
 } BoardHandleTypeDef;
 
 void Board_Init(BoardHandleTypeDef *board);
 void Board_StartMotor(BoardHandleTypeDef *board);
 void Board_StopMotor(BoardHandleTypeDef *board);
 void Board_CheckFaults(BoardHandleTypeDef *board);
-
+void Board_GetVddVoltage(BoardHandleTypeDef *board);
  #endif /* BOARD_H */

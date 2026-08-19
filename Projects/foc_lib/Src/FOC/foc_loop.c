@@ -57,7 +57,6 @@ static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
 
 //    monitor_data.id_ref = i_ref.d;
 //    monitor_data.speed_ref = speed_ramp_out;
-//    monitor_data.speed = SpeedEstimator_GetOmegaRPM();
    monitor_data.speed = SpeedEstimator_GetOmegaRPM_ISR();
 
    monitor_data.position_err = position_err;
@@ -127,11 +126,6 @@ void FOC_Init(BoardHandleTypeDef *board)
 }
 
 void FOC_Start(){
-
-//  HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
-//  CurrentSense_InjectedStart_IT(s_foc.board->hadc_curr);
-//	HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
-
 	// Pobranie danych przed uruchomieniem pętli FOC
 	currents_ready = false;
     spi_ready = true;

@@ -11,6 +11,7 @@
  #include "BSP/PowerStage.h"
  #include "BSP/drv8353.h"
  #include "BSP/as5048a.h"
+ #include <stdio.h>
 
  #ifdef DRV8353
 
@@ -20,6 +21,7 @@
  static void Board_SetPWMMode(BoardHandleTypeDef *board, PowerStage_PWM_Mode_t mode);
  static void Board_StartPWM(BoardHandleTypeDef *board);
  static void Board_StopPWM(BoardHandleTypeDef *board);
+ static void Board_CalibrateADC(BoardHandleTypeDef *board);
 
 static const PowerStage_Pins_t inverter_pins = {
     .IN_H_A = {IN_H_A_GPIO_Port, IN_H_A_Pin, GPIO_AF6_TIM1},
@@ -57,6 +59,8 @@ void Board_Init(BoardHandleTypeDef *board)
     
     // Current sense initialization and calibration
 
+    Board_CalibrateADC(board); // Kalibracja przetwornika ADC
+
 	HAL_TIM_Base_Start(board->htim_pwm);
 	HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
@@ -65,6 +69,8 @@ void Board_Init(BoardHandleTypeDef *board)
     #elif defined(IHM03)
         // Calibration for IHM03
     #endif
+
+    Board_GetVddVoltage(board);
 
     CurrentSense_Init(board->hadc_curr);
 
@@ -245,4 +251,37 @@ void Board_CheckFaults(BoardHandleTypeDef *board)
     {
         DRV8353_PrintFaults(&faults);
     }
+}
+
+static void Board_CalibrateADC(BoardHandleTypeDef *board)
+{
+    // Przed HAL_ADC_Start()
+    if (HAL_ADCEx_Calibration_Start(board->hadc_curr, ADC_SINGLE_ENDED) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+void Board_GetVddVoltage(BoardHandleTypeDef *board)
+{   
+    HAL_ADC_Init(board->hadc_curr);
+    uint16_t cal_value = *((uint16_t*)VREFINT_CAL_ADDR);
+    uint32_t vrefint_raw = 0;
+
+    // Regular conversion of VREFINT channel
+    HAL_ADC_Start(board->hadc_curr);
+    if (HAL_ADC_PollForConversion(board->hadc_curr, 10) == HAL_OK)
+    {
+        vrefint_raw = HAL_ADC_GetValue(board->hadc_curr);
+    }
+    HAL_ADC_Stop(board->hadc_curr);
+
+    if (vrefint_raw == 0) {
+        return;
+    }
+
+    float vdd_voltage = (float)cal_value * ((float)VREFINT_CAL_VREF / 1000.0f) / (float)vrefint_raw;
+    pPrintf("VDD voltage: %.3f V\r\n", vdd_voltage);
+
+    board->vdd_voltage = vdd_voltage;
 }
