@@ -23,7 +23,7 @@ typedef struct {
 } abc_raw_t;
 
 // Inicjalizacja pomiaru prądów
-void CurrentSense_Init(ADC_HandleTypeDef *hadc);
+void CurrentSense_Init(ADC_HandleTypeDef *hadc, float vdd_voltage);
 
 // Start pomiaru prądów w trybie przerwań
 void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc);
@@ -39,5 +39,8 @@ void CurrentSense_Read(abc_current_t *currents);
 
 // Zwraca surowe wartości ADC
 void CurrentSense_GetRaw(abc_raw_t *raw);
+
+// Aktualizacja współczynnika przeliczeniowego ADC na prąd w zależności od napięcia zasilania
+void CurrentSense_UpdateADCCoefficient(float vdd_voltage);
 
 #endif /* INC_CURRENT_SENSE_H_ */

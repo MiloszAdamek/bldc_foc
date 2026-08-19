@@ -72,7 +72,7 @@ void Board_Init(BoardHandleTypeDef *board)
 
     Board_GetVddVoltage(board);
 
-    CurrentSense_Init(board->hadc_curr);
+    CurrentSense_Init(board->hadc_curr, board->vdd_voltage); // Inicjalizacja pomiaru prądów
 
     #ifdef DRV8353
         PowerStage_SetCalibrationMode(&board->powerstage, false);
@@ -281,7 +281,7 @@ void Board_GetVddVoltage(BoardHandleTypeDef *board)
     }
 
     float vdd_voltage = (float)cal_value * ((float)VREFINT_CAL_VREF / 1000.0f) / (float)vrefint_raw;
-    pPrintf("VDD voltage: %.3f V\r\n", vdd_voltage);
+    printf("VDD voltage: %.3f V\r\n", vdd_voltage);
 
     board->vdd_voltage = vdd_voltage;
 }

@@ -27,7 +27,9 @@ static uint16_t offset_c = 0;
 
 volatile bool is_calibrated = false;
 
-static const float ADC_TO_CURRENT = ADC_REF_VOLTAGE / (ADC_RESOLUTION * SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+// static const float ADC_TO_CURRENT = ADC_REF_VOLTAGE / (ADC_RESOLUTION * SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
+
+static float s_adc_to_current;
 
 static void CurrentSense_CalibrateOffset(void)
 {
@@ -56,10 +58,12 @@ static void CurrentSense_CalibrateOffset(void)
     printf("Offset A: %u, B: %u, C: %u \r\n", offset_a, offset_b, offset_c);
 }
 
-void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
+void CurrentSense_Init(ADC_HandleTypeDef *hadc, float vdd_voltage) {
 	if (hadc->Instance == ADC1){
 
 	    s_hadc = hadc;
+
+        CurrentSense_UpdateADCCoefficient(vdd_voltage); // Default value, will be updated later
 
 	    HAL_ADCEx_InjectedStop(s_hadc);
 	    HAL_ADCEx_InjectedStart(s_hadc);
@@ -68,6 +72,10 @@ void CurrentSense_Init(ADC_HandleTypeDef *hadc) {
 
 	    HAL_ADCEx_InjectedStop(s_hadc);
 	}
+}
+
+void CurrentSense_UpdateADCCoefficient(float vdd_voltage) {
+    s_adc_to_current = vdd_voltage / ((float)ADC_RESOLUTION * SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
 }
 
 void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc) {
@@ -96,10 +104,10 @@ void CurrentSense_CalculatePhases(){
         int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
     #endif
 
-    current_a = -(float)diff_a * ADC_TO_CURRENT;
-    current_b = -(float)diff_b * ADC_TO_CURRENT;
+    current_a = -(float)diff_a * s_adc_to_current;
+    current_b = -(float)diff_b * s_adc_to_current;
     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-        current_c = -(float)diff_c * ADC_TO_CURRENT;
+        current_c = -(float)diff_c * s_adc_to_current;
     #else
         current_c = -(current_a + current_b);
     #endif
@@ -116,10 +124,10 @@ void CurrentSense_CalculatePhases(){
         int32_t diff_c = (int32_t)adc_raw_phase_c - (int32_t)offset_c;
     #endif
 
-    current_a = (float)diff_a * ADC_TO_CURRENT;
-    current_b = (float)diff_b * ADC_TO_CURRENT;
+    current_a = (float)diff_a * s_adc_to_current;
+    current_b = (float)diff_b * s_adc_to_current;
     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-        current_c = (float)diff_c * ADC_TO_CURRENT;
+        current_c = (float)diff_c * s_adc_to_current;
     #else
         current_c = -(current_a + current_b);
     #endif
