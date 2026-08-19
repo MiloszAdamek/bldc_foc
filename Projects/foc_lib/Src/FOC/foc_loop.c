@@ -143,7 +143,7 @@ void FOC_Start(){
     HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
 
     HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
-    CurrentSense_InjectedStart_IT(s_foc.board->hadc_curr);
+    CurrentSense_InjectedStart_IT(s_foc.board->hadc_currA);
     HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm); // Uruchomienie pętli FOC
 }
 
@@ -153,7 +153,7 @@ void FOC_Stop(){
 
     HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm);
 
-    HAL_ADCEx_InjectedStop_IT(s_foc.board->hadc_curr);
+    HAL_ADCEx_InjectedStop_IT(s_foc.board->hadc_currA);
 
     Flags_Reset(&s_foc.flags);
 

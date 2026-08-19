@@ -35,6 +35,7 @@
 #include "BSP/board.h"
 #include "BSP/drv8353.h"
 #include "BSP/powerstage.h"
+#include "BSP/voltage_sense.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -134,6 +135,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
   static BoardHandleTypeDef drv_board = {
@@ -144,7 +146,8 @@ int main(void)
     .htim_speed = &htim2,
     .htim_pos = &htim5,
     .htim_cmd = &htim3,
-    .hadc_curr = &hadc1,
+    .hadc_currA = &hadc1,
+    .hadc_currB_voltage = &hadc2,
     .hspi_enc = &hspi3,
     .hspi_drv = &hspi2,
     .huart_com = &huart3,
@@ -166,10 +169,13 @@ int main(void)
 
   MotorControl_Init(&drv_board);
 
+  VoltageSense_Init(&hadc2);
+
   // Controller initialization END
 
   // Tests BEGIN
 
+  float voltage_dc = 0.0f;
   // HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
   // AS5048_Init(&hspi3);
   // AS5048_GetErrorDetails();
@@ -185,7 +191,9 @@ int main(void)
     // HAL_Delay(1000);
     // printf("Kąt mechaniczny: %.2f deg\n", AS5048_GetAngleDeg());
 
-    // HAL_Delay(5000);
+    HAL_Delay(10000);
+    VoltageSense_ReadVDC(&voltage_dc);
+    printf("Napięcie DC: %.2f V\n", voltage_dc);
     // Board_CheckFaults(&drv_board);
     // Board_StartMotor(&drv_board);
     // HAL_Delay(5000);

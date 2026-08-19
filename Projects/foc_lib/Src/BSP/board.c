@@ -11,6 +11,7 @@
  #include "BSP/PowerStage.h"
  #include "BSP/drv8353.h"
  #include "BSP/as5048a.h"
+ #include "BSP/voltage_sense.h"
  #include <stdio.h>
 
  #ifdef DRV8353
@@ -72,7 +73,7 @@ void Board_Init(BoardHandleTypeDef *board)
 
     Board_GetVddVoltage(board);
 
-    CurrentSense_Init(board->hadc_curr, board->vdd_voltage); // Inicjalizacja pomiaru prądów
+    CurrentSense_Init(board->hadc_currA, board->vdd_voltage); // Inicjalizacja pomiaru prądów
 
     #ifdef DRV8353
         PowerStage_SetCalibrationMode(&board->powerstage, false);
@@ -80,6 +81,9 @@ void Board_Init(BoardHandleTypeDef *board)
         // Calibration for IHM03
     #endif
 
+    // Voltage sense initialization
+    VoltageSense_Init(board->hadc_currB_voltage);
+    VoltageSense_UpdateADCCoefficient(board->vdd_voltage);
     // Encoder initialization and calibration
 
     AS5048_Init(board->hspi_enc);
@@ -256,7 +260,12 @@ void Board_CheckFaults(BoardHandleTypeDef *board)
 static void Board_CalibrateADC(BoardHandleTypeDef *board)
 {
     // Przed HAL_ADC_Start()
-    if (HAL_ADCEx_Calibration_Start(board->hadc_curr, ADC_SINGLE_ENDED) != HAL_OK)
+    if (HAL_ADCEx_Calibration_Start(board->hadc_currA, ADC_SINGLE_ENDED) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    if (HAL_ADCEx_Calibration_Start(board->hadc_currB_voltage, ADC_SINGLE_ENDED) != HAL_OK)
     {
         Error_Handler();
     }
@@ -264,17 +273,17 @@ static void Board_CalibrateADC(BoardHandleTypeDef *board)
 
 void Board_GetVddVoltage(BoardHandleTypeDef *board)
 {   
-    HAL_ADC_Init(board->hadc_curr);
+    HAL_ADC_Init(board->hadc_currA);
     uint16_t cal_value = *((uint16_t*)VREFINT_CAL_ADDR);
     uint32_t vrefint_raw = 0;
 
     // Regular conversion of VREFINT channel
-    HAL_ADC_Start(board->hadc_curr);
-    if (HAL_ADC_PollForConversion(board->hadc_curr, 10) == HAL_OK)
+    HAL_ADC_Start(board->hadc_currA);
+    if (HAL_ADC_PollForConversion(board->hadc_currA, 10) == HAL_OK)
     {
-        vrefint_raw = HAL_ADC_GetValue(board->hadc_curr);
+        vrefint_raw = HAL_ADC_GetValue(board->hadc_currA);
     }
-    HAL_ADC_Stop(board->hadc_curr);
+    HAL_ADC_Stop(board->hadc_currA);
 
     if (vrefint_raw == 0) {
         return;

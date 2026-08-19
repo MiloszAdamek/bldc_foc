@@ -59,19 +59,16 @@ static void CurrentSense_CalibrateOffset(void)
 }
 
 void CurrentSense_Init(ADC_HandleTypeDef *hadc, float vdd_voltage) {
-	if (hadc->Instance == ADC1){
+    s_hadc = hadc;
 
-	    s_hadc = hadc;
+    CurrentSense_UpdateADCCoefficient(vdd_voltage);
 
-        CurrentSense_UpdateADCCoefficient(vdd_voltage); // Default value, will be updated later
+    HAL_ADCEx_InjectedStop(s_hadc);
+    HAL_ADCEx_InjectedStart(s_hadc);
 
-	    HAL_ADCEx_InjectedStop(s_hadc);
-	    HAL_ADCEx_InjectedStart(s_hadc);
+    CurrentSense_CalibrateOffset();
 
-	    CurrentSense_CalibrateOffset();
-
-	    HAL_ADCEx_InjectedStop(s_hadc);
-	}
+    HAL_ADCEx_InjectedStop(s_hadc);
 }
 
 void CurrentSense_UpdateADCCoefficient(float vdd_voltage) {

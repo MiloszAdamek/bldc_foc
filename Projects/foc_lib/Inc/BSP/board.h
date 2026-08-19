@@ -27,7 +27,8 @@ typedef struct
     TIM_HandleTypeDef *htim_pos;
     TIM_HandleTypeDef *htim_speed;
     TIM_HandleTypeDef *htim_cmd;
-    ADC_HandleTypeDef *hadc_curr;
+    ADC_HandleTypeDef *hadc_currA;
+    ADC_HandleTypeDef *hadc_currB_voltage;
     SPI_HandleTypeDef *hspi_enc;
     SPI_HandleTypeDef *hspi_drv;
     UART_HandleTypeDef *huart_com;
