@@ -28,14 +28,14 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "App/config.h"
-#include "App/commander.h"
-#include "App/motor_control.h"
-#include "FOC/foc_loop.h"
-#include "BSP/board.h"
-#include "BSP/drv8353.h"
-#include "BSP/powerstage.h"
-#include "BSP/voltage_sense.h"
+#include "config.h"
+#include "commander.h"
+#include "motor_control.h"
+#include "foc_loop.h"
+#include "board.h"
+#include "drv8353.h"
+#include "powerstage.h"
+#include "voltage_sense.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +56,21 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+BoardHandleTypeDef board = {
+  .type = BOARD_DRV8353,
+  .powerstage.pwm_mode = POWERSTAGE_PWM_MODE_3PWM,
+  .htim_pwm = &htim1,
+  .htim_enc = &htim4,
+  .htim_speed = &htim2,
+  .htim_pos = &htim5,
+  .htim_cmd = &htim3,
+  .hadc_currA = &hadc1,
+  .hadc_currB = &hadc2,
+  .hadc_VDC = &hadc2,
+  .hspi_enc = &hspi3,
+  .hspi_drv = &hspi2,
+  .huart_com = &huart3,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,38 +152,15 @@ int main(void)
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
-  static BoardHandleTypeDef drv_board = {
-    .type = BOARD_DRV8353,
-    .powerstage.pwm_mode = POWERSTAGE_PWM_MODE_3PWM,
-    .htim_pwm = &htim1,
-    .htim_enc = &htim4,
-    .htim_speed = &htim2,
-    .htim_pos = &htim5,
-    .htim_cmd = &htim3,
-    .hadc_currA = &hadc1,
-    .hadc_currB_voltage = &hadc2,
-    .hspi_enc = &hspi3,
-    .hspi_drv = &hspi2,
-    .huart_com = &huart3,
-  };
-
   // Controller initialization BEGIN
 
-  /* Kalibracja offsetu przetwornika */
-  if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
-  {
-      Error_Handler();
-  }
+  Board_Init(&board);
 
-  Board_Init(&drv_board);
+  FOC_Init(&board);
 
-  FOC_Init(&drv_board);
+  Commander_Init(&board);
 
-  Commander_Init(&drv_board);
-
-  MotorControl_Init(&drv_board);
-
-  VoltageSense_Init(&hadc2);
+  MotorControl_Init(&board);
 
   // Controller initialization END
 
@@ -193,7 +184,7 @@ int main(void)
 
     HAL_Delay(10000);
     VoltageSense_ReadVDC(&voltage_dc);
-    printf("Napięcie DC: %.2f V\n", voltage_dc);
+    printf("Napięcie DC: %.3f V\n", voltage_dc);
     // Board_CheckFaults(&drv_board);
     // Board_StartMotor(&drv_board);
     // HAL_Delay(5000);
