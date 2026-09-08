@@ -69,7 +69,7 @@ void Board_Init(BoardHandleTypeDef *board)
     #endif
 
     Board_GetVddVoltage(board);
-    CurrentSense_Init(board->hadc_currA, board->vdd_voltage); // Inicjalizacja pomiaru prądów
+    CurrentSense_Init(&board->hadc_currA, board->vdd_voltage); // Inicjalizacja pomiaru prądów
 
     #ifdef DRV8353
         PowerStage_SetCalibrationMode(&board->powerstage, false);
@@ -83,20 +83,37 @@ void Board_Init(BoardHandleTypeDef *board)
     
     // Encoder initialization and calibration
     AS5048_Init(board->hspi_enc);
-
-    // Powerstage initialization
-    PowerStage_On(&board->powerstage);
-    Board_StartPWM(board);
 }
 
 void Board_StartMotor(BoardHandleTypeDef *board)
 {
     PowerStage_On(&board->powerstage);
+    Board_StartPWM(board);
+}
+
+void Board_StartPeripherals(BoardHandleTypeDef *board)
+{
+    __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
+    __HAL_TIM_SET_COUNTER(board->htim_enc, 0);
+    
+    HAL_TIM_Base_Start_IT(board->htim_enc);
+    HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4);
+    CurrentSense_InjectedStart_IT(board->hadc_currA.hadc);
+    HAL_TIM_Base_Start_IT(board->htim_pwm);
 }
 
 void Board_StopMotor(BoardHandleTypeDef *board)
 {
     PowerStage_Off(&board->powerstage);
+    Board_StopPWM(board);
+}
+
+void Board_StopPeripherals(BoardHandleTypeDef *board)
+{
+    HAL_TIM_Base_Stop_IT(board->htim_pwm);
+	HAL_TIM_Base_Stop_IT(board->htim_enc);
+    HAL_TIM_OC_Stop(board->htim_pwm, TIM_CHANNEL_4);
+    CurrentSense_InjectedStop_IT(board->hadc_currA.hadc);
 }
 
 static void Board_StartPWM(BoardHandleTypeDef *board)
@@ -254,12 +271,12 @@ void Board_CheckFaults(BoardHandleTypeDef *board)
 static void Board_CalibrateADC(BoardHandleTypeDef *board)
 {
     // Przed HAL_ADC_Start()
-    if (HAL_ADCEx_Calibration_Start(board->hadc_currA, ADC_SINGLE_ENDED) != HAL_OK)
+    if (HAL_ADCEx_Calibration_Start(board->hadc_currA.hadc, ADC_SINGLE_ENDED) != HAL_OK)
     {
         Error_Handler();
     }
 
-    if (HAL_ADCEx_Calibration_Start(board->hadc_currB, ADC_SINGLE_ENDED) != HAL_OK)
+    if (HAL_ADCEx_Calibration_Start(board->hadc_currB.hadc, ADC_SINGLE_ENDED) != HAL_OK)
     {
         Error_Handler();
     }
@@ -267,17 +284,17 @@ static void Board_CalibrateADC(BoardHandleTypeDef *board)
 
 void Board_GetVddVoltage(BoardHandleTypeDef *board)
 {   
-    HAL_ADC_Init(board->hadc_currA);
+    HAL_ADC_Init(board->hadc_currA.hadc);
     uint16_t cal_value = *((uint16_t*)VREFINT_CAL_ADDR);
     uint32_t vrefint_raw = 0;
 
     // Regular conversion of VREFINT channel
-    HAL_ADC_Start(board->hadc_currA);
-    if (HAL_ADC_PollForConversion(board->hadc_currA, 10) == HAL_OK)
+    HAL_ADC_Start(board->hadc_currA.hadc);
+    if (HAL_ADC_PollForConversion(board->hadc_currA.hadc, 10) == HAL_OK)
     {
-        vrefint_raw = HAL_ADC_GetValue(board->hadc_currA);
+        vrefint_raw = HAL_ADC_GetValue(board->hadc_currA.hadc);
     }
-    HAL_ADC_Stop(board->hadc_currA);
+    HAL_ADC_Stop(board->hadc_currA.hadc);
 
     if (vrefint_raw == 0) {
         return;

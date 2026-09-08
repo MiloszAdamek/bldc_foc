@@ -29,7 +29,7 @@ volatile bool is_calibrated = false;
 
 static float s_adc_to_current;
 
-static void CurrentSense_CalibrateOffset(void)
+static void CurrentSense_CalibrateOffset(ADC_InjectedChannel_t *hadc_inj)
 {
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
     const int samples = 1000;
@@ -38,11 +38,11 @@ static void CurrentSense_CalibrateOffset(void)
 
     for (int i = 0; i < samples; ++i)
     {
-        HAL_ADCEx_InjectedPollForConversion(s_hadc, HAL_MAX_DELAY);
-        sum_a += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_1);
-        sum_b += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_2);
+        HAL_ADCEx_InjectedPollForConversion(hadc_inj->hadc, HAL_MAX_DELAY);
+        sum_a += HAL_ADCEx_InjectedGetValue(hadc_inj->hadc, hadc_inj->rank);
+        sum_b += HAL_ADCEx_InjectedGetValue(hadc_inj->hadc, ADC_INJECTED_RANK_2);
         #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-            sum_c += HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
+            sum_c += HAL_ADCEx_InjectedGetValue(hadc_inj->hadc, ADC_INJECTED_RANK_3);
         #endif
     }
 
@@ -56,15 +56,15 @@ static void CurrentSense_CalibrateOffset(void)
     printf("Offset A: %u, B: %u, C: %u \r\n", offset_a, offset_b, offset_c);
 }
 
-void CurrentSense_Init(ADC_HandleTypeDef *hadc, float vdd_voltage) {
-    s_hadc = hadc;
+void CurrentSense_Init(ADC_InjectedChannel_t *hadc_inj, float vdd_voltage) {
+    s_hadc = hadc_inj->hadc;
 
     CurrentSense_UpdateADCCoefficient(vdd_voltage);
 
     HAL_ADCEx_InjectedStop(s_hadc);
     HAL_ADCEx_InjectedStart(s_hadc);
 
-    CurrentSense_CalibrateOffset();
+    CurrentSense_CalibrateOffset(hadc_inj);
 
     HAL_ADCEx_InjectedStop(s_hadc);
 }
@@ -76,6 +76,12 @@ void CurrentSense_UpdateADCCoefficient(float vdd_voltage) {
 void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc) {
     if (hadc->Instance == ADC1){
         HAL_ADCEx_InjectedStart_IT(s_hadc);
+    }
+}
+
+void CurrentSense_InjectedStop_IT(ADC_HandleTypeDef *hadc) {
+    if (hadc->Instance == ADC1){
+        HAL_ADCEx_InjectedStop_IT(s_hadc);
     }
 }
 

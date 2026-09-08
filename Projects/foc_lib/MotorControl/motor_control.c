@@ -16,6 +16,8 @@
 #include "as5048a.h"
 #include "gpio.h"
 
+extern BoardHandleTypeDef board;
+
 volatile MotorState_t g_motor_state = STATE_IDLE;
 
 volatile uint32_t spi_ready_err = 0;
@@ -41,29 +43,31 @@ void MotorControl_Init(BoardHandleTypeDef* p_board)
 
 void MotorControl_Start(void)
 {
-    if (g_motor_state == STATE_IDLE) {
-        g_motor_state = STATE_ALIGNMENT;
-
-        // Uruchom kalibrację
-
-		if (!FOC_IsSensorAligned()) {
-			if (!FOC_AlignSensor()) {
-				// Błąd alignmentu FOC
-				FOC_Stop();
-				g_motor_state = STATE_FAULT;
-				return;
+	// Jeśli sensor nie jest skalibrowany, to uruchom procedurę kalibracji
+	if(!FOC_IsSensorAligned()){
+		if (g_motor_state == STATE_IDLE) {
+			g_motor_state = STATE_ALIGNMENT;
+			// Uruchom kalibrację
+			if (!FOC_IsSensorAligned()) {
+				if (!FOC_AlignSensor()) {
+					// Błąd alignmentu FOC
+					MotorControl_Stop();
+					g_motor_state = STATE_FAULT;
+					return;
+				}
 			}
-		}
-
-		// MotorControl_Stop();
-
-		FOC_Start();	
-       	MotorControl_SetTorque(0.15f);
-    }
+		}	
+	}
+	Board_StartMotor(&board);
+	Board_StartPeripherals(&board);
+	FOC_Start();
+	MotorControl_SetTorque(0.15f);
 }
 
 void MotorControl_Stop(void)
 {
+	Board_StopMotor(&board);
+	Board_StopPeripherals(&board);
     FOC_Stop();
     g_motor_state = STATE_IDLE;
 }
@@ -125,8 +129,10 @@ void MotorControl_OnCurrentSampleISR()
 	CurrentSense_Process_ISR();
 	currents_ready = true;
 
-	// Tylko do debugu, to ma zniknąć stąd
 	CurrentSense_CalculatePhases();
+
+	// Tu powinien być odczyt kąta, ewentualnie w przerwaniu od TIM_ENC
+
 	FOC_RunLoop();
 
 	// Sygnalizacja wykonania przerwania - obserwacja oscyloskopem

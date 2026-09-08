@@ -47,7 +47,7 @@ static inline void InvClarkeTransform(float ialpha, float ibeta, float *ia, floa
     *ic = -0.5f * ialpha + _SQRT3_2 * ibeta;
 }
 
-//Transformacja Parka: αβ → dq (theta w radianach)
+// Transformacja Parka: αβ → dq (theta w radianach)
 static inline void ParkTransform(float ialpha, float ibeta, float *sin_theta, float *cos_theta, float *id, float *iq)
 {
     *id =  ialpha * (*cos_theta) + ibeta * (*sin_theta);

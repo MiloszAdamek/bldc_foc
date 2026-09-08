@@ -94,35 +94,6 @@ void FOC_Init(BoardHandleTypeDef *board)
     #endif
 
     SVPWM_Init(s_foc.board->htim_pwm);
-
-	// HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
-	// HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
-
-	// __HAL_TIM_SET_COUNTER(s_foc.board->htim_pwm, 0);
-	// __HAL_TIM_SET_COUNTER(s_foc.board->htim_enc, 0);
-
-	// HAL_TIM_Base_Start(s_foc.board->htim_pwm);
-	// HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
-	// HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
-
-	// HAL_Delay(50);
-
-    // Testowo - do pomiaru prądu
-    // HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
-	// HAL_ADCEx_InjectedStart_IT(s_foc.board->hadc_curr);
-    // Testowo - end
-
-    // SVPWM_Init(s_foc.board->htim_pwm);
-    // FOC_AlignSensor();
-
-    // Odczyt kąta przed uruchomieniem pętli FOC
-    //    float mech0 = AS5048_GetAngleRad();
-    //    if (mech0 >= 0.0f) {
-    //        s_foc.angles.theta_mech = mech0;
-    //        s_foc.angles.theta_el = FOC_GetElectricalAngle(mech0);
-    //    }
-
-    // HAL_TIM_Base_Stop(s_foc.board->htim_pwm);
 }
 
 void FOC_Start(){
@@ -133,27 +104,9 @@ void FOC_Start(){
     FOCStats_Reset();
 
     AS5048_ReadAngleDMA();
-
-    HAL_TIM_Base_Stop_IT(s_foc.board->htim_pwm);
-	HAL_TIM_Base_Stop_IT(s_foc.board->htim_enc);
-
-    __HAL_TIM_SET_COUNTER(s_foc.board->htim_pwm, 0);
-    __HAL_TIM_SET_COUNTER(s_foc.board->htim_enc, 0);
-    
-    HAL_TIM_Base_Start_IT(s_foc.board->htim_enc);
-
-    HAL_TIM_OC_Start(s_foc.board->htim_pwm, TIM_CHANNEL_4);
-    CurrentSense_InjectedStart_IT(s_foc.board->hadc_currA);
-    HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm); // Uruchomienie pętli FOC
 }
 
 void FOC_Stop(){
-
-    Board_StopMotor(s_foc.board);
-
-    HAL_TIM_Base_Start_IT(s_foc.board->htim_pwm);
-
-    HAL_ADCEx_InjectedStop_IT(s_foc.board->hadc_currA);
 
     Flags_Reset(&s_foc.flags);
 
@@ -199,7 +152,6 @@ void FOC_RunLoop()
 	}
 
 	// Prąd (zapisany przez ADC ISR)
-	CurrentSense_CalculatePhases();
 	CurrentSense_Read(&s_foc.currents);
 
 	// Algorytm FOC

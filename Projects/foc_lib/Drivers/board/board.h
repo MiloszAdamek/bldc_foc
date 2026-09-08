@@ -5,10 +5,11 @@
  *      Author: Milosz Adamek
  */
 
- #ifndef BOARD_H
- #define BOARD_H
+#ifndef BOARD_H
+#define BOARD_H
 
- #include "powerstage.h"
+#include "powerstage.h"
+#include "motor_types.h"
 
 typedef enum
 {    
@@ -27,8 +28,8 @@ typedef struct
     TIM_HandleTypeDef *htim_pos;
     TIM_HandleTypeDef *htim_speed;
     TIM_HandleTypeDef *htim_cmd;
-    ADC_HandleTypeDef *hadc_currA;
-    ADC_HandleTypeDef *hadc_currB;
+    ADC_InjectedChannel_t hadc_currA;
+    ADC_InjectedChannel_t hadc_currB;
     ADC_HandleTypeDef *hadc_VDC;
     SPI_HandleTypeDef *hspi_enc;
     SPI_HandleTypeDef *hspi_drv;
@@ -48,4 +49,4 @@ void Board_StopMotor(BoardHandleTypeDef *board);
 void Board_CheckFaults(BoardHandleTypeDef *board);
 void Board_GetVddVoltage(BoardHandleTypeDef *board);
 
- #endif /* BOARD_H */
+#endif /* BOARD_H */

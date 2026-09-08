@@ -9,24 +9,16 @@
 #define INC_CURRENT_SENSE_H_
 
 #include "stm32g4xx_hal.h"
-
-typedef struct {
-    float a;
-    float b;
-    float c;
-} abc_current_t;
-
-typedef struct {
-    uint16_t a;
-    uint16_t b;
-    uint16_t c;
-} abc_raw_t;
+#include "motor_types.h"
 
 // Inicjalizacja pomiaru prądów
-void CurrentSense_Init(ADC_HandleTypeDef *hadc, float vdd_voltage);
+void CurrentSense_Init(ADC_InjectedChannel_t *hadc_inj, float vdd_voltage);
 
 // Start pomiaru prądów w trybie przerwań
 void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc);
+
+// Stop pomiaru prądów w trybie przerwań
+void CurrentSense_InjectedStop_IT(ADC_HandleTypeDef *hadc);
 
 // Wyliczenie pradów
 void CurrentSense_CalculatePhases();

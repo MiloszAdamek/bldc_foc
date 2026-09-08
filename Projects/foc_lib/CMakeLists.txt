@@ -16,10 +16,10 @@ target_sources(foc_lib PRIVATE
 
     # Drivers
     Drivers/board/board.c
-    Drivers/board/delay_us.c
-    Drivers/board/drv8353.c
-    Drivers/board/powerstage_drv8353.c
-    Drivers/board/powerstage_ihm03.c
+    Drivers/delay_us/delay_us.c
+    Drivers/drv8353/drv8353.c
+    Drivers/powerstage/powerstage_drv8353.c
+    Drivers/powerstage/powerstage_ihm03.c
     Drivers/current_sense/current_sense.c
     Drivers/encoder/as5048a.c
     Drivers/encoder/encoder_hub.c
@@ -41,6 +41,9 @@ target_include_directories(foc_lib PUBLIC
     Control/pwm
     Control/speed
     Drivers/board
+    Drivers/delay_us
+    Drivers/drv8353
+    Drivers/powerstage
     Drivers/current_sense
     Drivers/encoder
     Drivers/voltage_sense

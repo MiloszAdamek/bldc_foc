@@ -28,3 +28,22 @@ typedef struct {
     float duty_b;
     float duty_c;
 } Motor_Output_t;
+
+typedef struct {
+    ADC_HandleTypeDef *hadc;
+    uint32_t rank;            // Ranga w grupie Injected (np. ADC_INJECTED_RANK_1)
+} ADC_InjectedChannel_t;
+
+typedef struct {
+    float a;
+    float b;
+    float c;
+} abc_current_t;
+
+typedef struct {
+    uint16_t a;
+    uint16_t b;
+    uint16_t c;
+} abc_raw_t;
+
+#endif /* INC_MOTOR_TYPES_H_ */
