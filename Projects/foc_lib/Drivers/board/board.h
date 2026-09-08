@@ -46,6 +46,8 @@ typedef struct
 void Board_Init(BoardHandleTypeDef *board);
 void Board_StartMotor(BoardHandleTypeDef *board);
 void Board_StopMotor(BoardHandleTypeDef *board);
+void Board_StartPeripherals(BoardHandleTypeDef *board);
+void Board_StopPeripherals(BoardHandleTypeDef *board);
 void Board_CheckFaults(BoardHandleTypeDef *board);
 void Board_GetVddVoltage(BoardHandleTypeDef *board);
 

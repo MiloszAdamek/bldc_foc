@@ -14,8 +14,11 @@ typedef struct {
     // Wskaźnik na prywatną strukturę danych algorytmu (FOC_State_t, MPC_State_t itp.)
     void *ctx; 
     
-    // Interfejs funkcji
-    void  (*Init)(void *ctx);
-    void  (*Reset)(void *ctx);
-    void  (*Update)(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out);
+    void (*Init)(void *ctx);
+    void (*Start)(void *ctx);
+    void (*Stop)(void *ctx);
+    void (*Update)(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out);
+    void (*GetTelemetry)(const void *ctx, Motor_Telemetry_t *telem);
 } ControlAlgorithm_t;
+
+#endif /* INC_MOTOR_ALGORITHM_H_ */

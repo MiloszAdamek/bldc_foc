@@ -156,7 +156,7 @@ int main(void)
 
   Board_Init(&board);
 
-  FOC_Init(&board);
+  // FOC_Init(&board);
 
   Commander_Init(&board);
 

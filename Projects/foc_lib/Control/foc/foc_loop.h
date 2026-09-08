@@ -13,7 +13,8 @@
 #include <stdbool.h>
 #include "math.h"
 #include "foc_utils.h"
-#include "svpwm.h"
+#include "motor_types.h"
+#include "motor_algorithm.h"
 #include "current_sense.h"
 #include "as5048a.h"
 #include "board.h"
@@ -71,28 +72,38 @@ typedef struct {
     dq_ref_t       i_ref;
     abc_current_t  currents;
 
-    SensorCalib_t  calib;
+    float           v_bus;
+    float           v_alpha, v_beta;
+    float           v_d, v_q;
+    float           id, iq;
+    float           i_alpha, i_beta;
+
     Ramp_t         ramp;
     FocFlags_t     flags;
     FocAngles_t    angles;
     FocStats_t	   stats;
-} FOC_HandleTypeDef;
+} PI_FOC_State_t;
+
+extern PI_FOC_State_t s_foc;
 
 // Flagi
 extern volatile bool currents_ready;
 
-void FOC_Init(BoardHandleTypeDef *board);
-void FOC_RunLoop(void); // Główna pętla FOC
-void FOC_Update(float theta_el);
+ControlAlgorithm_t PI_FOC_Create(void);
+
+void FOC_Init(void *ctx);
+// void FOC_RunLoop(void); // Główna pętla FOC
+// void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out);
+void FOC_Stop(void *ctx); // Zatrzymanie PWM, wyłączenie driverów, zatrzymanie ADC
+void FOC_Start(void *ctx);
+
+float FOC_GetElectricalAngle(float mech);
+
 void FOC_SetIqTarget(float new_target);
-float FOC_GetElecticalAngle(float mech);
 void FOC_SetIqTarget_Ramp(float new_target);
 void FOC_SetTorqueTarget(float torque_mNm);
+
 bool FOC_AlignSensor(void); // Kalibracja enkodera
-
-void FOC_Stop(void); // Zatrzymanie PWM, wyłączenie driverów, zatrzymanie ADC
-void FOC_Start(void);
-
 bool FOC_IsSensorAligned(void);
 
 void Motor_Motion_Test(void);

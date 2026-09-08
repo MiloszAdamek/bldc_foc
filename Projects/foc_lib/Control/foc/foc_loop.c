@@ -5,6 +5,7 @@
  *      Author: Milosz Adamek
  */
 
+#include "motor_algorithm.h"
 #include "lut_sincos.h"
 #include "foc_loop.h"
 #include "foc_utils.h"
@@ -18,58 +19,35 @@
 #include "math.h"
 #include "main.h"
 #include <string.h>
+#include "svpwm.h"
 
 // Włącz jeśli SVPWM ma zamianę faz B↔C
 // #define SVPWM_PHASE_SWAP_BC
-//#define CALIB_SVPWM
+// #define CALIB_SVPWM
 
-static FOC_HandleTypeDef s_foc;
+PI_FOC_State_t s_foc;
 
-#define ENCODER_TIMEOUT_LIMIT 100
+extern BoardHandleTypeDef board;
+
 // RAMPA
 #define RAMP_STEP_DEFAULT 0.0001f
 
 // FLAGI
 volatile bool currents_ready = false;
 
-// Debug - cubemonitor
-volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
-
-static void FOC_LinearRamp(void);
+static void FOC_LinearRamp(PI_FOC_State_t *state, float target_iq);
 static void PI_Reset(PI_Controller *pi);
 static void Ramp_Reset(Ramp_t *ramp);
 static void Flags_Reset(FocFlags_t *flags);
 static void FOCStats_Reset(void);
-static inline float FOC_GetElectricalAngle(float mech);
 
-static inline void Log_To_CubeMonitor(float id, float iq, float target_iq)
-{
-    monitor_data.current_a = s_foc.currents.a;
-    monitor_data.current_b = s_foc.currents.b;
-    monitor_data.current_c = s_foc.currents.c;
-
-    monitor_data.id = id;
-    monitor_data.iq = iq;
-    monitor_data.iq_ref = target_iq;
-
-    monitor_data.theta_el =  s_foc.angles.theta_el;
-    monitor_data.theta_mech = s_foc.angles.theta_mech;
-
-//    monitor_data.id_ref = i_ref.d;
-//    monitor_data.speed_ref = speed_ramp_out;
-   monitor_data.speed = SpeedEstimator_GetOmegaRPM_ISR();
-
-   monitor_data.position_err = position_err;
-   monitor_data.position_ref = position_ref;
-   monitor_data.position_reg_out = position_reg_out;
-}
-
-void FOC_Init(BoardHandleTypeDef *board)
+void FOC_Init(void *ctx)
 {
 	printf("FOC: Init...\n");
-    s_foc.board = board;
 
-    s_foc.pi_id = (PI_Controller){
+    PI_FOC_State_t *state = (PI_FOC_State_t*)ctx;
+
+    state->pi_id = (PI_Controller){
         .kp = PI_KP_ID,
         .ki = PI_KI_ID,
         .limit = PI_LIMIT_ID,
@@ -77,7 +55,7 @@ void FOC_Init(BoardHandleTypeDef *board)
         .dt = PWM_PERIOD_SEC
     };
 
-    s_foc.pi_iq = (PI_Controller){
+    state->pi_iq = (PI_Controller){
         .kp = PI_KP_IQ,
         .ki = PI_KI_IQ,
         .limit = PI_LIMIT_IQ,
@@ -85,18 +63,16 @@ void FOC_Init(BoardHandleTypeDef *board)
         .dt = PWM_PERIOD_SEC
     };
 
-    s_foc.i_ref = (dq_ref_t){0.0f, 0.0f};
+    state->i_ref = (dq_ref_t){0.0f, 0.0f};
 
     #ifdef ENABLE_RAMP
-        s_foc.ramp.step = RAMP_STEP_DEFAULT;
-        s_foc.ramp.output = 0.0f;
-        s_foc.ramp.active = false;
+        state->ramp.step = RAMP_STEP_DEFAULT;
+        state->ramp.output = 0.0f;
+        state->ramp.active = false;
     #endif
-
-    SVPWM_Init(s_foc.board->htim_pwm);
 }
 
-void FOC_Start(){
+void FOC_Start(void *ctx){
 	// Pobranie danych przed uruchomieniem pętli FOC
 	currents_ready = false;
     spi_ready = true;
@@ -106,114 +82,136 @@ void FOC_Start(){
     AS5048_ReadAngleDMA();
 }
 
-void FOC_Stop(){
+void FOC_Stop(void *ctx){
 
-    Flags_Reset(&s_foc.flags);
+    PI_FOC_State_t *state = (PI_FOC_State_t*)ctx;
 
-    s_foc.ramp.active = false;
+    Flags_Reset(&state->flags);
+
+    state->ramp.active = false;
 
 #ifdef ENABLE_RAMP
-    s_foc.ramp.output = s_foc.i_ref.q;
+    state->ramp.output = state->i_ref.q;
 #endif  
 
-    s_foc.i_ref = (dq_ref_t){0.0f, 0.0f};
+    state->i_ref = (dq_ref_t){0.0f, 0.0f};
 
-    PI_Reset(&s_foc.pi_id);
-    PI_Reset(&s_foc.pi_iq);
+    PI_Reset(&state->pi_id);
+    PI_Reset(&state->pi_iq);
 
     FOCStats_Reset();
 }
 
-void FOC_RunLoop()
+static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out)
 {
-//	if (!currents_ready){s_foc.stats.loop_err++; return;}
-//	currents_ready = false;
-
-	// Kąt (zapisany przez SPI DMA)
-	EncoderSample_t enc;
-	if(EncoderHub_ConsumeSample(&enc)){
-		s_foc.angles.theta_mech = enc.theta_mech;
-		s_foc.angles.theta_el = FOC_GetElectricalAngle(enc.theta_mech);
-		s_foc.stats.encoder_timeout = 0;
-
-		EncoderHub_PublishAngle(
-			s_foc.angles.theta_mech,
-			s_foc.angles.theta_el
-		);
-	} else {
-		s_foc.stats.encoder_stale++;
-		s_foc.stats.encoder_timeout++;
-
-		if (s_foc.stats.encoder_timeout > ENCODER_TIMEOUT_LIMIT){
-			FOC_Stop();
-			return;
-		}
-		// Użycie wartości kąta z poprzedniej iteracji
-	}
-
-	// Prąd (zapisany przez ADC ISR)
-	CurrentSense_Read(&s_foc.currents);
-
-	// Algorytm FOC
-	FOC_Update(s_foc.angles.theta_el);
-
-//	s_foc.stats.loop_ok++;
-}
-
-void FOC_Update(float theta_el)
-{
-    float ialpha, ibeta;
-    float id, iq;
-    float vd, vq;
-    float valpha, vbeta;
-    float target_iq; // Lokalna zmienna dla celu PI
+    PI_FOC_State_t *state = (PI_FOC_State_t*)ctx;
     float sin_theta, cos_theta;
+    float target_iq;
 
 #ifdef ENABLE_RAMP
-	if (s_foc.ramp.active) {
-		FOC_LinearRamp();
-		target_iq = s_foc.ramp.output; // Użyj wyjścia z rampy
-	} else {
-		target_iq = s_foc.i_ref.q; // Użyj globalnej wartości zadanej
-	}
+    // Odpowiednik starego FOC_SetIqTarget_Ramp - automatycznie załącza rampę 
+    // jeśli zadana wartość (ref) zmieniła się względem aktualnego wyjścia rampy
+    if (fabsf(state->ramp.output - ref->torque_iq_ref) > 0.001f && !state->ramp.active) {
+        state->ramp.active = true;
+    }
+
+    if (state->ramp.active) {
+        FOC_LinearRamp(state, ref->torque_iq_ref);
+        target_iq = state->ramp.output;
+    } else {
+        target_iq = ref->torque_iq_ref;
+        state->ramp.output = target_iq; // Synchronizacja
+    }
 #else
-    // Jeśli rampa wyłączona, użyj bezpośrednio wartości zadanej
-    target_iq = s_foc.i_ref.q;
+    target_iq = ref->torque_iq_ref;
 #endif
 
-    LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
+    LUT_SinCos(meas->theta_el, &sin_theta, &cos_theta);
 
 #ifdef SVPWM_PHASE_SWAP_BC
-    // Kompensacja zamiany faz w SVPWM
-    ClarkeTransform(s_foc.currents.a, s_foc.currents.c, &ialpha, &ibeta);
+    ClarkeTransform(meas->currents.a, meas->currents.c, &state->i_alpha, &state->i_beta);
 #else
-    ClarkeTransform(s_foc.currents.a, s_foc.currents.b, &ialpha, &ibeta);
+    ClarkeTransform(meas->currents.a, meas->currents.b, &state->i_alpha, &state->i_beta);
 #endif
-
-    ParkTransform(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
-
-    vd = pi_control(&s_foc.pi_id, s_foc.i_ref.d - id);
-    vq = pi_control(&s_foc.pi_iq, target_iq - iq);
-
-    // static uint32_t cnt = 0;
-    // if (++cnt % 5000 == 0) {
-    //     printf("FOC: theta=%.2f id=%.3f iq=%.3f vd=%.2f vq=%.2f\n",
-    //            theta_el, id, iq, vd, vq);
-    //     printf("     Ia=%.3f Ib=%.3f Ic=%.3f\n",
-    //            s_foc.currents.a, s_foc.currents.b, s_foc.currents.c);
-    // }
-
-    // CubeMonitor log data
-    Log_To_CubeMonitor(id, iq, target_iq);
-
-    InvParkTransform(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
-    SVPWM_Update(valpha, vbeta);
+    
+    ParkTransform(state->i_alpha, state->i_beta, &sin_theta, &cos_theta, &state->id, &state->iq);
+    
+    // Obliczenia PI - wpisane sztywne Id = 0.0f
+    state->v_d = pi_control(&state->pi_id, state->i_ref.d - state->id);
+    state->v_q = pi_control(&state->pi_iq, target_iq - state->iq);
+    
+    InvParkTransform(state->v_d, state->v_q, &sin_theta, &cos_theta, &state->v_alpha, &state->v_beta);
+    
+    SVPWM_Update(state->v_alpha, state->v_beta);
 }
 
-static inline float FOC_GetElectricalAngle(float mech)
+ControlAlgorithm_t PI_FOC_Create(void)
 {
-    return normalize_angle((float)(s_foc.calib.direction * MOTOR_POLE_PAIRS) * mech - s_foc.calib.zero_electric_angle);
+    ControlAlgorithm_t algo = {
+        .ctx = &s_foc,
+        .Init = FOC_Init,
+        .Start = FOC_Start,
+        .Stop = FOC_Stop,
+        .Update = FOC_Update, // Tym zajmiemy się w następnym kroku
+        .GetTelemetry = FOC_GetTelemetry
+    };
+    return algo;
 }
+
+// void FOC_Update(float theta_el)
+// {
+//     float ialpha, ibeta;
+//     float id, iq;
+//     float vd, vq;
+//     float valpha, vbeta;
+//     float target_iq; // Lokalna zmienna dla celu PI
+//     float sin_theta, cos_theta;
+
+// #ifdef ENABLE_RAMP
+// 	if (s_foc.ramp.active) {
+// 		FOC_LinearRamp();
+// 		target_iq = s_foc.ramp.output; // Użyj wyjścia z rampy
+// 	} else {
+// 		target_iq = s_foc.i_ref.q; // Użyj globalnej wartości zadanej
+// 	}
+// #else
+//     // Jeśli rampa wyłączona, użyj bezpośrednio wartości zadanej
+//     target_iq = s_foc.i_ref.q;
+// #endif
+
+//     LUT_SinCos(theta_el, &sin_theta, &cos_theta); // Pobranie wartosci sin,cos z LUT
+
+// #ifdef SVPWM_PHASE_SWAP_BC
+//     // Kompensacja zamiany faz w SVPWM
+//     ClarkeTransform(s_foc.currents.a, s_foc.currents.c, &ialpha, &ibeta);
+// #else
+//     ClarkeTransform(s_foc.currents.a, s_foc.currents.b, &ialpha, &ibeta);
+// #endif
+
+//     ParkTransform(ialpha, ibeta, &sin_theta, &cos_theta, &id, &iq);
+
+//     vd = pi_control(&s_foc.pi_id, s_foc.i_ref.d - id);
+//     vq = pi_control(&s_foc.pi_iq, target_iq - iq);
+
+//     // static uint32_t cnt = 0;
+//     // if (++cnt % 5000 == 0) {
+//     //     printf("FOC: theta=%.2f id=%.3f iq=%.3f vd=%.2f vq=%.2f\n",
+//     //            theta_el, id, iq, vd, vq);
+//     //     printf("     Ia=%.3f Ib=%.3f Ic=%.3f\n",
+//     //            s_foc.currents.a, s_foc.currents.b, s_foc.currents.c);
+//     // }
+
+//     // CubeMonitor log data
+//     Log_To_CubeMonitor(id, iq, target_iq);
+
+//     InvParkTransform(vd, vq, &sin_theta, &cos_theta, &valpha, &vbeta);
+//     SVPWM_Update(valpha, vbeta);
+// }
+
+// float FOC_GetElectricalAngle(float mech)
+// {
+//     return normalize_angle((float)(s_foc.calib.direction * MOTOR_POLE_PAIRS) * mech - s_foc.calib.zero_electric_angle);
+// }
 
 void FOC_SetIqTarget_Ramp(float new_target)
 {
@@ -244,216 +242,43 @@ void FOC_SetTorqueTarget(float torque_mNm)
     FOC_SetIqTarget(target_iq);
 }
 
-// Funkcja używana tylko do kalibracji, w FOC_Align_Sensor()
-void FOC_SetPhaseVoltage(float Uq, float Ud, float angle_el)
+static void FOC_GetTelemetry(const void *ctx, Motor_Telemetry_t *telem)
 {
-    // Ograniczenie wektora napięcia
-    float Uref = sqrtf(Ud * Ud + Uq * Uq);
-    float Umax = VOLTAGE_SUPPLY / M_SQRT3;
-
-    if (Uref > Umax) {
-        float scale = Umax / Uref;
-        Ud *= scale;
-        Uq *= scale;
-    }
-
-    float sin_t, cos_t;
-    LUT_SinCos(angle_el, &sin_t, &cos_t); // Pobranie sin cos z tablicy LUT
-
-
-    float Ualpha, Ubeta;
-    InvParkTransform(Ud, Uq, &sin_t, &cos_t, &Ualpha, &Ubeta);
-
-    float Ua, Ub, Uc;
-    InvClarkeTransform(Ualpha, Ubeta, &Ua, &Ub, &Uc);
-
-    // Mapowanie na PWM dla drivera 3-PWM ---
-    float dc_a = Ua / VOLTAGE_SUPPLY;
-    float dc_b = Ub / VOLTAGE_SUPPLY;
-    float dc_c = Uc / VOLTAGE_SUPPLY;
-
-    // Dodajemy 0.5, aby przesunąć zakres. Centrowanie dla drivera 3-PWM.
-    dc_a += 0.5f;
-    dc_b += 0.5f;
-    dc_c += 0.5f;
-
-    // Przeliczamy współczynniki wypełnienia (0.0 do 1.0) na wartości dla rejestru timera.
-    uint32_t pwm_a = (uint32_t)(dc_a * PWM_PERIOD_ARR);
-    uint32_t pwm_b = (uint32_t)(dc_b * PWM_PERIOD_ARR);
-    uint32_t pwm_c = (uint32_t)(dc_c * PWM_PERIOD_ARR);
-
-    // Zabezpieczenie
-    if (pwm_a > PWM_PERIOD_ARR) pwm_a = PWM_PERIOD_ARR;
-    if (pwm_b > PWM_PERIOD_ARR) pwm_b = PWM_PERIOD_ARR;
-    if (pwm_c > PWM_PERIOD_ARR) pwm_c = PWM_PERIOD_ARR;
-
-    // Ustawienie wartości w rejestrach timera
-    __HAL_TIM_SET_COMPARE(s_foc.board->htim_pwm, TIM_CHANNEL_1, pwm_a);
-    __HAL_TIM_SET_COMPARE(s_foc.board->htim_pwm, TIM_CHANNEL_2, pwm_b);
-    __HAL_TIM_SET_COMPARE(s_foc.board->htim_pwm, TIM_CHANNEL_3, pwm_c);
+    const PI_FOC_State_t *state = (const PI_FOC_State_t*)ctx;
+    
+    telem->id_meas = state->id;
+    telem->iq_meas = state->iq;
+    telem->id_ref = state->i_ref.d; // Uaktualnione referencje, jesli dodasz je do zapisu w stanie
+    telem->iq_ref = state->ramp.active ? state->ramp.output : state->i_ref.q;
+    telem->vd_out = state->v_d;
+    telem->vq_out = state->v_q;
+    telem->active_algo = 1; // 1 to PI-FOC
 }
 
-static void FOC_ApplyVoltageVector(float Uq, float Ud, float theta_el)
-{
-    float sin_t, cos_t;
-    LUT_SinCos(theta_el, &sin_t, &cos_t);
-
-    float Ualpha, Ubeta;
-    InvParkTransform(Ud, Uq, &sin_t, &cos_t, &Ualpha, &Ubeta);
-
-    SVPWM_Update(Ualpha, Ubeta);
-}
-
-bool FOC_AlignSensor()
-{
-    if (s_foc.calib.aligned) {
-        return true;
-    }
-
-    Board_StartMotor(s_foc.board);
-
-    printf("\n--- Start kalibracji sensora ---\n");
-    printf("Krok 1: Wykrywanie kierunku...\n");
-
-    // --- Obrót w przód ---
-    for (int i = 0; i <= 500; i++) {
-        float theta = _3PI_2 + (i * (M_TWOPI / 500.0f));
-
-#ifdef CALIB_SVPWM
-        FOC_ApplyVoltageVector(0, VOLTAGE_SENSOR_ALIGN, theta);
-#else
-        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, theta);
-#endif
-
-        HAL_Delay(2);
-    }
-
-    float mid_angle = AS5048_GetAngleRad();
-    if (mid_angle < 0.0f) {
-        printf("Błąd: odczyt kąta (mid)\n");
-        return (s_foc.calib.aligned = false);
-    }
-
-    // --- Obrót w tył ---
-    for (int i = 500; i >= 0; i--) {
-        float theta = _3PI_2 + (i * (M_TWOPI / 500.0f));
-
-#ifdef CALIB_SVPWM
-        FOC_ApplyVoltageVector(0, VOLTAGE_SENSOR_ALIGN, theta);
-#else
-        FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, theta);
-#endif
-
-        HAL_Delay(2);
-    }
-
-    float end_angle = AS5048_GetAngleRad();
-    if (end_angle < 0.0f) {
-        printf("Błąd: odczyt kąta (end)\n");
-        return (s_foc.calib.aligned = false);
-    }
-
-    // Analiza ruchu
-    float moved = mid_angle - end_angle;
-
-    if (moved < -M_PI) moved += M_TWOPI;
-    if (moved >  M_PI) moved -= M_TWOPI;
-
-    if (fabsf(moved) < 0.1f) {
-        printf("Błąd: silnik nie poruszył się!\n");
-        return (s_foc.calib.aligned = false);
-    }
-
-    s_foc.calib.direction = (moved > 0) ? SENSOR_DIRECTION_CCW : SENSOR_DIRECTION_CW;
-    printf("Kierunek sensora: %d (%s)\n",
-           s_foc.calib.direction,
-           s_foc.calib.direction == SENSOR_DIRECTION_CW ? "CW" : "CCW");
-
-    // Sprawdzenie par biegunów
-    float expected = M_TWOPI / MOTOR_POLE_PAIRS;
-    if (fabsf(fabsf(moved) - expected) > 0.5f) {
-        printf("Ostrzeżenie: możliwy błąd liczby par biegunów\n");
-    } else {
-        printf("Weryfikacja par biegunów: OK\n");
-    }
-
-    printf("Krok 2: Wyrównywanie do zera elektrycznego...\n");
-
-    // Ustaw znaną elektryczną pozycję
-#ifdef CALIB_SVPWM
-    FOC_ApplyVoltageVector(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
-#else
-    FOC_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
-#endif
-
-    HAL_Delay(700);
-
-    float mech_angle = AS5048_GetAngleRad();
-    if (mech_angle < 0.0f) {
-        printf("Błąd odczytu kąta przy wyznaczaniu zera.\n");
-        return (s_foc.calib.aligned = false);
-    }
-
-    // Kąt elektryczny
-    float el_angle = normalize_angle(
-        (float)s_foc.calib.direction * MOTOR_POLE_PAIRS * mech_angle
-    );
-
-    s_foc.calib.zero_electric_angle = normalize_angle(el_angle - _3PI_2);
-
-    printf("Offset elektryczny: %.4f rad\n", s_foc.calib.zero_electric_angle);
-
-    // Zatrzymanie silnika
-#ifdef CALIB_SVPWM
-//    FOC_ApplyVoltageVector(0, 0, 0);
-    SVPWM_Update(0, 0);
-#else
-	FOC_SetPhaseVoltage(0, 0, 0);
-#endif
-
-    printf("--- Kalibracja zakończona pomyślnie! ---\n\n");
-
-    printf("=== DEBUG ===\n");
-    printf("mid_angle: %.4f rad\n", mid_angle);
-    printf("end_angle: %.4f rad\n", end_angle);
-    printf("moved: %.4f rad\n", moved);
-    printf("mech_angle (final): %.4f rad\n", mech_angle);
-    printf("el_angle: %.4f rad\n", el_angle);
-    printf("zero_electric_angle: %.4f rad\n", s_foc.calib.zero_electric_angle);
-    printf("=============\n");
-
-    return (s_foc.calib.aligned = true);
-}
-
-bool FOC_IsSensorAligned(void)
-{
-    return s_foc.calib.aligned;
-}
-
-static void FOC_LinearRamp(void)
+static void FOC_LinearRamp(PI_FOC_State_t *state, float target_iq)
 {
 #ifdef ENABLE_RAMP
-    if (s_foc.ramp.active)
+    if (state->ramp.active)
     {
-        if (s_foc.ramp.output < s_foc.i_ref.q)
+        if (state->ramp.output < target_iq)
         {
-        	s_foc.ramp.output += s_foc.ramp.step;
-            if (s_foc.ramp.output > s_foc.i_ref.q) {
-            	s_foc.ramp.output = s_foc.i_ref.q;
-                s_foc.ramp.active = false; // Zakończ rampę
+            state->ramp.output += state->ramp.step;
+            if (state->ramp.output > target_iq) {
+                state->ramp.output = target_iq;
+                state->ramp.active = false;
             }
         }
-        else if (s_foc.ramp.output > i_ref.q)
+        else if (state->ramp.output > target_iq)
         {
-        	s_foc.ramp.output -= s_foc.ramp.step;
-            if (s_foc.ramp.output < s_foc.i_ref.q) {
-            	s_foc.ramp.output = s_foc.i_ref.q;
-                s_foc.ramp.active = false; // Zakończ rampę
+            state->ramp.output -= state->ramp.step;
+            if (state->ramp.output < target_iq) {
+                state->ramp.output = target_iq;
+                state->ramp.active = false;
             }
         }
         else
         {
-            s_foc.ramp.active = false;
+            state->ramp.active = false;
         }
     }
 #endif
