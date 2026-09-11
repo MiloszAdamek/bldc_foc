@@ -1,0 +1,6 @@
+[submodule "Projects/BLDC_FOC_DRV8353/stm32_can_lib"]
+	path = Projects/BLDC_FOC_DRV8353/stm32_can_lib
+	url = https://github.com/MiloszAdamek/stm32_can_lib.git
+[submodule "Projects/BLDC_FOC_DRV8353/Thirdparty/stm32_can_lib"]
+	path = Projects/BLDC_FOC_DRV8353/Thirdparty/stm32_can_lib
+	url = https://github.com/MiloszAdamek/stm32_can_lib.git
