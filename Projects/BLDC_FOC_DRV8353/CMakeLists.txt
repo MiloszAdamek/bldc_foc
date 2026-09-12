@@ -142,10 +142,18 @@ target_include_directories(foc_lib PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc"
 )
 
+
+add_subdirectory(Thirdparty/stm32_can_lib)
+target_compile_definitions(stm32_can_lib PUBLIC
+    DEVICE_IS_SLAVE
+    SLAVE_NODE_ID=0x02
+)
+
 # Linkowanie do binarnego pliku ELF
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     foc_lib
+    stm32_can_lib
     m
 )
 
