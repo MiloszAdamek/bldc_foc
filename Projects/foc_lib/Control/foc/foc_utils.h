@@ -8,7 +8,7 @@
 #ifndef INC_CONTROLLER_UTILS_H_
 #define INC_CONTROLLER_UTILS_H_
 
-#include "config.h"
+// #include "config.h"
 #include "math_consts.h"
 
 // Parametry regulatorów PI

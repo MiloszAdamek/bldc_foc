@@ -8,15 +8,10 @@
 #ifndef INC_FOC_LOOP_H_
 #define INC_FOC_LOOP_H_
 
-#include "stm32g4xx_hal.h"
-#include <stdio.h>
 #include <stdbool.h>
-#include "math.h"
 #include "foc_utils.h"
 #include "motor_types.h"
 #include "motor_algorithm.h"
-#include "current_sense.h"
-#include "as5048a.h"
 #include "board.h"
 
 extern volatile MonitorData_t monitor_data;

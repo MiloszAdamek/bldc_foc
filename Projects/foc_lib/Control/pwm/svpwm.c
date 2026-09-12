@@ -5,13 +5,12 @@
  *      Author: Milosz Adamek
  */
 
+#include "main.h"
 #include "lut_sincos.h"
 #include "config.h"
 #include "svpwm.h"
-#include "foc_utils.h"
-#include "powerstage.h"
 #include "math.h"
-#include "main.h"
+#include "math_consts.h"
 
 static TIM_HandleTypeDef* svpwm_htim;
 

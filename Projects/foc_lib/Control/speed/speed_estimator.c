@@ -6,26 +6,19 @@
  */
 
 #include "speed_estimator.h"
-#include "as5048a.h"
+#include "main.h"
 #include "encoder_hub.h"
-#include <math.h>
-
-#define TWO_PI (2.0f * (float)M_PI)
-#define RAD_TO_RPM (60.0f / (2.0f * (float)M_PI))
+#include "math_consts.h"
 
 static AngleUnwrap_t enc_unwrap;
 static volatile SpeedEstimate_t s_out;
 
 #ifdef SPEED_ESTIMATOR_KALMAN
-
-static KalmanState  kf_state;
-static KalmanParams kf_params;
-
+    static KalmanState  kf_state;
+    static KalmanParams kf_params;
 #else /* SPEED_ESTIMATOR_LPF */
-
-static float s_dt_sec   = 0.001f;
-static float s_omega_lpf = 0.0f;
-
+    static float s_dt_sec   = 0.001f;
+    static float s_omega_lpf = 0.0f;
 #endif
 
 static void Publish(float theta, float omega)
@@ -33,22 +26,22 @@ static void Publish(float theta, float omega)
     s_out.seq++;
     __DMB();
     s_out.theta     = theta;
-    s_out.omega     = omega;
-    s_out.omega_rpm = omega * RAD_TO_RPM;
+    s_out.omega_rad_s = omega;
+    s_out.omega_rpm = omega * RAD_S_TO_RPM;
     __DMB();
     s_out.seq++;
 }
 
 void SpeedEstimator_Init(float dt_sec)
 {
-    enc_unwrap.initialized = false;  // <-- reset bez zakładania kąta 0
+    enc_unwrap.initialized  = false;  // <-- reset bez zakładania kąta 0
     enc_unwrap.prev_wrapped = 0.0f;
     enc_unwrap.unwrapped    = 0.0f;
 
-    s_out.theta = 0.0f;
-    s_out.omega = 0.0f;
-    s_out.omega_rpm = 0.0f;
-    s_out.seq = 0;
+    s_out.theta         = 0.0f;
+    s_out.omega_rad_s   = 0.0f;
+    s_out.omega_rpm     = 0.0f;
+    s_out.seq           = 0;
 
 #ifdef SPEED_ESTIMATOR_KALMAN
     Kalman_Init(&kf_state, &kf_params, dt_sec);
@@ -158,7 +151,7 @@ void Kalman_Init(KalmanState *s, KalmanParams *p, float dt){
 	p->Q[1][0] = 0.0;  p->Q[1][1] = 8e-3;
 
 	// Encoder noise
-	p->R = 5e-5;
+	p->R = 1e-3;
 
 	// Initial state
 	s->x[0] = 0.0; // theta

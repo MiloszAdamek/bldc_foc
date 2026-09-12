@@ -9,10 +9,8 @@
 #include "foc_utils.h"
 #include "encoder_hub.h"
 #include "math_consts.h"
-#include <stdio.h>
+#include "config.h"
 
-#define RAD_TO_DEG (360.0f / (2.0f * M_PI))
-#define RAD_PER_SEC_TO_RPM (60.0f / (2.0f * M_PI))
 #define POS_DEADBAND 0.005f
 #define POS_ERROR_LPF_ALPHA 0.85f
 #define POS_INTEGRAL_DECAY  0.999f
@@ -58,7 +56,7 @@ void PositionController_Update()
 	}
 
     float velocity_ref = pi_control(&pi_position, error); // rad/s
-    velocity_ref *= RAD_PER_SEC_TO_RPM; // RPM
+    velocity_ref *= RAD_S_TO_RPM; // RPM
 
 	position_err = error;
 	position_reg_out = velocity_ref;

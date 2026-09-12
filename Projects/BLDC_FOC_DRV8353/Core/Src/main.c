@@ -29,14 +29,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include "config.h"
 #include "commander.h"
 #include "motor_control.h"
-#include "foc_loop.h"
 #include "board.h"
-#include "drv8353.h"
 #include "powerstage.h"
-#include "voltage_sense.h"
 // #include "can_interface.h"
 /* USER CODE END Includes */
 

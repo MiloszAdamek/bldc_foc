@@ -8,9 +8,6 @@
 #ifndef MOTOR_CONFIG_H_
 #define MOTOR_CONFIG_H_
 
-#include "stm32g4xx_hal.h"
-#include <math.h>
-
 /* BOARD */ 
 
 #define DRV8353
@@ -76,8 +73,8 @@
  * ========================================================================= */
 
 #ifdef DRV8353
-    #define PI_KP_ID 0.3f
-    #define PI_KI_ID 3.0f
+    #define PI_KP_ID 0.8f
+    #define PI_KI_ID 5.0f
     #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_IQ 0.5f

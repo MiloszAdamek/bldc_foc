@@ -8,9 +8,9 @@
 #ifndef INC_MOTOR_TYPES_H_
 #define INC_MOTOR_TYPES_H_
 
-#include "stm32g4xx_hal.h"
-#include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include "main.h"
 
 typedef struct {
     float a;

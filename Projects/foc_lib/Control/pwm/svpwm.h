@@ -8,9 +8,6 @@
 #ifndef INC_SVPWM_H_
 #define INC_SVPWM_H_
 
-#include "main.h"
-#include "stm32g4xx.h"
-
 void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,
                          float *dc_a, float *dc_b, float *dc_c);
 

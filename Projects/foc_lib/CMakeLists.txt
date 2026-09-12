@@ -31,25 +31,46 @@ target_sources(foc_lib PRIVATE
     MotorControl/motor_alignment.c
 )
 
+# target_include_directories(foc_lib PUBLIC
+#     App
+#     Common/math
+#     Common/types
+#     Control/ccs_mpc
+#     Control/fcs_mpc
+#     Control/foc
+#     Control/position
+#     Control/pwm
+#     Control/speed
+#     Drivers/board
+#     Drivers/delay_us
+#     Drivers/drv8353
+#     Drivers/powerstage
+#     Drivers/current_sense
+#     Drivers/encoder
+#     Drivers/voltage_sense
+#     MotorControl
+# )
+
 target_include_directories(foc_lib PUBLIC
-    App
-    Common/math
-    Common/types
-    Control/ccs_mpc
-    Control/fcs_mpc
-    Control/foc
-    Control/position
-    Control/pwm
-    Control/speed
-    Drivers/board
-    Drivers/delay_us
-    Drivers/drv8353
-    Drivers/powerstage
-    Drivers/current_sense
-    Drivers/encoder
-    Drivers/voltage_sense
-    MotorControl
+    ${CMAKE_CURRENT_SOURCE_DIR}/App
+    ${CMAKE_CURRENT_SOURCE_DIR}/Common/math
+    ${CMAKE_CURRENT_SOURCE_DIR}/Common/types
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/ccs_mpc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/fcs_mpc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/foc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/position
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/pwm
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/speed
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/board
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/delay_us
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/drv8353
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/powerstage
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/current_sense
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/encoder
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/voltage_sense
+    ${CMAKE_CURRENT_SOURCE_DIR}/MotorControl
 )
+
 # Definicja mikrokontrolera wymagana przez nagłówki ST:
 # target_compile_definitions(foc_lib PUBLIC
 #     STM32G474xx

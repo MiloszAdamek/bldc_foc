@@ -1,2 +1,5 @@
 CompileFlags:
-  CompilationDatabase: ../BLDC_FOC_DRV8353/build/Debug
+  CompilationDatabase: "../BLDC_FOC_DRV8353/build/Debug"
+
+Diagnostics:
+  UnusedIncludes: Strict

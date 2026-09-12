@@ -10,7 +10,6 @@
 #include "motor_alignment.h"
 #include "motor_types.h"
 #include "config.h"
-#include "commander.h"
 #include "board.h"
 #include "foc_loop.h"
 #include "speed_control.h"
@@ -18,13 +17,11 @@
 #include "position_control.h"
 #include "as5048a.h"
 #include "encoder_hub.h"
-#include "gpio.h"
 #include "svpwm.h"
-#include "voltage_sense.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
-volatile bool g_cmd_flag = false;
+volatile bool g_cmd_flag = false; // Flaga ustawiona w przerwaniu TIM, komenda przetwarzana w pętli while()
 
 extern BoardHandleTypeDef board;
 
@@ -281,19 +278,19 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
         }
     }
 
-
     // === Odczyt prędkości mechanicznej ===
     meas->omega_mech = SpeedEstimator_GetOmegaRPM_ISR();
 
     float omega_rad = meas->omega_mech * (M_TWOPI / 60.0f);
-    const float T_DELAY = 50e-6f; // 125 us - na próbę (zmieniaj 100..150us)
+    
 
 	meas->theta_mech = last_theta_mech;
     // meas->theta_el   = last_theta_el;
 
-    if (fabsf(meas->omega_mech) > 30.0f) {          // np. >30 RPM
-        meas->theta_mech = normalize_angle(last_theta_mech - omega_rad * T_DELAY);
-    }
+    // Ekstrapolacja kąta w przód o T_DELAY
+    const float T_DELAY = 90e-6f; // 125 us - na próbę (zmieniaj 100..150us)
+    meas->theta_mech = normalize_angle(last_theta_mech + omega_rad * T_DELAY);
+
 
     meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
 

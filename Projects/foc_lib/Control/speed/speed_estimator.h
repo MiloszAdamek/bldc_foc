@@ -18,7 +18,7 @@
 
 typedef struct {
     float theta;       // rad
-    float omega;       // rad/s
+    float omega_rad_s;   // rad/s
     float omega_rpm;   // rpm
     uint32_t seq;      // counter
 } SpeedEstimate_t;

@@ -7,11 +7,9 @@
 
 #include "speed_control.h"
 #include "foc_utils.h"
-#include "foc_loop.h"
 #include "speed_estimator.h"
-#include "math.h"
-
-#define RAD_TO_RPM          (60.0f / (2.0f * M_PI))
+#include "motor_types.h"
+#include "config.h"
 
 volatile float speed_ref_rpm = 0.0f;
 static SpeedMode_t speed_mode = SPEED_MODE_DIRECT;

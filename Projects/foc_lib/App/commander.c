@@ -11,7 +11,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "usart.h"
 
 static UART_HandleTypeDef* cmd_huart;
 

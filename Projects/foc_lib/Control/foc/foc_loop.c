@@ -11,10 +11,10 @@
 #include "foc_utils.h"
 #include "config.h"
 #include "board.h"
-#include "math.h"
-#include "main.h"
 #include <string.h>
 #include "svpwm.h"
+#include "stdio.h"
+#include "as5048a.h"
 
 extern BoardHandleTypeDef board;
 
