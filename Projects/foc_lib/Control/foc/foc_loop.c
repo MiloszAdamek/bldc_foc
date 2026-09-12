@@ -26,7 +26,7 @@ extern Motor_Stats_t g_stats;
 extern volatile Motor_Measurements_t g_meas;
 
 // RAMPA
-#define RAMP_STEP_DEFAULT 0.0001f
+#define IQ_RAMP_RATE_A_S 0.1f // A/s
 
 // FLAGI
 volatile bool currents_ready = false;
@@ -81,9 +81,8 @@ void FOC_Init(void *ctx)
     state->iq_setpoint = 0.0f;
 
     #ifdef ENABLE_RAMP
-        state->ramp.step = RAMP_STEP_DEFAULT;
+        state->ramp.step = IQ_RAMP_RATE_A_S * FOC_PERIOD_SEC;
         state->ramp.output = 0.0f;
-        state->ramp.active = false;
     #endif
 }
 
@@ -98,7 +97,6 @@ void FOC_Start(void *ctx){
     state->iq_target_raw = 0.0f;
 
     #ifdef ENABLE_RAMP
-        state->ramp.active = false;
         state->ramp.output = 0.0f; 
     #endif
 
@@ -118,7 +116,6 @@ void FOC_Stop(void *ctx){
     Flags_Reset(&state->flags);
     
     #ifdef ENABLE_RAMP
-        state->ramp.active = false;
         state->ramp.output = 0.0f;
     #endif  
 
@@ -140,25 +137,8 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     state->iq_target_raw = ref->torque_iq_ref;
 
     #ifdef ENABLE_RAMP
-        if (ref->iq_ramp_enabled) {
-            // Rampa FOC WŁĄCZONA (Tryb Momentu)
-
-            // Jeśli zadana wartość (ref) zmieniła się względem aktualnego wyjścia rampy
-            if (fabsf(state->ramp.output - state->iq_target_raw) > 0.001f && !state->ramp.active) {
-                state->ramp.active = true;
-            }
-            if (state->ramp.active) {
-                FOC_LinearRamp(state, ref);
-            } else {
-                state->ramp.output = state->iq_target_raw; // Synchronizacja w stanie ustalonym
-            }
-            state->iq_setpoint = state->ramp.output;
-        } else {
-            // Rampa FOC WYŁĄCZONA (Tryb Prędkości / Pozycji)
-            state->ramp.active = false;
-            state->ramp.output = state->iq_target_raw; // Synchronizacja na wypadek powrotu do trybu momentu
-            state->iq_setpoint = state->iq_target_raw; // Prąd z regulatora nadrzędnego idzie bez opóźnień
-        }
+        FOC_LinearRamp(state, ref);
+        state->iq_setpoint = state->ramp.output;
     #else
         state->iq_setpoint = state->iq_target_raw;
     #endif
@@ -169,21 +149,25 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
 
     ParkTransform(state->i_alpha, state->i_beta, &sin_theta, &cos_theta, &state->id, &state->iq);
     
-    state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
-    state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
+    // === Wariant bez priorytetu osi D ===
+    // state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
+    // state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
     
-    // float vd = state->v_d;
-    // float vq = state->v_q;
-    // const float VMAX = (VOLTAGE_LIMIT / M_SQRT3);
+    // === Wariant z priorytetem osi D (ograniczenie na osi Q w zależności od napięcia na osi D)===
+    const float VMAX_SQ = PI_LIMIT_ID * PI_LIMIT_ID;
+    state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
 
-    // float vmag = sqrtf(vd*vd + vq*vq);
-    // if (vmag > VMAX) {
-    //     float k = VMAX / vmag;
-    //     vd *= k;
-    //     vq *= k;
-    //     state->v_d = vd;
-    //     state->v_q = vq;
-    // }
+    // Dostępne napięcie dla osi Q po uwzględnieniu ograniczenia na osi D
+    float vd_sq = state->v_d * state->v_d;
+    float vq_limit_sq = VMAX_SQ - vd_sq;
+
+    float max_vq = 0.0f;
+    if (vq_limit_sq > 0.0f) {
+        max_vq = sqrtf(vq_limit_sq); 
+    }
+
+    state->pi_iq.limit = max_vq; // Dynamiczna zmiana limitu dla regulatora PI na osi Q
+    state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
 
     InvParkTransform(state->v_d, state->v_q, &sin_theta, &cos_theta, &state->v_alpha, &state->v_beta);
     
@@ -204,30 +188,29 @@ static void FOC_GetTelemetry(const void *ctx, Motor_Telemetry_t *telem)
 }
 
 #ifdef ENABLE_RAMP
+
 static void FOC_LinearRamp(PI_FOC_State_t *state, const Motor_References_t *ref)
 {
-    if (state->ramp.active)
+    // Jeśli rampa jest wyłączona to ustawiamy wyjście rampy bezpośrednio na wartość referencyjną
+    if (!ref->iq_ramp_enabled)
     {
-        if (state->ramp.output < ref->torque_iq_ref)
-        {
-            state->ramp.output += state->ramp.step;
-            if (state->ramp.output > ref->torque_iq_ref) {
-                state->ramp.output = ref->torque_iq_ref;
-                state->ramp.active = false;
-            }
-        }
-        else if (state->ramp.output > ref->torque_iq_ref)
-        {
-            state->ramp.output -= state->ramp.step;
-            if (state->ramp.output < ref->torque_iq_ref) {
-                state->ramp.output = ref->torque_iq_ref;
-                state->ramp.active = false;
-            }
-        }
-        else
-        {
-            state->ramp.active = false;
-        }
+        state->ramp.output = ref->torque_iq_ref;
+        return;
+    }
+
+    float diff = ref->torque_iq_ref - state->ramp.output;
+
+    if (diff > state->ramp.step)
+    {
+        state->ramp.output += state->ramp.step;
+    }
+    else if (diff < -state->ramp.step)
+    {
+        state->ramp.output -= state->ramp.step;
+    }
+    else
+    {
+        state->ramp.output = ref->torque_iq_ref;
     }
 }
 #endif

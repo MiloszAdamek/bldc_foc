@@ -30,7 +30,8 @@ typedef struct {
     float v_bus;            // Napięcie Vbus (V)
     float theta_el;         // Kąt elektryczny (rad)
     float theta_mech;       // Kąt mechaniczny (rad)
-    float omega_mech;       // Prędkość mechaniczna (rad/s)
+    float omega_mech_rpm;   // Prędkość mechaniczna (rpm)
+    float omega_mech_rad_s; // Prędkość mechaniczna (rad/s)
 } Motor_Measurements_t;
 
 typedef struct {

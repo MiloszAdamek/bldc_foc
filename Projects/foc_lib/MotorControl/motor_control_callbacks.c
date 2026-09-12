@@ -56,10 +56,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
-    if (hadc->Instance == board.hadc_currA.hadc->Instance) // 20 kHz
+    if (hadc->Instance == board.hadc_currA.hadc->Instance) // 20 kHz - Center aligned Mode 3, 10 kHz - Center aligned Mode 1
     {
 		MotorControl_OnCurrentSampleISR();
-        // if (__HAL_TIM_IS_TIM_COUNTING_DOWN(board.htim_pwm)){ // 10 kHz
+		
+        // if (__HAL_TIM_IS_TIM_COUNTING_DOWN(board.htim_pwm)){ // 10 kHz - gdy center aligned mode 3
         //     MotorControl_OnCurrentSampleISR();
         // }
     }

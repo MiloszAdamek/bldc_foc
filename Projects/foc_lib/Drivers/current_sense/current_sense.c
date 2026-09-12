@@ -6,10 +6,10 @@
  */
 
 #include "current_sense.h"
-#include "foc_loop.h"
 #include "config.h"
 #include "powerstage.h"
 #include "stdbool.h"
+#include "stdio.h"
 
 static ADC_HandleTypeDef *s_hadc;
 

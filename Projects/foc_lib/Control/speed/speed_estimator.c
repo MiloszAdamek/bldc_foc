@@ -127,9 +127,19 @@ float SpeedEstimator_GetOmegaRPM_ISR(void)
     return s_out.omega_rpm;
 }
 
+float SpeedEstimator_GetOmegaRad_s_ISR(void)
+{
+    return s_out.omega_rad_s;
+}
+
 float SpeedEstimator_GetOmegaRPM(void)
 {
     return SpeedEstimator_Get().omega_rpm;
+}
+
+float SpeedEstimator_GetOmegaRad_s(void)
+{
+    return SpeedEstimator_Get().omega_rad_s;
 }
 
 #ifdef SPEED_ESTIMATOR_KALMAN

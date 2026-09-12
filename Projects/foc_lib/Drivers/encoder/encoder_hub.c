@@ -7,10 +7,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#include "math.h"
 #include "encoder_hub.h"
-#include "foc_utils.h"
-#include "config.h"
 #include "main.h"
 #include <string.h>
 

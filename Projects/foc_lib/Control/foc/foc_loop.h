@@ -33,7 +33,6 @@ typedef struct {
 typedef struct {
     float output;
     float step;
-    bool  active;
 } Ramp_t;
 
 /* -------- Flagi synchronizacji -------- */

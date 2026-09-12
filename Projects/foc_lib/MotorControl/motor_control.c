@@ -18,6 +18,7 @@
 #include "as5048a.h"
 #include "encoder_hub.h"
 #include "svpwm.h"
+#include "current_sense.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
@@ -83,7 +84,7 @@ static inline void Log_To_CubeMonitor(const Motor_Measurements_t *meas)
     monitor_data.theta_el = meas->theta_el;
     monitor_data.theta_mech = meas->theta_mech;
 
-    monitor_data.speed = meas->omega_mech;
+    monitor_data.speed = meas->omega_mech_rpm;
 
     // Błędy nadrzędnych regulatorów logowane tak jak poprzednio
     monitor_data.position_err = position_err;
@@ -247,7 +248,6 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
 	CurrentSense_Read(&meas->currents);
 
 	// === Odczyt i przetwarzanie próbek kąta z enkodera ===
-
 	EncoderSample_t enc;
 
     static uint32_t encoder_timeout = 0;
@@ -277,21 +277,18 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
             return false;
         }
     }
-
-    // === Odczyt prędkości mechanicznej ===
-    meas->omega_mech = SpeedEstimator_GetOmegaRPM_ISR();
-
-    float omega_rad = meas->omega_mech * (M_TWOPI / 60.0f);
-    
-
-	meas->theta_mech = last_theta_mech;
+    // === Zapis ostatnich wartości kątów, wersja bez ekstrapolacji ===
+    // meas->theta_mech = last_theta_mech;
     // meas->theta_el   = last_theta_el;
 
-    // Ekstrapolacja kąta w przód o T_DELAY
-    const float T_DELAY = 90e-6f; // 125 us - na próbę (zmieniaj 100..150us)
-    meas->theta_mech = normalize_angle(last_theta_mech + omega_rad * T_DELAY);
+    // === Odczyt prędkości mechanicznej ===
+    meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
+    meas->omega_mech_rad_s = SpeedEstimator_GetOmegaRad_s_ISR();
 
-
+	
+    // === Ekstrapolacja kąta w przód o T_DELAY ===
+    const float T_DELAY = 125e-6f; // 125 us - na próbę (zmieniaj 100..150us)
+    meas->theta_mech = normalize_angle(last_theta_mech + meas->omega_mech_rad_s * T_DELAY);
     meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
 
 	// === Odczyt napięcia Vbus ===

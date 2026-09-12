@@ -58,19 +58,19 @@
 extern volatile bool g_cmd_flag;
 
 BoardHandleTypeDef board = {
-  .type = BOARD_DRV8353,
-  .powerstage.pwm_mode = POWERSTAGE_PWM_MODE_3PWM,
-  .htim_pwm = &htim1,
-  .htim_enc = &htim4,
-  .htim_speed = &htim2,
-  .htim_pos = &htim5,
-  .htim_cmd = &htim3,
-  .hadc_currA = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
-  .hadc_currB = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_1},
-  .hadc_VDC = &hadc2, 
-  .hspi_enc = &hspi3,
-  .hspi_drv = &hspi2,
-  .huart_com = &huart3,
+  .type                 = BOARD_DRV8353,
+  .powerstage.pwm_mode  = POWERSTAGE_PWM_MODE_3PWM,
+  .htim_pwm             = &htim1,
+  .htim_enc             = &htim4,
+  .htim_speed           = &htim2,
+  .htim_pos             = &htim5,
+  .htim_cmd             = &htim3,
+  .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
+  .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_1},
+  .hadc_VDC             = &hadc2, 
+  .hspi_enc             = &hspi3,
+  .hspi_drv             = &hspi2,
+  .huart_com            = &huart3,
 };
 
 /* USER CODE END PV */

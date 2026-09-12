@@ -26,7 +26,7 @@
 
 
 #define ENABLE_SERIAL_DEBUGGING
-// #define ENABLE_RAMP
+#define ENABLE_RAMP
 // #define TEST_MODE
 
 /* =========================================================================
@@ -74,7 +74,7 @@
 
 #ifdef DRV8353
     #define PI_KP_ID 0.8f
-    #define PI_KI_ID 5.0f
+    #define PI_KI_ID 3.0f
     #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_IQ 0.5f

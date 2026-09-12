@@ -53,8 +53,12 @@ void Kalman_Predict(KalmanState *s, KalmanParams *p);
 void SpeedEstimator_Init(float dt_sec);
 void SpeedEstimator_Update();
 SpeedEstimate_t SpeedEstimator_Get(void);
+
 float SpeedEstimator_GetOmegaRPM(void);
+float SpeedEstimator_GetOmegaRad_s(void);
+
 float SpeedEstimator_GetOmegaRPM_ISR(void);
+float SpeedEstimator_GetOmegaRad_s_ISR(void);
 
 void  AngleUnwrap_Reset(AngleUnwrap_t *u, float theta_wrapped_rad);
 float AngleUnwrap_Update(AngleUnwrap_t *u, float theta_wrapped_rad);
