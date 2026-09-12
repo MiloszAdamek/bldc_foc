@@ -20,7 +20,7 @@ void VoltageSense_UpdateADCCoefficient(float vdd_voltage) {
     s_adc_to_voltage = VOLTAGE_SENSE_DIV_RATIO * vdd_voltage / (float)ADC_RESOLUTION;
 }
 
-void VoltageSense_ReadVDC(float *voltage) {
+void VoltageSense_ReadVDC(volatile float *voltage) {
     uint32_t adc_value = 0;
 
     HAL_ADC_Start(s_hadc);

@@ -50,6 +50,15 @@ target_include_directories(foc_lib PUBLIC
     Drivers/voltage_sense
     MotorControl
 )
+# Definicja mikrokontrolera wymagana przez nagłówki ST:
+# target_compile_definitions(foc_lib PUBLIC
+#     STM32G474xx
+#     USE_HAL_DRIVER
+# )
+
+# target_compile_options(foc_lib PRIVATE
+#     -O3
+# )
 
 target_link_libraries(foc_lib PUBLIC
     stm32cubemx

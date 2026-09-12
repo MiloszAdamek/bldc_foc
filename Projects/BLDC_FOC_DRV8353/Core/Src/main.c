@@ -20,6 +20,7 @@
 #include "main.h"
 #include "adc.h"
 #include "dma.h"
+#include "fdcan.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -36,6 +37,7 @@
 #include "drv8353.h"
 #include "powerstage.h"
 #include "voltage_sense.h"
+// #include "can_interface.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +58,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+extern volatile bool g_cmd_flag;
+
 BoardHandleTypeDef board = {
   .type = BOARD_DRV8353,
   .powerstage.pwm_mode = POWERSTAGE_PWM_MODE_3PWM,
@@ -71,6 +76,7 @@ BoardHandleTypeDef board = {
   .hspi_drv = &hspi2,
   .huart_com = &huart3,
 };
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -150,13 +156,14 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM5_Init();
   MX_ADC2_Init();
+  MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
 
   // Controller initialization BEGIN
 
   Board_Init(&board);
 
-  // FOC_Init(&board);
+  // CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID);
 
   Commander_Init(&board);
 
@@ -166,11 +173,6 @@ int main(void)
 
   // Tests BEGIN
 
-  float voltage_dc = 0.0f;
-  // HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_SET);
-  // AS5048_Init(&hspi3);
-  // AS5048_GetErrorDetails();
-
   // Tests END
   
   /* USER CODE END 2 */
@@ -179,21 +181,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // HAL_Delay(1000);
-    // printf("Kąt mechaniczny: %.2f deg\n", AS5048_GetAngleDeg());
-
-    HAL_Delay(10000);
-    VoltageSense_ReadVDC(&voltage_dc);
-    printf("Napięcie DC: %.3f V\n", voltage_dc);
-    // Board_CheckFaults(&drv_board);
-    // Board_StartMotor(&drv_board);
-    // HAL_Delay(5000);
-    // Board_StopMotor(&drv_board);
-
-    // Motor_Motion_Test();
-
-    // DRV8353_GetFaults(&g_drv, &g_drv.faults);
-    // DRV8353_PrintFaults(&g_drv.faults);
+    if (g_cmd_flag) {
+      g_cmd_flag = false;
+      Commander_Process();
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

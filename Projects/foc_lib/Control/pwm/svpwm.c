@@ -26,6 +26,12 @@ void SVPWM_Init(TIM_HandleTypeDef *htim)
     svpwm_htim = htim;
 }
 
+static inline float clamp01(float x){
+    if (x < 0.0f) return 0.0f;
+    if (x > 1.0f) return 1.0f;
+    return x;
+}
+
 void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,
                          float *dc_a, float *dc_b, float *dc_c)
 {
@@ -57,6 +63,18 @@ void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,
     float k = (M_SQRT3 * PWM_PERIOD_SEC) / VOLTAGE_SUPPLY;
     float T1 = Uref * LUT_Sin(_PI_3 - angle_in_sector) * k;
     float T2 = Uref * LUT_Sin(angle_in_sector) * k;
+
+    /* zabezpieczenie numeryczne przed ujemnym T0 */
+    // float sum = T1 + T2;
+    // if (sum > PWM_PERIOD_SEC) {
+    //     float s = PWM_PERIOD_SEC / sum;
+    //     T1 *= s;
+    //     T2 *= s;
+    //     sum = PWM_PERIOD_SEC;
+    // }
+
+    // float T0 = PWM_PERIOD_SEC - sum;   // już nie ujemne
+
     float T0 = PWM_PERIOD_SEC - T1 - T2;
 
     switch (sector) {
@@ -76,13 +94,13 @@ void SVPWM_GetDutyCycles(float Ualpha, float Ubeta,
     //	aby uzyskać wartość do wpisania do rejestru compare timera.
 
 #ifdef CALIB_SVPWM
-		*dc_a = Ta / PWM_PERIOD_SEC;
-		*dc_b = Tc / PWM_PERIOD_SEC;
-		*dc_c = Tb / PWM_PERIOD_SEC;
+    *dc_a = Ta / PWM_PERIOD_SEC;
+    *dc_b = Tc / PWM_PERIOD_SEC;
+    *dc_c = Tb / PWM_PERIOD_SEC;
 #else
-        *dc_a = Ta / PWM_PERIOD_SEC;
-        *dc_b = Tb / PWM_PERIOD_SEC;
-        *dc_c = Tc / PWM_PERIOD_SEC;
+    *dc_a = clamp01(Ta / PWM_PERIOD_SEC);
+    *dc_b = clamp01(Tb / PWM_PERIOD_SEC);
+    *dc_c = clamp01(Tc / PWM_PERIOD_SEC);
 #endif
 
 }
@@ -104,3 +122,34 @@ void SVPWM_Update(float Ualpha, float Ubeta)
 	__HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, ccr2);
 	__HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, ccr3);
 }
+
+// void SVPWM_Update(float Ualpha, float Ubeta)
+// {
+//     // Ualpha/Ubeta w VOLTACH (tak jak u Ciebie)
+//     const float Vdc = VOLTAGE_SUPPLY; // docelowo: mierzony Vbus!
+
+//     // fazy (line-neutral)
+//     float Va = Ualpha;
+//     float Vb = -0.5f * Ualpha + 0.8660254f * Ubeta;
+//     float Vc = -0.5f * Ualpha - 0.8660254f * Ubeta;
+
+//     float Vmax = fmaxf(Va, fmaxf(Vb, Vc));
+//     float Vmin = fminf(Va, fminf(Vb, Vc));
+//     float Voff = 0.5f * (Vmax + Vmin);
+
+//     float da = 0.5f + (Va - Voff) / Vdc;
+//     float db = 0.5f + (Vb - Voff) / Vdc;
+//     float dc = 0.5f + (Vc - Voff) / Vdc;
+
+//     da = clamp01(da);
+//     db = clamp01(db);
+//     dc = clamp01(dc);
+
+//     uint32_t ccr1 = (uint32_t)(da * PWM_PERIOD_ARR);
+//     uint32_t ccr2 = (uint32_t)(db * PWM_PERIOD_ARR);
+//     uint32_t ccr3 = (uint32_t)(dc * PWM_PERIOD_ARR);
+
+//     __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_1, ccr1);
+//     __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_2, ccr2);
+//     __HAL_TIM_SET_COMPARE(svpwm_htim, TIM_CHANNEL_3, ccr3);
+// }

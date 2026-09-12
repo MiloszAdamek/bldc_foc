@@ -20,17 +20,15 @@ typedef enum {
     STATE_FAULT         	// Błąd krytyczny
 } MotorState_t;
 
-extern BoardHandleTypeDef board;
-
-extern volatile MotorState_t g_motor_state;
-
 void MotorControl_Init(BoardHandleTypeDef* p_board);
 
 void MotorControl_SetPosition(float position);
 
 void MotorControl_SetSpeed(float rpm);
 
-void MotorControl_SetTorque(float iq);
+void MotorControl_SetTorque_Iq(float iq);
+
+void MotorControl_SetTorque_mNm(float torque_mNm);
 
 float MotorControl_GetActualSpeed();
 
@@ -48,5 +46,6 @@ void MotorControl_OnEncoderSampleISR(void);
 void MotorControl_OnSpeedISR(void);
 void MotorControl_OnPositionISR(void);
 void MotorControl_OnCommandISR(void);
+void MotorControl_SlowLoopMeasurementsISR(void);
 
 #endif /* INC_MOTOR_CONTROL_H_ */

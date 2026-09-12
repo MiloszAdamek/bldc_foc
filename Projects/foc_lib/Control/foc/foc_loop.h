@@ -69,8 +69,12 @@ typedef struct {
 
     PI_Controller  pi_id;
     PI_Controller  pi_iq;
-    dq_ref_t       i_ref;
+    // dq_ref_t       i_ref;
     abc_current_t  currents;
+
+    float id_setpoint;
+    float iq_target_raw; // Surowa wartość Iq zadana z zewnątrz (np. z CLI)
+    float iq_setpoint;   // Wartość Iq po rampie (jeśli włączona)
 
     float           v_bus;
     float           v_alpha, v_beta;
@@ -84,16 +88,10 @@ typedef struct {
     FocStats_t	   stats;
 } PI_FOC_State_t;
 
-extern PI_FOC_State_t s_foc;
-
-// Flagi
-extern volatile bool currents_ready;
-
 ControlAlgorithm_t PI_FOC_Create(void);
 
 void FOC_Init(void *ctx);
-// void FOC_RunLoop(void); // Główna pętla FOC
-// void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out);
+
 void FOC_Stop(void *ctx); // Zatrzymanie PWM, wyłączenie driverów, zatrzymanie ADC
 void FOC_Start(void *ctx);
 
@@ -105,7 +103,5 @@ void FOC_SetTorqueTarget(float torque_mNm);
 
 bool FOC_AlignSensor(void); // Kalibracja enkodera
 bool FOC_IsSensorAligned(void);
-
-void Motor_Motion_Test(void);
 
 #endif /* INC_FOC_LOOP_H_ */

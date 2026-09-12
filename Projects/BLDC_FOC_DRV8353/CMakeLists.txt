@@ -1,17 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
-#
-# This file is generated only once,
-# and is not re-generated if converter is called multiple times.
-#
-# User is free to modify the file as much as necessary
-#
-
 # Setup compiler settings
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
-
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -49,7 +41,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    Core/Inc
 )
 
 # Add project symbols (macros)
@@ -60,18 +52,47 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 # Remove wrong libob.a library dependency when using cpp files
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
+# Dodanie foc_lib przez utworzone dowiązanie Junction
 add_subdirectory(
     ../foc_lib
     ${CMAKE_BINARY_DIR}/foc_lib
 )
+
+# Kluczowe dla clangd i kompilacji: przekazanie nagłówków projektu i HAL do foc_lib
+target_include_directories(foc_lib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc
+)
+
+target_link_libraries(foc_lib PUBLIC
+    stm32cubemx
+)
+
+# add_subdirectory(Thirdparty/stm32_can_lib)
+# target_compile_definitions(stm32_can_lib PUBLIC
+#     DEVICE_IS_SLAVE
+#     SLAVE_NODE_ID=0x02
+# )
+
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     foc_lib
+    # stm32_can_lib
     m
-    # Add user defined libraries
 )
 
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
     -u _printf_float
 )
+
+# target_compile_options(${PROJECT_NAME} PRIVATE
+#     -O3
+# )
+
+# Automatyczne kopiowanie bazy kompilacji dla clangd do głównego katalogu
+# add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#         ${CMAKE_BINARY_DIR}/compile_commands.json
+#         ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+#     COMMENT "Kopiowanie compile_commands.json do korzenia projektu"
+# )

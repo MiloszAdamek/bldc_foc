@@ -23,7 +23,7 @@ volatile float speed_ramp_out = 0.0f;
 
 static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
 
-void SpeedController_Update()
+void SpeedController_Update(Motor_References_t *ref)
 {
     if (speed_mode == SPEED_MODE_RAMP) {
         SpeedController_LinearRamp();
@@ -37,7 +37,9 @@ void SpeedController_Update()
     float error = target - estimated_speed_rpm;
 
     float iq_ref = pi_control(&pi_speed, error);
-    FOC_SetIqTarget(iq_ref);
+
+	// Przepisanie wartości zadanej prądu Iq do struktury referencji dla algorytmu sterowania
+	ref->torque_iq_ref = iq_ref;
 }
 
 void SpeedController_SetTarget_Ramp(float new_target_rpm)
@@ -56,7 +58,7 @@ void SpeedController_SetTarget(float new_target_rpm)
     speed_ramp_out = new_target_rpm;
 }
 
-// Dla regulatora pozycji
+// Ref z regulatora pozycji
 void SpeedController_SetReference(float rpm)
 {
     speed_ref_rpm = rpm;

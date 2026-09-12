@@ -11,13 +11,12 @@
 #include "lut_sincos.h"
 #include "foc_utils.h"
 #include "config.h"
-#include "svpwm.h"
 #include <stdio.h>
 #include <math.h>
 
 extern BoardHandleTypeDef board;
 
-MotorCalibration_t g_motor_calib = {
+Motor_Calibration_t g_motor_calib = {
     .direction = 1,
     .zero_electric_angle = 0.0f,
     .aligned = false
@@ -148,3 +147,22 @@ float MotorAlignment_GetElectricalAngle(float mech)
 {
     return normalize_angle((float)(g_motor_calib.direction * MOTOR_POLE_PAIRS) * mech - g_motor_calib.zero_electric_angle);
 }
+
+// void Motor_Motion_Test(void)
+// {
+//     static uint32_t t0 = 0;
+
+//     float Uq = 0.6f * (VOLTAGE_SUPPLY / M_SQRT3);
+//     float Ud = 0.0f;
+
+//     uint32_t t_ms = HAL_GetTick() - t0;   // czas od startu w ms
+//     float t = t_ms * 0.001f;              // sekundy
+
+//     float freq = 20.0f;                   // 20 Hz elektryczne
+//     float angle = 2.0f * M_PI * freq * t;
+
+//     // zawijanie kąta (opcjonalne)
+//     angle = fmodf(angle, 2.0f * M_PI);
+
+//     FOC_SetPhaseVoltage(Uq, Ud, angle);
+// }

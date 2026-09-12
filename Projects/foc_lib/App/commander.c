@@ -83,7 +83,7 @@ static void process_command(char* cmd) {
 		case 't': {
 			float torque = atof(args);
 			printf("CMD: Set Torque -> %.2f A\r\n", torque);
-			MotorControl_SetTorque(torque);
+			MotorControl_SetTorque_Iq(torque);
 			break;
 		}
 		case 'R':

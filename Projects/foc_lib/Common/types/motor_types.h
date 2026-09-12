@@ -37,6 +37,8 @@ typedef struct {
     float torque_iq_ref;
     float speed_ref;
     float position_ref;
+
+    bool iq_ramp_enabled; // Flaga włączenia rampy dla prądu Iq (tryb regulacji momentu)
 } Motor_References_t;
 
 // Wyjście z algorytmu (wypełnienie PWM)
@@ -50,7 +52,13 @@ typedef struct {
     int   direction;          // 1=CW, -1=CCW
     float zero_electric_angle;
     bool  aligned;
-} MotorCalibration_t;
+} Motor_Calibration_t;
+
+typedef struct {
+    uint32_t loop_ok;
+    uint32_t loop_err;
+    uint32_t currents_err;
+} Motor_Stats_t;
 
 typedef struct {
     ADC_HandleTypeDef *hadc;

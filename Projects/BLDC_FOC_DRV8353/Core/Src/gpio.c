@@ -52,16 +52,26 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(Encoder_Flag_GPIO_Port, Encoder_Flag_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DRV8353_CS_GPIO_Port, DRV8353_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, AS5048A_CS_Pin|ADC_Conv_Flag_Pin|FOC_Update_Flag_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI3_CS_GPIO_Port, SPI3_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, DRV8353_ENABLE_Pin|LED2_Pin|LED1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : Encoder_Flag_Pin */
+  GPIO_InitStruct.Pin = Encoder_Flag_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Encoder_Flag_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : DRV8353_CS_Pin DRV8353_ENABLE_Pin LED2_Pin LED1_Pin */
   GPIO_InitStruct.Pin = DRV8353_CS_Pin|DRV8353_ENABLE_Pin|LED2_Pin|LED1_Pin;
@@ -70,12 +80,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : AS5048A_CS_Pin */
-  GPIO_InitStruct.Pin = AS5048A_CS_Pin;
+  /*Configure GPIO pins : AS5048A_CS_Pin ADC_Conv_Flag_Pin FOC_Update_Flag_Pin */
+  GPIO_InitStruct.Pin = AS5048A_CS_Pin|ADC_Conv_Flag_Pin|FOC_Update_Flag_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(AS5048A_CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI3_CS_Pin */
   GPIO_InitStruct.Pin = SPI3_CS_Pin;

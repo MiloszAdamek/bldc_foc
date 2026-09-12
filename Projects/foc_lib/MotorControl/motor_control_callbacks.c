@@ -50,6 +50,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	else if (htim->Instance == board.htim_cmd->Instance)
 	{
         MotorControl_OnCommandISR();
+		MotorControl_SlowLoopMeasurementsISR(); 
 	}
 }
 
@@ -57,8 +58,9 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
     if (hadc->Instance == board.hadc_currA.hadc->Instance) // 20 kHz
     {
-        if (__HAL_TIM_IS_TIM_COUNTING_DOWN(board.htim_pwm)){ // 10 kHz
-            MotorControl_OnCurrentSampleISR();
-        }
+		MotorControl_OnCurrentSampleISR();
+        // if (__HAL_TIM_IS_TIM_COUNTING_DOWN(board.htim_pwm)){ // 10 kHz
+        //     MotorControl_OnCurrentSampleISR();
+        // }
     }
 }

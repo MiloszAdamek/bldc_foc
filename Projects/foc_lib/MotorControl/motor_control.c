@@ -8,11 +8,11 @@
 #include "motor_control.h"
 #include "motor_algorithm.h"
 #include "motor_alignment.h"
+#include "motor_types.h"
 #include "config.h"
 #include "commander.h"
 #include "board.h"
 #include "foc_loop.h"
-#include "motor_types.h"
 #include "speed_control.h"
 #include "speed_estimator.h"
 #include "position_control.h"
@@ -20,32 +20,38 @@
 #include "encoder_hub.h"
 #include "gpio.h"
 #include "svpwm.h"
+#include "voltage_sense.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
+volatile bool g_cmd_flag = false;
+
 extern BoardHandleTypeDef board;
 
-Motor_Measurements_t g_meas;
-Motor_References_t g_ref;
-Motor_Output_t g_out;
-Motor_Telemetry_t g_telem;
+volatile Motor_Measurements_t g_meas; // To do zastąpienia getterami
+volatile Motor_References_t g_ref; // Volatile, bo może być modyfikowane w ISR Commander_Process() i w ISR MotorControl_SlowLoopMeasurementsISR()
+volatile Motor_Telemetry_t g_telem; // Zapisywane w ISR MotorControl_OnCurrentSampleISR() i odczytywane w ISR MotorControl_SlowLoopMeasurementsISR()
+
+Motor_Calibration_t g_calibration; // Ustawiane tylko raz na starcie, potem odczyt
+
+volatile Motor_Stats_t g_stats; // Volatile, bo może być modyfikowane w ISR
 
 static ControlAlgorithm_t active_algorithm;
 
-volatile MotorState_t g_motor_state = STATE_IDLE;
+MotorState_t g_motor_state = STATE_IDLE;
 
 volatile uint32_t spi_ready_err = 0;
 volatile uint32_t spi_ready_ok = 0;
-
-// static float target_position = 0.0f;
-// static float target_speed_rpm = 0.0f;
-// static float target_torque_iq = 0.0f;
 
 volatile bool speed_loop_enabled = false;
 volatile bool position_loop_enabled = false;
 
 // Debug - cubemonitor
 volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
+
+static inline void Log_To_CubeMonitor(const Motor_Measurements_t *meas);
+static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas);
+static inline void MotorControl_BuildReferences(Motor_References_t *ref);
 
 void MotorControl_Init(BoardHandleTypeDef* p_board)
 {
@@ -66,21 +72,21 @@ void MotorControl_Init(BoardHandleTypeDef* p_board)
 	MotorControl_Start();
 }
 
-static void Log_To_CubeMonitor(void)
+static inline void Log_To_CubeMonitor(const Motor_Measurements_t *meas)
 {
-    monitor_data.current_a = g_meas.currents.a;
-    monitor_data.current_b = g_meas.currents.b;
-    monitor_data.current_c = g_meas.currents.c;
+    monitor_data.current_a = meas->currents.a;
+    monitor_data.current_b = meas->currents.b;
+    monitor_data.current_c = meas->currents.c;
 
     // Korzystamy ze znormalizowanej struktury telemetrycznej algorytmu (FOC/MPC)
     monitor_data.id = g_telem.id_meas;
     monitor_data.iq = g_telem.iq_meas;
     // monitor_data.iq_ref = g_telem.iq_ref;
     
-    monitor_data.theta_el = g_meas.theta_el;
-    monitor_data.theta_mech = g_meas.theta_mech;
+    monitor_data.theta_el = meas->theta_el;
+    monitor_data.theta_mech = meas->theta_mech;
 
-    monitor_data.speed = g_meas.omega_mech;
+    monitor_data.speed = meas->omega_mech;
 
     // Błędy nadrzędnych regulatorów logowane tak jak poprzednio
     monitor_data.position_err = position_err;
@@ -106,7 +112,7 @@ void MotorControl_Start(void)
 	if (active_algorithm.Start) {
         active_algorithm.Start(active_algorithm.ctx);
     }
-	MotorControl_SetTorque(0.15f);
+	MotorControl_SetTorque_Iq(0.15f);
 }
 
 void MotorControl_Stop(void)
@@ -129,7 +135,8 @@ void MotorControl_SetPosition(float position)
     speed_loop_enabled = true;
     position_loop_enabled = true;
 
-    // target_position = position;
+	// WYŁĄCZ rampę momentu (pracuje regulator pozycji i prędkości)
+    g_ref.iq_ramp_enabled = false;
 
 	g_ref.position_ref = position;
     PositionController_Reset();
@@ -147,7 +154,8 @@ void MotorControl_SetSpeed(float rpm)
     speed_loop_enabled = true;
     position_loop_enabled = false;
 
-    // target_speed_rpm = rpm;
+	// WYŁĄCZ rampę momentu (pracuje tylko rampa regulatora prędkości)
+    g_ref.iq_ramp_enabled = false;
 
 	g_ref.speed_ref = rpm;
     SpeedController_Reset();
@@ -156,7 +164,7 @@ void MotorControl_SetSpeed(float rpm)
     g_motor_state = STATE_RUN;
 }
 
-void MotorControl_SetTorque(float iq)
+void MotorControl_SetTorque_Iq(float iq)
 {
 	if (g_motor_state == STATE_IDLE) {
 	    if (active_algorithm.Start) {
@@ -166,15 +174,21 @@ void MotorControl_SetTorque(float iq)
     speed_loop_enabled = false;
     position_loop_enabled = false;
 
-    // target_torque_iq = iq;
-	// FOC_SetIqTarget_Ramp(iq); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
+	// WŁĄCZ rampę momentu (sterujemy prądem bezpośrednio)
+    g_ref.iq_ramp_enabled = true;
 
 	g_ref.torque_iq_ref = iq; // Algorytm sam zajmie się rampą wewnątrz swojej funkcji Update()
-
     g_motor_state = STATE_RUN;
 }
 
-void MotorControl_Reboot()
+void MotorControl_SetTorque_mNm(float torque_mNm)
+{
+    // Iq = (T_mNm / 1000) / Kt
+    float target_iq = (torque_mNm / 1000.0f) / MOTOR_TORQUE_CONSTANT;
+	MotorControl_SetTorque_Iq(target_iq);
+}
+
+void MotorControl_Reboot(void)
 {
 	HAL_NVIC_SystemReset();
 }
@@ -184,50 +198,43 @@ void MotorControl_SetState(MotorState_t new_state)
 	g_motor_state = new_state;
 }
 
-void MotorControl_OnCurrentSampleISR()
+void MotorControl_OnCurrentSampleISR(void)
 {	
+    Motor_Measurements_t meas;
+    Motor_References_t ref;
+    Motor_Output_t out;
 
-	// ==== Odczyt i przetwarzanie próbek prądów z ADC ===
+	if (!MotorControl_BuildMeasurements(&meas))
+	{
+		return;
+	}
 
-	CurrentSense_Process_ISR();
-	CurrentSense_CalculatePhases();
-	CurrentSense_Read(&g_meas.currents);
-
-	// === Odczyt i przetwarzanie próbek kąta z enkodera ===
-
-	EncoderSample_t enc;
-    static uint32_t encoder_timeout = 0;
-    
-    if(EncoderHub_ConsumeSample(&enc)){
-        g_meas.theta_mech = enc.theta_mech;
-        g_meas.theta_el = MotorAlignment_GetElectricalAngle(g_meas.theta_mech);
-        
-        encoder_timeout = 0;
-        
-        EncoderHub_PublishAngle(g_meas.theta_mech, g_meas.theta_el);
-    } else {
-        encoder_timeout++;
-        
-        if (encoder_timeout > ENCODER_TIMEOUT_LIMIT){
-            MotorControl_Stop(); // Awaryjne zatrzymanie całego sterowania
-            g_motor_state = STATE_FAULT;
-            return;
-        }
-    }
+	MotorControl_BuildReferences(&ref);
 
 	// === Pętla wybranego algorytmu sterowania ===
-
-	if (active_algorithm.Update) {
-        active_algorithm.Update(active_algorithm.ctx, &g_meas, &g_ref, &g_out);
+    if (active_algorithm.Update)
+    {
+        active_algorithm.Update(
+            active_algorithm.ctx,
+            &meas,
+            &ref,
+            &out
+        );
     }
+
+	// === Wysterowanie wyjść PWM ===
 
 	// === Aktualizacja telemetrii ====
 
-	if (active_algorithm.GetTelemetry) {
-        active_algorithm.GetTelemetry(active_algorithm.ctx, &g_telem);
+    if (active_algorithm.GetTelemetry)
+    {
+        active_algorithm.GetTelemetry(
+            active_algorithm.ctx,
+            &g_telem
+        );
     }
 
-	Log_To_CubeMonitor();
+	// Log_To_CubeMonitor();
 
 	// === Sygnalizacja wykonania przerwania - obserwacja oscyloskopem ===
 
@@ -235,7 +242,76 @@ void MotorControl_OnCurrentSampleISR()
 	// ADC_Conv_Flag_GPIO_Port->BSRR = (uint32_t)ADC_Conv_Flag_Pin << 16; // GPIO_PIN_RESET
 }
 
-void MotorControl_OnEncoderSampleISR()
+static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
+{
+	// ==== Odczyt i przetwarzanie próbek prądów z ADC ===
+	CurrentSense_Process_ISR();
+	CurrentSense_CalculatePhases();
+	CurrentSense_Read(&meas->currents);
+
+	// === Odczyt i przetwarzanie próbek kąta z enkodera ===
+
+	EncoderSample_t enc;
+
+    static uint32_t encoder_timeout = 0;
+    static float last_theta_mech = 0.0f;
+    static float last_theta_el = 0.0f;
+
+    if (EncoderHub_ConsumeSample(&enc))
+    {
+        last_theta_mech = enc.theta_mech;
+        last_theta_el = MotorAlignment_GetElectricalAngle(last_theta_mech);
+
+        encoder_timeout = 0;
+
+        EncoderHub_PublishAngle(
+            last_theta_mech,
+            last_theta_el
+        );
+    }
+    else
+    {
+        encoder_timeout++;
+
+        if (encoder_timeout > ENCODER_TIMEOUT_LIMIT)
+        {
+            MotorControl_Stop();
+            g_motor_state = STATE_FAULT;
+            return false;
+        }
+    }
+
+
+    // === Odczyt prędkości mechanicznej ===
+    meas->omega_mech = SpeedEstimator_GetOmegaRPM_ISR();
+
+    float omega_rad = meas->omega_mech * (M_TWOPI / 60.0f);
+    const float T_DELAY = 50e-6f; // 125 us - na próbę (zmieniaj 100..150us)
+
+	meas->theta_mech = last_theta_mech;
+    // meas->theta_el   = last_theta_el;
+
+    if (fabsf(meas->omega_mech) > 30.0f) {          // np. >30 RPM
+        meas->theta_mech = normalize_angle(last_theta_mech - omega_rad * T_DELAY);
+    }
+
+    meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
+
+	// === Odczyt napięcia Vbus ===
+	// meas->v_bus = g_meas.v_bus; // Tu powinny być gettery
+
+	return true;
+}
+
+static inline void MotorControl_BuildReferences(Motor_References_t *ref)
+{
+    ref->torque_iq_ref   = g_ref.torque_iq_ref;
+    ref->speed_ref       = g_ref.speed_ref;
+    ref->position_ref    = g_ref.position_ref;
+    ref->iq_ramp_enabled = g_ref.iq_ramp_enabled;
+}
+
+void MotorControl_OnEncoderSampleISR(void)
 {
 	if (spi_ready) {
 		// SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET
@@ -244,23 +320,33 @@ void MotorControl_OnEncoderSampleISR()
 	}
 }
 
-void MotorControl_OnSpeedISR()
+void MotorControl_OnSpeedISR(void)
 {
-	SpeedEstimator_Update();          /* Prediction or corection */
+	SpeedEstimator_Update();
 	if (speed_loop_enabled){
-		SpeedController_Update();
+		SpeedController_Update(&g_ref);
 	}
 }
 
-void MotorControl_OnPositionISR()
+void MotorControl_OnPositionISR(void)
 {
 	if (position_loop_enabled){
 		PositionController_Update();
 	}
 }
 
-void MotorControl_OnCommandISR()
+void MotorControl_OnCommandISR(void)
 {
-	Commander_Process();
+    g_cmd_flag = true;
+    // W przerwaniu tylko ustawienie flagi,
+    // a przetwarzanie komend w while(1)
+
+	// Commander_Process();
 }
 
+void MotorControl_SlowLoopMeasurementsISR(void)
+{
+	// VoltageSense_ReadVDC(&g_meas.v_bus);
+
+	// Obsługa telemetrii i heatbeat dla CAN
+}

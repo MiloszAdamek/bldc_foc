@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "BLDC_FOC_DRV8353"
+		},
+		{
+			"path": "foc_lib"
+		}
+	],
+	"settings": {}
+}

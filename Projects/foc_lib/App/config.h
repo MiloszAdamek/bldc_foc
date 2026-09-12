@@ -24,13 +24,13 @@
 
 /* CURRENT SENSE MODE */ 
 
-// #define CURRENT_SENSE_DOUBLE_SHUNT
-#define CURRENT_SENSE_TRIPLE_SHUNT
+#define CURRENT_SENSE_DOUBLE_SHUNT
+// #define CURRENT_SENSE_TRIPLE_SHUNT
 
 
 #define ENABLE_SERIAL_DEBUGGING
-//#define ENABLE_RAMP
-//#define TEST_MODE
+// #define ENABLE_RAMP
+// #define TEST_MODE
 
 /* =========================================================================
  * ----------------   PARAMETRY OGÓLNE SYSTEMU   ----------------------------

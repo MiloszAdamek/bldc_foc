@@ -63,8 +63,8 @@ void Error_Handler(void);
 #define CurrentA_GPIO_Port GPIOA
 #define CurrentB_Pin GPIO_PIN_1
 #define CurrentB_GPIO_Port GPIOA
-#define CurrentC_Pin GPIO_PIN_2
-#define CurrentC_GPIO_Port GPIOA
+#define Encoder_Flag_Pin GPIO_PIN_3
+#define Encoder_Flag_GPIO_Port GPIOA
 #define DRV8353_nFAULT_Pin GPIO_PIN_6
 #define DRV8353_nFAULT_GPIO_Port GPIOA
 #define IN_L_A_Pin GPIO_PIN_7
@@ -77,6 +77,10 @@ void Error_Handler(void);
 #define DRV8353_CS_GPIO_Port GPIOB
 #define AS5048A_CS_Pin GPIO_PIN_6
 #define AS5048A_CS_GPIO_Port GPIOC
+#define ADC_Conv_Flag_Pin GPIO_PIN_7
+#define ADC_Conv_Flag_GPIO_Port GPIOC
+#define FOC_Update_Flag_Pin GPIO_PIN_8
+#define FOC_Update_Flag_GPIO_Port GPIOC
 #define IN_H_A_Pin GPIO_PIN_8
 #define IN_H_A_GPIO_Port GPIOA
 #define IN_H_B_Pin GPIO_PIN_9

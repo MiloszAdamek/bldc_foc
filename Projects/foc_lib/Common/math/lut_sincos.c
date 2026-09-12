@@ -268,7 +268,7 @@ const float sin_lut[LUT_SIZE] __attribute__((section(".ccmram"))) = {
 		-0.0245412285,-0.0184067299,-0.0122715383,-0.0061358846
 };
 
-float LUT_Sin(float angle)
+float inline LUT_Sin(float angle)
 {
     while (angle >= M_TWOPI) angle -= M_TWOPI;
     while (angle < 0.0f)      angle += M_TWOPI;
@@ -279,7 +279,7 @@ float LUT_Sin(float angle)
     return sin_lut[idx];
 }
 
-float LUT_Cos(float angle)
+float inline LUT_Cos(float angle)
 {
     angle += 1.57079632679f; // + pi/2
     if (angle >= M_TWOPI) angle -= M_TWOPI;
@@ -290,7 +290,7 @@ float LUT_Cos(float angle)
     return sin_lut[idx];
 }
 
-void LUT_SinCos(float angle, float *s, float *c)
+void inline LUT_SinCos(float angle, float *s, float *c)
 {
     while (angle >= M_TWOPI) angle -= M_TWOPI;
     while (angle < 0.0f)      angle += M_TWOPI;
