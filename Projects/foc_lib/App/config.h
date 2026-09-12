@@ -126,6 +126,8 @@ typedef struct {
     float iq_ref;
     float id;
     float id_ref;
+    float vd_out;
+    float vq_out;
     float speed;
     float speed_ref;
     float theta_el;

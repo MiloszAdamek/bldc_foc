@@ -23,8 +23,6 @@ static PI_FOC_State_t s_foc;
 extern Motor_Calibration_t g_calibration;
 extern Motor_Stats_t g_stats;
 
-extern volatile Motor_Measurements_t g_meas;
-
 // RAMPA
 #define IQ_RAMP_RATE_A_S 0.1f // A/s
 
@@ -39,7 +37,7 @@ extern volatile bool spi_ready;
 static void PI_Reset(PI_Controller *pi);
 static void Flags_Reset(FocFlags_t *flags);
 static void FOC_StatsReset(void);
-static void FOC_GetTelemetry(const void *ctx, Motor_Telemetry_t *telem);
+static void FOC_GetTelemetry(const void *ctx, volatile Motor_Telemetry_t *telem);
 static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out);
 
 ControlAlgorithm_t PI_FOC_Create(void)
@@ -174,7 +172,7 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     SVPWM_Update(state->v_alpha, state->v_beta);
 }
 
-static void FOC_GetTelemetry(const void *ctx, Motor_Telemetry_t *telem)
+static void FOC_GetTelemetry(const void *ctx, volatile Motor_Telemetry_t *telem)
 {
     const PI_FOC_State_t *state = (const PI_FOC_State_t*)ctx;
     
@@ -188,7 +186,6 @@ static void FOC_GetTelemetry(const void *ctx, Motor_Telemetry_t *telem)
 }
 
 #ifdef ENABLE_RAMP
-
 static void FOC_LinearRamp(PI_FOC_State_t *state, const Motor_References_t *ref)
 {
     // Jeśli rampa jest wyłączona to ustawiamy wyjście rampy bezpośrednio na wartość referencyjną

@@ -19,6 +19,7 @@
 #include "encoder_hub.h"
 #include "svpwm.h"
 #include "current_sense.h"
+#include "voltage_sense.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
@@ -26,7 +27,6 @@ volatile bool g_cmd_flag = false; // Flaga ustawiona w przerwaniu TIM, komenda p
 
 extern BoardHandleTypeDef board;
 
-volatile Motor_Measurements_t g_meas; // To do zastąpienia getterami
 volatile Motor_References_t g_ref; // Volatile, bo może być modyfikowane w ISR Commander_Process() i w ISR MotorControl_SlowLoopMeasurementsISR()
 volatile Motor_Telemetry_t g_telem; // Zapisywane w ISR MotorControl_OnCurrentSampleISR() i odczytywane w ISR MotorControl_SlowLoopMeasurementsISR()
 
@@ -47,7 +47,7 @@ volatile bool position_loop_enabled = false;
 // Debug - cubemonitor
 volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
 
-static inline void Log_To_CubeMonitor(const Motor_Measurements_t *meas);
+static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas);
 static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas);
 static inline void MotorControl_BuildReferences(Motor_References_t *ref);
 
@@ -70,26 +70,26 @@ void MotorControl_Init(BoardHandleTypeDef* p_board)
 	MotorControl_Start();
 }
 
-static inline void Log_To_CubeMonitor(const Motor_Measurements_t *meas)
+static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas)
 {
-    monitor_data.current_a = meas->currents.a;
-    monitor_data.current_b = meas->currents.b;
-    monitor_data.current_c = meas->currents.c;
-
-    // Korzystamy ze znormalizowanej struktury telemetrycznej algorytmu (FOC/MPC)
-    monitor_data.id = g_telem.id_meas;
-    monitor_data.iq = g_telem.iq_meas;
-    // monitor_data.iq_ref = g_telem.iq_ref;
-    
-    monitor_data.theta_el = meas->theta_el;
+    monitor_data.current_a  = meas->currents.a;
+    monitor_data.current_b  = meas->currents.b;
+    monitor_data.current_c  = meas->currents.c;
+    monitor_data.theta_el   = meas->theta_el;
     monitor_data.theta_mech = meas->theta_mech;
+    monitor_data.speed      = meas->omega_mech_rpm;
 
-    monitor_data.speed = meas->omega_mech_rpm;
+    monitor_data.id         = g_telem.id_meas;
+    monitor_data.iq         = g_telem.iq_meas;
+    monitor_data.iq_ref     = g_telem.iq_ref;
+    monitor_data.id_ref     = g_telem.id_ref;
+    monitor_data.vd_out     = g_telem.vd_out;
+    monitor_data.vq_out     = g_telem.vq_out;
 
     // Błędy nadrzędnych regulatorów logowane tak jak poprzednio
-    monitor_data.position_err = position_err;
-    monitor_data.position_ref = position_ref;
-    monitor_data.position_reg_out = position_reg_out;
+    // monitor_data.position_err = position_err;
+    // monitor_data.position_ref = position_ref;
+    // monitor_data.position_reg_out = position_reg_out;
 }
 
 void MotorControl_Start(void)
@@ -232,7 +232,7 @@ void MotorControl_OnCurrentSampleISR(void)
         );
     }
 
-	// Log_To_CubeMonitor();
+	MotorControl_LogCubeMonitor(&meas);
 
 	// === Sygnalizacja wykonania przerwania - obserwacja oscyloskopem ===
 
@@ -277,6 +277,7 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
             return false;
         }
     }
+    
     // === Zapis ostatnich wartości kątów, wersja bez ekstrapolacji ===
     // meas->theta_mech = last_theta_mech;
     // meas->theta_el   = last_theta_el;
@@ -285,14 +286,14 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
     meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
     meas->omega_mech_rad_s = SpeedEstimator_GetOmegaRad_s_ISR();
 
-	
+
     // === Ekstrapolacja kąta w przód o T_DELAY ===
     const float T_DELAY = 125e-6f; // 125 us - na próbę (zmieniaj 100..150us)
     meas->theta_mech = normalize_angle(last_theta_mech + meas->omega_mech_rad_s * T_DELAY);
     meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
 
 	// === Odczyt napięcia Vbus ===
-	// meas->v_bus = g_meas.v_bus; // Tu powinny być gettery
+    meas->v_bus = VoltageSense_GetVbus_ISR();
 
 	return true;
 }
@@ -340,7 +341,7 @@ void MotorControl_OnCommandISR(void)
 
 void MotorControl_SlowLoopMeasurementsISR(void)
 {
-	// VoltageSense_ReadVDC(&g_meas.v_bus);
+	VoltageSense_ReadVbus();
 
 	// Obsługa telemetrii i heatbeat dla CAN
 }
