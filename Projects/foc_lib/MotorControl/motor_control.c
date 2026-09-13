@@ -25,8 +25,6 @@
 
 volatile bool g_cmd_flag = false; // Flaga ustawiona w przerwaniu TIM, komenda przetwarzana w pętli while()
 
-extern BoardHandleTypeDef board;
-
 volatile Motor_References_t g_ref; // Volatile, bo może być modyfikowane w ISR Commander_Process() i w ISR MotorControl_SlowLoopMeasurementsISR()
 volatile Motor_Telemetry_t g_telem; // Zapisywane w ISR MotorControl_OnCurrentSampleISR() i odczytywane w ISR MotorControl_SlowLoopMeasurementsISR()
 
@@ -232,6 +230,10 @@ void MotorControl_OnCurrentSampleISR(void)
         );
     }
 
+    g_telem.theta_mech = meas.theta_mech;
+    g_telem.omega_mech_rpm = meas.omega_mech_rpm;
+    g_telem.motor_state = (uint16_t)g_motor_state;
+
 	MotorControl_LogCubeMonitor(&meas);
 
 	// === Sygnalizacja wykonania przerwania - obserwacja oscyloskopem ===
@@ -335,13 +337,9 @@ void MotorControl_OnCommandISR(void)
     g_cmd_flag = true;
     // W przerwaniu tylko ustawienie flagi,
     // a przetwarzanie komend w while(1)
-
-	// Commander_Process();
 }
 
 void MotorControl_SlowLoopMeasurementsISR(void)
 {
 	VoltageSense_ReadVbus();
-
-	// Obsługa telemetrii i heatbeat dla CAN
 }

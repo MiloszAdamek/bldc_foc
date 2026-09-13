@@ -33,7 +33,7 @@
 #include "motor_control.h"
 #include "board.h"
 #include "powerstage.h"
-// #include "can_interface.h"
+#include "can_interface.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +55,9 @@
 
 /* USER CODE BEGIN PV */
 
+extern volatile bool g_can_heartbeat_flag;
+extern volatile bool g_can_telemetry_flag;
+
 extern volatile bool g_cmd_flag;
 
 BoardHandleTypeDef board = {
@@ -65,6 +68,7 @@ BoardHandleTypeDef board = {
   .htim_speed           = &htim2,
   .htim_pos             = &htim5,
   .htim_cmd             = &htim3,
+  .htim_can             = &htim2,
   .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
   .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_1},
   .hadc_VDC             = &hadc2, 
@@ -88,11 +92,10 @@ int _write(int file, char *ptr, int len)
     uint8_t cr = '\r';
     for (int i = 0; i < len; i++)
     {
-        if (ptr[i] == '\n')
-        
-            HAL_UART_Transmit(&huart3, &cr, 1, HAL_MAX_DELAY);
-            // ITM_SendChar('\r');
-
+        if (ptr[i] == '\n'){
+          HAL_UART_Transmit(&huart3, &cr, 1, HAL_MAX_DELAY);
+          // ITM_SendChar('\r');
+        }
         // ITM_SendChar(ptr[i]);
         HAL_UART_Transmit(&huart3, (uint8_t *)&ptr[i], 1, HAL_MAX_DELAY);
     }
@@ -125,7 +128,8 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */  HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -158,7 +162,7 @@ int main(void)
 
   Board_Init(&board);
 
-  // CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID);
+  CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID);
 
   Commander_Init(&board);
 
@@ -176,9 +180,27 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    // Obsługa CLI
     if (g_cmd_flag) {
       g_cmd_flag = false;
       Commander_Process();
+    }
+    // Obsługa CAN
+    if (g_can_heartbeat_flag) 
+    {
+        g_can_heartbeat_flag = false;
+        if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
+        {
+            CAN_Slave_Heartbeat();
+        }
+    }
+    if (g_can_telemetry_flag) 
+    {
+        g_can_telemetry_flag = false;
+        if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
+        {
+            CAN_Slave_Telemetry();
+        }
     }
     /* USER CODE END WHILE */
 

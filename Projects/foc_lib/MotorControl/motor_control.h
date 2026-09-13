@@ -9,16 +9,9 @@
 #define INC_MOTOR_CONTROL_H_
 
 #include "board.h"
+#include "motor_types.h"
 
-typedef enum {
-    STATE_IDLE,         	// Czeka na polecenia, PWM wyłączone
-    STATE_ALIGNMENT,    	// Trwa kalibracja (FOC_AlignSensor)
-    STATE_TORQUE_CONTROL, 	// Tryb regulacji momentu
-	STATE_RUN,
-    STATE_SPEED_CONTROL,  	// Tryb regulacji prędkości
-	STATE_POSITION_CONTROL, // Tryb regulacji pozycji
-    STATE_FAULT         	// Błąd krytyczny
-} MotorState_t;
+extern BoardHandleTypeDef board;
 
 void MotorControl_Init(BoardHandleTypeDef* p_board);
 
@@ -47,5 +40,9 @@ void MotorControl_OnSpeedISR(void);
 void MotorControl_OnPositionISR(void);
 void MotorControl_OnCommandISR(void);
 void MotorControl_SlowLoopMeasurementsISR(void);
+void MotorControl_OnCANISR(void);
+
+void MotorControl_GetCANTelemetry(float *pos_rev, float *vel_rpm);
+void MotorControl_GetCANHeartbeat(uint16_t *state, uint16_t *faults);
 
 #endif /* INC_MOTOR_CONTROL_H_ */
