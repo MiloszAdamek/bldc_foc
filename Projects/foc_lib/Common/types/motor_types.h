@@ -12,6 +12,16 @@
 #include <stdbool.h>
 #include "main.h"
 
+typedef enum {
+    STATE_IDLE,         	// Czeka na polecenia, PWM wyłączone
+    STATE_ALIGNMENT,    	// Trwa kalibracja (FOC_AlignSensor)
+    STATE_TORQUE_CONTROL, 	// Tryb regulacji momentu
+	STATE_RUN,
+    STATE_SPEED_CONTROL,  	// Tryb regulacji prędkości
+	STATE_POSITION_CONTROL, // Tryb regulacji pozycji
+    STATE_FAULT         	// Błąd krytyczny
+} MotorState_t;
+
 typedef struct {
     float a;
     float b;
@@ -73,8 +83,14 @@ typedef struct {
     float iq_ref;
     float vd_out;
     float vq_out;
-    uint32_t loop_time_us; // Czas wykonania pojedynczego kroku
-    uint8_t active_algo;   // 0 = None, 1 = PI_FOC, 2 = CCS_MPC
+    float theta_mech;           // Kąt mechaniczny (rad)
+    float omega_mech_rpm;       // Prędkość mechaniczna (rpm)
+    float omega_mech_rad_s;     // Prędkość mechaniczna (rad/s)
+    MotorState_t motor_state;   // Stan silnika (STATE_IDLE, STATE_RUNNING, STATE_FAULT)
+    uint32_t loop_time_us;      // Czas wykonania pojedynczego kroku
+    uint8_t active_algo;        // 0 = None, 1 = PI_FOC, 2 = CCS_MPC
 } Motor_Telemetry_t;
+
+
 
 #endif /* INC_MOTOR_TYPES_H_ */

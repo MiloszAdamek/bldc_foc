@@ -46,6 +46,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         MotorControl_OnPositionISR();
 	}
 
+	/* CAN heartbeat & telemetry 1 kHz - priority 4 */
+	else if (htim->Instance == board.htim_can->Instance)
+	{
+		MotorControl_OnCANISR();
+	}
+
 	/* Commander CLI 100 Hz - priority 4 */
 	else if (htim->Instance == board.htim_cmd->Instance)
 	{

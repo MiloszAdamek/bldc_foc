@@ -144,6 +144,7 @@ target_include_directories(foc_lib PUBLIC
 
 
 add_subdirectory(Thirdparty/stm32_can_lib)
+
 target_compile_definitions(stm32_can_lib PUBLIC
     DEVICE_IS_SLAVE
     SLAVE_NODE_ID=0x02
