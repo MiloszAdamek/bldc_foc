@@ -18,26 +18,18 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
-#include "dma.h"
+#include "cmsis_os.h"
 #include "fdcan.h"
-#include "spi.h"
-#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include "slave_driver.h"
 #include "commander.h"
-#include "motor_control.h"
-#include "board.h"
-#include "powerstage.h"
-
-#if defined(USE_CAN_INTERFACE)
-  #include "can_interface.h"
-#endif
-
+#include "stdio.h"
+// #include "logger.h"
+// #include "UART_DMA.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,53 +50,22 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+// extern TaskHandle_t task_DMA_UART_Notify;
 
-extern volatile bool g_can_heartbeat_flag;
-extern volatile bool g_can_telemetry_flag;
+TaskHandle_t task_esc_init_handle;
+TaskHandle_t task_slave_monitor_handle;
+TaskHandle_t task_handle_commands;
 
-extern volatile bool g_cmd_flag;
-
-BoardHandleTypeDef board = {
-  .type                 = BOARD_DRV8353,
-  .powerstage.pwm_mode  = POWERSTAGE_PWM_MODE_3PWM,
-  .htim_pwm             = &htim1,
-  .htim_enc             = &htim4,
-  .htim_speed           = &htim2,
-  .htim_pos             = &htim5,
-  .htim_cmd             = &htim3,
-  #ifdef USE_CAN_INTERFACE
-    // .htim_can             = &htim2,
-  #endif
-  .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
-  .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_1},
-  .hadc_VDC             = &hadc2, 
-  .hspi_enc             = &hspi3,
-  .hspi_drv             = &hspi2,
-  .huart_com            = &huart3,
-};
-
-#if defined(USE_CAN_INTERFACE)
-  static CAN_Slave_Callbacks_t can_callbacks =
-  {
-      .start = MotorControl_Start,
-      .stop = MotorControl_Stop,
-
-      .set_speed = MotorControl_SetSpeed,
-      .set_torque = MotorControl_SetTorque_Iq,
-
-      .reboot = MotorControl_Reboot,
-
-      .get_heartbeat = MotorControl_GetCANHeartbeat,
-      .get_telemetry = MotorControl_GetCANTelemetry
-  };
-#endif
-
+SlaveState_t esc_status[NUM_SLAVES];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void commander_task(void *pvParameters);
+static void esc_init_task(void *pvParameters);
+static void slave_monitor_task(void *pvParameters);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -115,25 +76,13 @@ int _write(int file, char *ptr, int len)
     for (int i = 0; i < len; i++)
     {
         if (ptr[i] == '\n'){
-          HAL_UART_Transmit(&huart3, &cr, 1, HAL_MAX_DELAY);
+          HAL_UART_Transmit(&huart2, &cr, 1, HAL_MAX_DELAY);
           // ITM_SendChar('\r');
         }
         // ITM_SendChar(ptr[i]);
-        HAL_UART_Transmit(&huart3, (uint8_t *)&ptr[i], 1, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart2, (uint8_t *)&ptr[i], 1, HAL_MAX_DELAY);
     }
     return len;
-}
-
-void DRV8353_PrintRegisterBinary(uint16_t value)
-{
-    printf("0b");
-
-    for(int8_t i = 15; i >= 0; i--)
-    {
-        printf("%d", (value >> i) & 0x01);
-    }
-
-    printf("\r\n");
 }
 /* USER CODE END 0 */
 
@@ -145,7 +94,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  BaseType_t status;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -166,71 +115,43 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_TIM1_Init();
-  MX_SPI2_Init();
-  MX_SPI3_Init();
-  MX_ADC1_Init();
-  MX_USART3_UART_Init();
-  MX_TIM2_Init();
-  MX_TIM3_Init();
-  MX_TIM4_Init();
-  MX_TIM5_Init();
-  MX_ADC2_Init();
   MX_FDCAN1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  // Controller initialization BEGIN
+  printf("Starting system...\r\n");
 
-  Board_Init(&board);
+  SlaveDriver_Init(&hfdcan1);
 
-  #if defined(USE_CAN_INTERFACE)
-    CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID, &can_callbacks);
-  #endif
+  Commander_Init(&huart2);
 
-  Commander_Init(&board);
+  status = xTaskCreate(commander_task, "CommanderTask", 1024, NULL, 2, &task_handle_commands);
+  configASSERT(status == pdPASS);
 
-  MotorControl_Init(&board);
+  // Zadanie inicjalizacji ESC
+  status = xTaskCreate(esc_init_task, "ESC_Init_Task", 1024, NULL, 6, &task_esc_init_handle);
+  configASSERT(status == pdPASS);
 
-  // Controller initialization END
+  // Monitorowanie slave'ów, kopiowanie ich stanów do zmiennych globalnych
+  status = xTaskCreate(slave_monitor_task, "SlaveMonitorTask", 1024, NULL, 7, &task_slave_monitor_handle);
+  configASSERT(status == pdPASS);
 
-  // Tests BEGIN
+  // loggerInit(false, &hcom_uart[COM1]);
 
-  // Tests END
-  
   /* USER CODE END 2 */
+
+  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // Obsługa CLI
-    if (g_cmd_flag) {
-      g_cmd_flag = false;
-      Commander_Process();
-    }
-
-    // Obsługa CAN
-    #if defined(USE_CAN_INTERFACE)
-
-      if (g_can_heartbeat_flag) 
-      {
-          g_can_heartbeat_flag = false;
-          if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
-          {
-              CAN_Slave_Heartbeat();
-          }
-      }
-      if (g_can_telemetry_flag) 
-      {
-          g_can_telemetry_flag = false;
-          if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
-          {
-              CAN_Slave_Telemetry();
-          }
-      }
-
-    #endif
 
     /* USER CODE END WHILE */
 
@@ -255,13 +176,14 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV6;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV4;
   RCC_OscInitStruct.PLL.PLLN = 85;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV8;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -286,7 +208,117 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 
+// void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+// {
+//   if (huart->Instance == USART1)
+//   {
+//     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//     vTaskNotifyGiveIndexedFromISR(task_DMA_UART_Notify, NOTIFICATION_DMA, &xHigherPriorityTaskWoken);
+//     task_DMA_UART_Notify = NULL;
+//     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+//   }
+// }
+
+// void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+// {
+//   if (huart->Instance == USART1)
+//   {
+//     UARTDMA_IrqHandler(&huartdma);
+//   }
+//   return;
+// }
+
+static void commander_task(void* pvParameters) {
+  for (;;) {
+      Commander_Process();
+      vTaskDelay(pdMS_TO_TICKS(20));
+  }
+}
+
+static void esc_init_task(void *pvParameters)
+{
+  (void)pvParameters;
+#if ONLY_SHIELD
+  // logger(LOG_ERROR, "No shield detected");
+  vTaskDelete(NULL);
+#endif
+  // logger(LOG_INFO, "Initializing ESC...");
+  SlaveDriver_InitESCs();
+  // logger(LOG_INFO, "ESC Initialized.");
+  vTaskDelete(NULL);
+}
+
+static void slave_monitor_task(void *pvParameters)
+{
+  (void)pvParameters;
+#if ONLY_SHIELD
+  // logger(LOG_ERROR, "No Shield detected");
+  vTaskDelete(NULL);
+#endif
+
+  while (1)
+  {
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // Notify z callbacku CAN
+
+    // if (controller_state != WAITING && controller_state != CALIBRATE_TORQUE) {
+    //   continue;
+    // }
+
+    // Sprawdź stan wszystkich ESC
+    for (int role = 0; role < NUM_SLAVES; role++)
+    {
+
+      SlaveDriver_GetStateCopy_RTOS((SlaveRole_t)role, &esc_status[role]);
+
+      if (esc_status[role].last_heartbeat_tick == 0 ||
+          (HAL_GetTick() - esc_status[role].last_heartbeat_tick) > 2000)
+      {
+        // logger(LOG_ERROR, "Motor %d lost heartbeat!", role);
+        SlaveDriver_StopAll();
+        // disarm();
+
+        break;
+      }
+
+      if (esc_status[role].occurred_faults != MC_NO_ERROR)
+      {
+        if (esc_status[role].axis_error != MC_NO_ERROR)
+        {
+          // logger(LOG_ERROR, "Motor %d Axis Error: 0x%X", role, esc_status[role].axis_error);
+
+          // logger(LOG_INFO, "System przechodzi w stan awaryjny (ERROR). Zatrzymywanie silnikow.");
+          SlaveDriver_StopAll();
+          // disarm();
+          break;
+        }
+      }
+    }
+  }
+}
+
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM1 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM1)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

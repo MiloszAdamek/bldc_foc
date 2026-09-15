@@ -1,0 +1,15 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "../Libs"
+        }
+    ],
+    "settings": {
+        "clangd.arguments": [
+            "--compile-commands-dir=E:/AGH/AiR/Praca_inzynierska/bldc_foc/Projects/G474_CAN_Test/build/Debug"
+        ]
+    }
+}

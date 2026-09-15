@@ -1,0 +1,16 @@
+build
+mx.scratch
+!.settings
+
+# IDE
+.vscode/
+
+# CubeIDE
+.settings/
+Drivers/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
