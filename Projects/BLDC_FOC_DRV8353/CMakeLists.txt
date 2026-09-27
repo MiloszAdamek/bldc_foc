@@ -82,3 +82,23 @@ target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
 # target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
 #     -O3
 # )
+
+# set(FOC_MATH_OPTIONS
+#     -O3
+#     -ffast-math
+#     -fno-trapping-math
+# )
+
+# target_compile_options(foc_lib PRIVATE
+#     ${FOC_MATH_OPTIONS}
+# )
+
+# target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+#     ${FOC_MATH_OPTIONS}
+# )
+
+# # Automatyczne powiadomienie STM32CubeMonitor o nowym ELF
+# add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+#     COMMAND curl -s -X POST http://localhost:1880/stm32cubemonitor/update_symbols || true
+#     COMMENT "Notifying CubeMonitor of updated ELF symbols"
+# )

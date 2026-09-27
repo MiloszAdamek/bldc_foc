@@ -100,6 +100,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+
   HAL_Init();
 
   /* USER CODE BEGIN Init */
@@ -133,8 +134,8 @@ int main(void)
   configASSERT(status == pdPASS);
 
   // Monitorowanie slave'ów, kopiowanie ich stanów do zmiennych globalnych
-  status = xTaskCreate(slave_monitor_task, "SlaveMonitorTask", 1024, NULL, 7, &task_slave_monitor_handle);
-  configASSERT(status == pdPASS);
+  // status = xTaskCreate(slave_monitor_task, "SlaveMonitorTask", 1024, NULL, 7, &task_slave_monitor_handle);
+  // configASSERT(status == pdPASS);
 
   // loggerInit(false, &hcom_uart[COM1]);
 

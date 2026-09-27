@@ -69,7 +69,7 @@ void Board_Init(BoardHandleTypeDef *board)
     #endif
 
     Board_GetVddVoltage(board);
-    CurrentSense_Init(&board->hadc_currA, board->vdd_voltage); // Inicjalizacja pomiaru prądów
+    CurrentSense_Init(&board->hadc_currA, &board->hadc_currB, board->vdd_voltage); // Inicjalizacja pomiaru prądów
 
     #ifdef DRV8353
         PowerStage_SetCalibrationMode(&board->powerstage, false);
@@ -98,7 +98,9 @@ void Board_StartPeripherals(BoardHandleTypeDef *board)
     
     HAL_TIM_Base_Start_IT(board->htim_enc);
     HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4);
-    CurrentSense_InjectedStart_IT(board->hadc_currA.hadc);
+
+    CurrentSense_StartADC();
+
     // HAL_TIM_Base_Start_IT(board->htim_pwm);
     HAL_TIM_Base_Start(board->htim_pwm);
 }
@@ -116,7 +118,7 @@ void Board_StopPeripherals(BoardHandleTypeDef *board)
     
 	HAL_TIM_Base_Stop_IT(board->htim_enc);
     HAL_TIM_OC_Stop(board->htim_pwm, TIM_CHANNEL_4);
-    CurrentSense_InjectedStop_IT(board->hadc_currA.hadc);
+    CurrentSense_StopADC();
 }
 
 static void Board_StartPWM(BoardHandleTypeDef *board)

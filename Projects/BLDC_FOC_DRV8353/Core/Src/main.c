@@ -38,6 +38,10 @@
   #include "can_interface.h"
 #endif
 
+// #ifndef __FAST_MATH__
+//   #error "FAST_MATH must be enabled in the project settings"
+// #endif
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,8 +63,11 @@
 
 /* USER CODE BEGIN PV */
 
-extern volatile bool g_can_heartbeat_flag;
-extern volatile bool g_can_telemetry_flag;
+#if defined(USE_CAN_INTERFACE)
+  extern volatile bool g_can_heartbeat_flag;
+  extern volatile bool g_can_telemetry_flag;
+  extern volatile bool g_can_cmd_received_flag;
+#endif
 
 extern volatile bool g_cmd_flag;
 
@@ -76,7 +83,7 @@ BoardHandleTypeDef board = {
     // .htim_can             = &htim2,
   #endif
   .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
-  .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_1},
+  .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_2},
   .hadc_VDC             = &hadc2, 
   .hspi_enc             = &hspi3,
   .hspi_drv             = &hspi2,
@@ -184,13 +191,13 @@ int main(void)
 
   Board_Init(&board);
 
-  #if defined(USE_CAN_INTERFACE)
-    CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID, &can_callbacks);
-  #endif
+  MotorControl_Init(&board);
 
   Commander_Init(&board);
 
-  MotorControl_Init(&board);
+  #if defined(USE_CAN_INTERFACE)
+    CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID, &can_callbacks);
+  #endif
 
   // Controller initialization END
 
@@ -228,6 +235,11 @@ int main(void)
           {
               CAN_Slave_Telemetry();
           }
+      }
+      if (g_can_cmd_received_flag)
+      {
+          g_can_cmd_received_flag = false;
+          CAN_Slave_PrintLastCommand();
       }
 
     #endif

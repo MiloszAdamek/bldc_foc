@@ -10,9 +10,14 @@
 
 #include "stm32g4xx_hal.h"
 #include "motor_types.h"
+#
 
 // Inicjalizacja pomiaru prądów
-void CurrentSense_Init(ADC_InjectedChannel_t *hadc_inj, float vdd_voltage);
+void CurrentSense_Init(ADC_InjectedChannel_t *hadc_injA, ADC_InjectedChannel_t *hadc_injB, float vdd_voltage);
+
+void CurrentSense_StartADC();
+
+void CurrentSense_StopADC();
 
 // Start pomiaru prądów w trybie przerwań
 void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc);

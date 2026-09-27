@@ -11,7 +11,8 @@
 #include "stdbool.h"
 #include "stdio.h"
 
-static ADC_HandleTypeDef *s_hadc;
+static ADC_HandleTypeDef *s_hadcA;
+static ADC_HandleTypeDef *s_hadcB;
 
 static volatile uint16_t adc_raw_phase_a = 0;
 static volatile uint16_t adc_raw_phase_b = 0;
@@ -29,6 +30,7 @@ volatile bool is_calibrated = false;
 
 static float s_adc_to_current;
 
+#ifdef IHM03
 static void CurrentSense_CalibrateOffset(ADC_InjectedChannel_t *hadc_inj)
 {
     uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
@@ -55,46 +57,131 @@ static void CurrentSense_CalibrateOffset(ADC_InjectedChannel_t *hadc_inj)
     is_calibrated = true;
     printf("Offset A: %u, B: %u, C: %u \r\n", offset_a, offset_b, offset_c);
 }
+#endif
 
-void CurrentSense_Init(ADC_InjectedChannel_t *hadc_inj, float vdd_voltage) {
-    s_hadc = hadc_inj->hadc;
+#ifdef DRV8353
+static void CurrentSense_CalibrateOffset(ADC_InjectedChannel_t *hadc_injA, ADC_InjectedChannel_t *hadc_injB)
+{
+    // Make sure to shut down inverter before calibration to avoid current flow
+
+    uint32_t sum_a = 0, sum_b = 0, sum_c = 0;
+    const int samples = 1000;
+
+    #ifdef DUAL_ADC
+        HAL_ADCEx_InjectedStop(s_hadcA);
+        HAL_ADCEx_InjectedStop(s_hadcB);
+
+        // Najpierw Slave, potem Master
+        HAL_ADCEx_InjectedStart(s_hadcB);
+        HAL_ADCEx_InjectedStart(s_hadcA);
+
+        for (int i = 0; i < samples; ++i)
+        {
+            // 2. Wyzwolenie konwersji sprzętowej w parze Dual
+            hadc_injA->hadc->Instance->CR |= ADC_CR_JADSTART;
+
+            // 3. Czekamy na flagę sprzętową JEOC na Masterze
+            while (!(hadc_injA->hadc->Instance->ISR & ADC_ISR_JEOC)) {}
+            hadc_injA->hadc->Instance->ISR = ADC_ISR_JEOC; // Kasowanie flagi przez wpisanie 1
+
+            // 4. Czekamy na flagę sprzętową JEOC na Slave
+            while (!(hadc_injB->hadc->Instance->ISR & ADC_ISR_JEOC)) {}
+            hadc_injB->hadc->Instance->ISR = ADC_ISR_JEOC; // Kasowanie flagi przez wpisanie 1
+
+            // 5. Bezpośredni odczyt z rejestrów danych wstrzykiwanych
+            sum_a += hadc_injA->hadc->Instance->JDR1;
+            sum_b += hadc_injB->hadc->Instance->JDR1;
+        }
+    #else
+        HAL_ADCEx_InjectedStop(s_hadcA);
+        HAL_ADCEx_InjectedStart(s_hadcA);
+
+        for (int i = 0; i < samples; ++i)
+        {
+            HAL_ADCEx_InjectedPollForConversion(hadc_injA->hadc, HAL_MAX_DELAY);
+            sum_a += HAL_ADCEx_InjectedGetValue(hadc_injA->hadc, hadc_inj->rank);
+            sum_b += HAL_ADCEx_InjectedGetValue(hadc_injA->hadc, ADC_INJECTED_RANK_2);
+            #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+                sum_c += HAL_ADCEx_InjectedGetValue(hadc_injA->hadc, ADC_INJECTED_RANK_3);
+            #endif
+        }
+    #endif
+
+    offset_a = sum_a / samples;
+    offset_b = sum_b / samples;
+    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+        offset_c = sum_c / samples;
+    #endif
+
+    is_calibrated = true;
+    printf("Offset A: %u, B: %u, C: %u \r\n", offset_a, offset_b, offset_c);
+
+    HAL_ADCEx_InjectedStop(s_hadcA);
+    #ifdef DUAL_ADC
+        HAL_ADCEx_InjectedStop(s_hadcB);
+    #endif
+}
+#endif
+
+void CurrentSense_Init(ADC_InjectedChannel_t *hadc_injA, ADC_InjectedChannel_t *hadc_injB, float vdd_voltage) 
+{
+    s_hadcA = hadc_injA->hadc;
+    s_hadcB = hadc_injB->hadc;
 
     CurrentSense_UpdateADCCoefficient(vdd_voltage);
-
-    HAL_ADCEx_InjectedStop(s_hadc);
-    HAL_ADCEx_InjectedStart(s_hadc);
-
-    CurrentSense_CalibrateOffset(hadc_inj);
-
-    HAL_ADCEx_InjectedStop(s_hadc);
+    CurrentSense_CalibrateOffset(hadc_injA, hadc_injB);
 }
 
 void CurrentSense_UpdateADCCoefficient(float vdd_voltage) {
     s_adc_to_current = vdd_voltage / ((float)ADC_RESOLUTION * SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
 }
 
-void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc) {
-    if (hadc->Instance == ADC1){
-        HAL_ADCEx_InjectedStart_IT(s_hadc);
-    }
+void CurrentSense_StartADC() {
+    #ifdef DUAL_ADC
+        HAL_ADCEx_InjectedStart(s_hadcB);
+        HAL_ADCEx_InjectedStart_IT(s_hadcA);
+    #else
+        HAL_ADCEx_InjectedStart_IT(s_hadcA);
+    #endif
 }
 
-void CurrentSense_InjectedStop_IT(ADC_HandleTypeDef *hadc) {
-    if (hadc->Instance == ADC1){
-        HAL_ADCEx_InjectedStop_IT(s_hadc);
-    }
+void CurrentSense_StopADC() {
+    #ifdef DUAL_ADC
+        HAL_ADCEx_InjectedStop(s_hadcB);
+        HAL_ADCEx_InjectedStop_IT(s_hadcA);
+    #else
+        HAL_ADCEx_InjectedStop_IT(s_hadcA);
+    #endif
 }
+
+// void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc) {
+//     if (hadc->Instance == ADC1){
+//         HAL_ADCEx_InjectedStart_IT(s_hadcA);
+//     }
+// }
+
+// void CurrentSense_InjectedStop_IT(ADC_HandleTypeDef *hadc) {
+//     if (hadc->Instance == ADC1){
+//         HAL_ADCEx_InjectedStop_IT(s_hadcA);
+//     }
+// }
 
 void CurrentSense_Process_ISR() {
 	if (!is_calibrated) return;
 
-	// adc_raw_phase_a = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_1);
-    adc_raw_phase_a = s_hadc->Instance->JDR1;
-	// adc_raw_phase_b = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_2);
-    adc_raw_phase_b = s_hadc->Instance->JDR2;
-    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-        // adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
-        adc_raw_phase_c = s_hadc->Instance->JDR3;
+    #ifdef DUAL_ADC
+        adc_raw_phase_a = s_hadcA->Instance->JDR1;
+        adc_raw_phase_b = s_hadcB->Instance->JDR1;
+        s_hadcB->Instance->ISR = ADC_ISR_JEOC;
+    #else
+        // adc_raw_phase_a = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_1);
+        adc_raw_phase_a = s_hadcA->Instance->JDR1;
+        // adc_raw_phase_b = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_2);
+        adc_raw_phase_b = s_hadcA->Instance->JDR2;
+        #ifdef CURRENT_SENSE_TRIPLE_SHUNT
+            // adc_raw_phase_c = HAL_ADCEx_InjectedGetValue(s_hadc, ADC_INJECTED_RANK_3);
+            adc_raw_phase_c = s_hadcA->Instance->JDR3;
+        #endif
     #endif
 }
 
@@ -113,7 +200,8 @@ void CurrentSense_CalculatePhases(){
     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
         current_c = -(float)diff_c * s_adc_to_current;
     #else
-        current_c = -(current_a + current_b);
+        int32_t diff_c = -(diff_a + diff_b);
+        current_c = (float)diff_c * s_adc_to_current;
     #endif
 }
 #endif
@@ -133,7 +221,8 @@ void CurrentSense_CalculatePhases(){
     #ifdef CURRENT_SENSE_TRIPLE_SHUNT
         current_c = (float)diff_c * s_adc_to_current;
     #else
-        current_c = -(current_a + current_b);
+        int32_t diff_c = -(diff_a + diff_b);
+        current_c = (float)diff_c * s_adc_to_current;
     #endif
 }
 #endif
@@ -142,9 +231,7 @@ void CurrentSense_Read(abc_current_t *currents)
 {
     currents->a = current_a;
     currents->b = current_b;
-    #ifdef CURRENT_SENSE_TRIPLE_SHUNT
-        currents->c = current_c;
-    #endif
+    currents->c = current_c;
 }
 
 void CurrentSense_GetRaw(abc_raw_t *raw)
