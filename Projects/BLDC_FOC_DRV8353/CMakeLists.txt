@@ -86,10 +86,9 @@ target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
 # )
 
 set(FOC_MATH_OPTIONS
-    -O3
+    # -O3
     -fno-strict-aliasing
-    # -ffast-math
-    # -fno-trapping-math
+    -ffast-math
 )
 
 target_compile_options(foc_lib PRIVATE

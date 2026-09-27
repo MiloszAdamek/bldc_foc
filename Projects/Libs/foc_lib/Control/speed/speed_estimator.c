@@ -161,7 +161,7 @@ void Kalman_Init(KalmanState *s, KalmanParams *p, float dt){
 	p->Q[1][0] = 0.0;  p->Q[1][1] = 8e-3;
 
 	// Encoder noise
-	p->R = 1e-3;
+	p->R = 1e-6;
 
 	// Initial state
 	s->x[0] = 0.0; // theta

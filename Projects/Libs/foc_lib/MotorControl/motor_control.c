@@ -70,19 +70,20 @@ void MotorControl_Init(BoardHandleTypeDef* p_board)
 
 static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas)
 {
-    monitor_data.current_a  = meas->currents.a;
-    monitor_data.current_b  = meas->currents.b;
-    monitor_data.current_c  = meas->currents.c;
-    monitor_data.theta_el   = meas->theta_el;
-    monitor_data.theta_mech = meas->theta_mech;
-    monitor_data.speed      = meas->omega_mech_rpm;
+    monitor_data.current_a      = meas->currents.a;
+    monitor_data.current_b      = meas->currents.b;
+    monitor_data.current_c      = meas->currents.c;
+    monitor_data.theta_el       = meas->theta_el;
+    monitor_data.theta_mech     = meas->theta_mech;
+    monitor_data.speed          = meas->omega_mech_rpm;
+    // monitor_data.speed_ref      = g_ref.position_ref;
 
-    monitor_data.id         = g_telem.id_meas;
-    monitor_data.iq         = g_telem.iq_meas;
-    monitor_data.iq_ref     = g_telem.iq_ref;
-    monitor_data.id_ref     = g_telem.id_ref;
-    monitor_data.vd_out     = g_telem.vd_out;
-    monitor_data.vq_out     = g_telem.vq_out;
+    monitor_data.id             = g_telem.id_meas;
+    monitor_data.iq             = g_telem.iq_meas;
+    monitor_data.iq_ref         = g_telem.iq_ref;
+    monitor_data.id_ref         = g_telem.id_ref;
+    monitor_data.vd_out         = g_telem.vd_out;
+    monitor_data.vq_out         = g_telem.vq_out;
 
     // Błędy nadrzędnych regulatorów logowane tak jak poprzednio
     // monitor_data.position_err = position_err;
