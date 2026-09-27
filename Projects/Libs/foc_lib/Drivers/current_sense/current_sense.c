@@ -132,41 +132,26 @@ void CurrentSense_Init(ADC_InjectedChannel_t *hadc_injA, ADC_InjectedChannel_t *
     CurrentSense_CalibrateOffset(hadc_injA, hadc_injB);
 }
 
-void CurrentSense_UpdateADCCoefficient(float vdd_voltage) {
+void CurrentSense_UpdateADCCoefficient(float vdd_voltage)
+{
     s_adc_to_current = vdd_voltage / ((float)ADC_RESOLUTION * SHUNT_RESISTOR * CURRENT_SENSE_GAIN);
 }
 
-void CurrentSense_StartADC() {
+void CurrentSense_StartADC() 
+{
     #ifdef DUAL_ADC
+        __HAL_ADC_CLEAR_FLAG(s_hadcA, ADC_FLAG_JEOC | ADC_FLAG_JEOS | ADC_FLAG_JQOVF);
+        __HAL_ADC_CLEAR_FLAG(s_hadcB, ADC_FLAG_JEOC | ADC_FLAG_JEOS | ADC_FLAG_JQOVF);
         HAL_ADCEx_InjectedStart(s_hadcB);
         HAL_ADCEx_InjectedStart_IT(s_hadcA);
     #else
+        __HAL_ADC_CLEAR_FLAG(s_hadcA, ADC_FLAG_JEOC | ADC_FLAG_JEOS | ADC_FLAG_JQOVF);
         HAL_ADCEx_InjectedStart_IT(s_hadcA);
     #endif
 }
 
-void CurrentSense_StopADC() {
-    #ifdef DUAL_ADC
-        HAL_ADCEx_InjectedStop(s_hadcB);
-        HAL_ADCEx_InjectedStop_IT(s_hadcA);
-    #else
-        HAL_ADCEx_InjectedStop_IT(s_hadcA);
-    #endif
-}
-
-// void CurrentSense_InjectedStart_IT(ADC_HandleTypeDef *hadc) {
-//     if (hadc->Instance == ADC1){
-//         HAL_ADCEx_InjectedStart_IT(s_hadcA);
-//     }
-// }
-
-// void CurrentSense_InjectedStop_IT(ADC_HandleTypeDef *hadc) {
-//     if (hadc->Instance == ADC1){
-//         HAL_ADCEx_InjectedStop_IT(s_hadcA);
-//     }
-// }
-
-void CurrentSense_Process_ISR() {
+void CurrentSense_Process_ISR() 
+{
 	if (!is_calibrated) return;
 
     #ifdef DUAL_ADC
@@ -186,7 +171,8 @@ void CurrentSense_Process_ISR() {
 }
 
 #ifdef IHM03
-void CurrentSense_CalculatePhases(){
+void CurrentSense_CalculatePhases()
+{
     if (!is_calibrated) return;
     
     int32_t diff_a = (int32_t)adc_raw_phase_a - (int32_t)offset_a;
@@ -207,7 +193,8 @@ void CurrentSense_CalculatePhases(){
 #endif
 
 #ifdef DRV8353
-void CurrentSense_CalculatePhases(){
+void CurrentSense_CalculatePhases()
+{
     if (!is_calibrated) return;
 
     int32_t diff_a = (int32_t)adc_raw_phase_a - (int32_t)offset_a;

@@ -51,11 +51,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	// {
 	// 	MotorControl_OnCANISR();
 	// }
-
-	/* Commander CLI 100 Hz - priority 4 */
-	else if (htim->Instance == board.htim_cmd->Instance)
+	
+	/* Slow loop measurements 100 Hz - priority 4 */
+	else if (htim->Instance == board.htim_slow_loop->Instance)
 	{
-        MotorControl_OnCommandISR();
+		#if defined(USE_CMD_INTERFACE)
+        	MotorControl_OnCommandISR();
+		#endif
 		MotorControl_SlowLoopMeasurementsISR(); 
 	}
 }

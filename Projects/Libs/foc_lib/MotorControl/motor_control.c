@@ -59,7 +59,7 @@ void MotorControl_Init(BoardHandleTypeDef* p_board)
 
 	HAL_TIM_Base_Start_IT(p_board->htim_speed);
     HAL_TIM_Base_Start_IT(p_board->htim_pos);
-    HAL_TIM_Base_Start_IT(p_board->htim_cmd);
+    HAL_TIM_Base_Start_IT(p_board->htim_slow_loop);
 	PositionController_Init(POSITION_UNIT_RAD); // Wybór jednostki w regulatorze pozycji
 	SpeedEstimator_Init(SPEED_PERIOD_SEC);
 	Board_Init(p_board);
@@ -170,7 +170,7 @@ void MotorControl_SetTorque_Iq(float iq)
     speed_loop_enabled = false;
     position_loop_enabled = false;
 
-	// WŁĄCZ rampę momentu (sterujemy prądem bezpośrednio)
+	// Włącz rampę momentu
     g_ref.iq_ramp_enabled = true;
 
 	g_ref.torque_iq_ref = iq; // Algorytm sam zajmie się rampą wewnątrz swojej funkcji Update()

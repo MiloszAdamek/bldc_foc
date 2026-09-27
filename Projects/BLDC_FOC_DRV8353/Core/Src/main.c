@@ -69,7 +69,9 @@
   extern volatile bool g_can_cmd_received_flag;
 #endif
 
-extern volatile bool g_cmd_flag;
+#if defined(USE_CMD_INTERFACE)
+  extern volatile bool g_cmd_flag;  
+#endif
 
 BoardHandleTypeDef board = {
   .type                 = BOARD_DRV8353,
@@ -78,10 +80,7 @@ BoardHandleTypeDef board = {
   .htim_enc             = &htim4,
   .htim_speed           = &htim2,
   .htim_pos             = &htim5,
-  .htim_cmd             = &htim3,
-  #ifdef USE_CAN_INTERFACE
-    // .htim_can             = &htim2,
-  #endif
+  .htim_slow_loop       = &htim3,
   .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
   .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_2},
   .hadc_VDC             = &hadc2, 
@@ -193,7 +192,9 @@ int main(void)
 
   MotorControl_Init(&board);
 
-  Commander_Init(&board);
+  #if defined(USE_CMD_INTERFACE)
+    Commander_Init(&board);
+  #endif
 
   #if defined(USE_CAN_INTERFACE)
     CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID, &can_callbacks);
@@ -212,10 +213,12 @@ int main(void)
   while (1)
   {
     // Obsługa CLI
-    if (g_cmd_flag) {
-      g_cmd_flag = false;
-      Commander_Process();
-    }
+    #if defined(USE_CMD_INTERFACE)
+      if (g_cmd_flag) {
+        g_cmd_flag = false;
+        Commander_Process();
+      }
+    #endif
 
     // Obsługa CAN
     #if defined(USE_CAN_INTERFACE)

@@ -33,6 +33,8 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 add_compile_definitions(USE_CAN_INTERFACE)
 
+add_compile_definitions(USE_CMD_INTERFACE)
+
 # Dołączenie foc_lib
 add_subdirectory(
     "${CMAKE_CURRENT_SOURCE_DIR}/../Libs/foc_lib"
@@ -83,22 +85,17 @@ target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
 #     -O3
 # )
 
-# set(FOC_MATH_OPTIONS
-#     -O3
-#     -ffast-math
-#     -fno-trapping-math
-# )
+set(FOC_MATH_OPTIONS
+    -O3
+    -fno-strict-aliasing
+    # -ffast-math
+    # -fno-trapping-math
+)
 
-# target_compile_options(foc_lib PRIVATE
-#     ${FOC_MATH_OPTIONS}
-# )
+target_compile_options(foc_lib PRIVATE
+    ${FOC_MATH_OPTIONS}
+)
 
-# target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
-#     ${FOC_MATH_OPTIONS}
-# )
-
-# # Automatyczne powiadomienie STM32CubeMonitor o nowym ELF
-# add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-#     COMMAND curl -s -X POST http://localhost:1880/stm32cubemonitor/update_symbols || true
-#     COMMENT "Notifying CubeMonitor of updated ELF symbols"
-# )
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+    ${FOC_MATH_OPTIONS}
+)

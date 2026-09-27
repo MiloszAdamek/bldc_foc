@@ -27,8 +27,7 @@ typedef struct
     TIM_HandleTypeDef *htim_enc;
     TIM_HandleTypeDef *htim_pos;
     TIM_HandleTypeDef *htim_speed;
-    TIM_HandleTypeDef *htim_cmd;
-    TIM_HandleTypeDef *htim_can;
+    TIM_HandleTypeDef *htim_slow_loop;
     ADC_InjectedChannel_t hadc_currA;
     ADC_InjectedChannel_t hadc_currB;
     ADC_HandleTypeDef *hadc_VDC;
