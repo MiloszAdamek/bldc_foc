@@ -24,6 +24,7 @@ target_sources(foc_lib PRIVATE
     Drivers/encoder/as5048a.c
     Drivers/encoder/encoder_hub.c
     Drivers/voltage_sense/voltage_sense.c
+    Drivers/slow_adc/slow_adc.c
 
     # MotorControl
     MotorControl/motor_control.c
@@ -49,6 +50,7 @@ target_include_directories(foc_lib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/current_sense
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/encoder
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/voltage_sense
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/slow_adc
     ${CMAKE_CURRENT_SOURCE_DIR}/MotorControl
 )
 

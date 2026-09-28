@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define DRV8353_nFAULT_GPIO_Port GPIOA
 #define IN_L_A_Pin GPIO_PIN_7
 #define IN_L_A_GPIO_Port GPIOA
+#define MOSFET_TEMP_Pin GPIO_PIN_4
+#define MOSFET_TEMP_GPIO_Port GPIOC
+#define MOTOR_TEMP_Pin GPIO_PIN_5
+#define MOTOR_TEMP_GPIO_Port GPIOC
 #define IN_L_B_Pin GPIO_PIN_0
 #define IN_L_B_GPIO_Port GPIOB
 #define IN_L_C_Pin GPIO_PIN_1

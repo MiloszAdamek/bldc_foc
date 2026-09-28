@@ -141,6 +141,7 @@ void DRV8353_PrintRegisterBinary(uint16_t value)
 
     printf("\r\n");
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -167,7 +168,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -185,7 +186,7 @@ int main(void)
   MX_ADC2_Init();
   MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
-
+  Board_CalibrateADC(&board);
   // Controller initialization BEGIN
 
   Board_Init(&board);

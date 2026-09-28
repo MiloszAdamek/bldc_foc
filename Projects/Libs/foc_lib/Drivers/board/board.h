@@ -50,5 +50,6 @@ void Board_StartPeripherals(BoardHandleTypeDef *board);
 void Board_StopPeripherals(BoardHandleTypeDef *board);
 void Board_CheckFaults(BoardHandleTypeDef *board);
 void Board_GetVddVoltage(BoardHandleTypeDef *board);
+void Board_CalibrateADC(BoardHandleTypeDef *board);
 
 #endif /* BOARD_H */

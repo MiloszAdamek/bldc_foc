@@ -13,6 +13,7 @@
  #include "as5048a.h"
  #include "voltage_sense.h"
  #include <stdio.h>
+ #include "slow_adc.h"
 
  #ifdef DRV8353
 
@@ -22,7 +23,6 @@
  static void Board_SetPWMMode(BoardHandleTypeDef *board, PowerStage_PWM_Mode_t mode);
  static void Board_StartPWM(BoardHandleTypeDef *board);
  static void Board_StopPWM(BoardHandleTypeDef *board);
- static void Board_CalibrateADC(BoardHandleTypeDef *board);
 
 static const PowerStage_Pins_t inverter_pins = {
     .IN_H_A = {IN_H_A_GPIO_Port, IN_H_A_Pin, GPIO_AF6_TIM1},
@@ -58,7 +58,7 @@ void Board_Init(BoardHandleTypeDef *board)
     
     // Current sense initialization and calibration
 
-    Board_CalibrateADC(board); // Kalibracja przetwornika ADC
+    // Board_CalibrateADC(board); // Kalibracja przetwornika ADC
 	HAL_TIM_Base_Start(board->htim_pwm);
 	HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4); 	// Start CH4 -> wyzwalanie ADC
 
@@ -78,8 +78,10 @@ void Board_Init(BoardHandleTypeDef *board)
     #endif
 
     // Voltage sense initialization
-    VoltageSense_Init(board->hadc_VDC);
-    VoltageSense_UpdateADCCoefficient(board->vdd_voltage);
+    // VoltageSense_Init(board->hadc_VDC);
+    // VoltageSense_UpdateADCCoefficient(board->vdd_voltage);
+    SlowADC_Init(board->hadc_VDC);
+    SlowADC_UpdateADCCoefficient(board->vdd_voltage);
     
     // Encoder initialization and calibration
     AS5048_Init(board->hspi_enc);
@@ -270,7 +272,7 @@ void Board_CheckFaults(BoardHandleTypeDef *board)
     }
 }
 
-static void Board_CalibrateADC(BoardHandleTypeDef *board)
+void Board_CalibrateADC(BoardHandleTypeDef *board)
 {
     // Przed HAL_ADC_Start()
     if (HAL_ADCEx_Calibration_Start(board->hadc_currA.hadc, ADC_SINGLE_ENDED) != HAL_OK)

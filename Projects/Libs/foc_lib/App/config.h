@@ -25,6 +25,8 @@
 // #define CURRENT_SENSE_TRIPLE_SHUNT
 #define DUAL_ADC
 
+// #define ENABLE_CURRENT_LIMIT
+// #define ENABLE_FIELD_WEAKENING
 
 #define ENABLE_SERIAL_DEBUGGING
 #define ENABLE_RAMP
@@ -50,7 +52,7 @@
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        13.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         1.0f
+#define CURRENT_LIMIT         3.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -82,6 +84,10 @@
     #define PI_KP_IQ 0.22f
     #define PI_KI_IQ 1058.0f
     #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_FW  0.09155f
+    #define PI_KI_FW  1500.0f
+    #define PI_LIMIT_FW 0.5f
 
     #define PI_KP_V 0.0005f
     #define PI_KI_V 0.0001f
@@ -137,6 +143,9 @@ typedef struct {
     float position_ref;
     float position_err;
     float position_reg_out;
+    float vbus;
+    float motor_temp;
+    float mosfet_temp;
 } MonitorData_t;
 
 #endif /* MOTOR_CONFIG_H_ */

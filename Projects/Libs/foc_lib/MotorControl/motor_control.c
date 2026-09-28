@@ -20,6 +20,7 @@
 #include "svpwm.h"
 #include "current_sense.h"
 #include "voltage_sense.h"
+#include "slow_adc.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
@@ -41,6 +42,8 @@ volatile uint32_t spi_ready_ok = 0;
 
 volatile bool speed_loop_enabled = false;
 volatile bool position_loop_enabled = false;
+
+extern volatile bool slow_adc_ready;
 
 // Debug - cubemonitor
 volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
@@ -84,6 +87,10 @@ static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas)
     monitor_data.id_ref         = g_telem.id_ref;
     monitor_data.vd_out         = g_telem.vd_out;
     monitor_data.vq_out         = g_telem.vq_out;
+
+    monitor_data.vbus           = meas->v_bus;
+    monitor_data.motor_temp     = meas->motor_temp;
+    monitor_data.mosfet_temp    = meas->mosfet_temp;
 
     // Błędy nadrzędnych regulatorów logowane tak jak poprzednio
     // monitor_data.position_err = position_err;
@@ -296,7 +303,9 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
     meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
 
 	// === Odczyt napięcia Vbus ===
-    meas->v_bus = VoltageSense_GetVbus_ISR();
+    meas->v_bus = SlowADC_GetVBusVoltage_ISR();
+    meas->motor_temp = SlowADC_GetMotorTemperature_ISR();
+    meas->mosfet_temp = SlowADC_GetMosfetTemperature_ISR();
 
 	return true;
 }
@@ -342,5 +351,10 @@ void MotorControl_OnCommandISR(void)
 
 void MotorControl_SlowLoopMeasurementsISR(void)
 {
-	VoltageSense_ReadVbus();
+    SlowADC_Trigger();
+    if(slow_adc_ready)
+    {
+        slow_adc_ready = false;
+        SlowADC_CalculateMeasurements();
+    }
 }

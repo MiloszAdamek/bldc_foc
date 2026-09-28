@@ -63,6 +63,7 @@ typedef struct {
 
     PI_Controller  pi_id;
     PI_Controller  pi_iq;
+    PI_Controller  pi_field_weakening;
     // dq_ref_t       i_ref;
     abc_current_t  currents;
 

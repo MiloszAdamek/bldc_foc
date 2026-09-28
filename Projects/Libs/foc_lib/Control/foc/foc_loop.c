@@ -26,6 +26,9 @@ extern Motor_Stats_t g_stats;
 // RAMPA
 #define IQ_RAMP_RATE_A_S 0.1f // A/s
 
+// FIELD WEAKENING
+#define FIELD_WEAKENING_THRESHOLD 0.95f // 95% napięcia szyny DC (Vbus / sqrt(3))
+
 // FLAGI
 volatile bool currents_ready = false;
 extern volatile bool spi_ready;
@@ -75,6 +78,14 @@ void FOC_Init(void *ctx)
         .dt = FOC_PERIOD_SEC
     };
 
+    state->pi_field_weakening = (PI_Controller){
+        .kp = PI_KP_FW,
+        .ki = PI_KI_FW,
+        .limit = PI_LIMIT_FW,
+        .integral = 0.0f,
+        .dt = FOC_PERIOD_SEC
+    };
+
     state->id_setpoint = 0.0f;
     state->iq_setpoint = 0.0f;
 
@@ -89,7 +100,7 @@ void FOC_Start(void *ctx){
 
     PI_Reset(&state->pi_id);
     PI_Reset(&state->pi_iq);
-
+    PI_Reset(&state->pi_field_weakening);
     state->id_setpoint = 0.0f;
     state->iq_setpoint = 0.0f;
     state->iq_target_raw = 0.0f;
@@ -123,7 +134,7 @@ void FOC_Stop(void *ctx){
 
     PI_Reset(&state->pi_id);
     PI_Reset(&state->pi_iq);
-
+    PI_Reset(&state->pi_field_weakening);
     FOC_StatsReset();
 }
 
@@ -141,15 +152,46 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
         state->iq_setpoint = state->iq_target_raw;
     #endif
 
+    #ifdef ENABLE_FIELD_WEAKENING
+        float v_mag_sq = (state->v_d * state->v_d) + (state->v_q * state->v_q);
+        
+        float v_limit_max = (meas->v_bus / M_SQRT3) * FIELD_WEAKENING_THRESHOLD; 
+        float v_threshold_sq = v_limit_max * v_limit_max;
+
+        const float BASE_SPEED_RPM = 1800.0f;
+
+        if ((v_mag_sq > v_threshold_sq) && (meas->omega_mech_rpm > BASE_SPEED_RPM)) {
+            float voltage_error = sqrtf(v_mag_sq) - v_limit_max;
+            state->id_setpoint = -pi_control(&state->pi_field_weakening, voltage_error);
+        } else {
+            state->pi_field_weakening.integral = 0.0f;
+            state->id_setpoint = 0.0f;
+        }
+    #else
+        state->id_setpoint = 0.0f;
+    #endif
+
+    #ifdef ENABLE_CURRENT_LIMIT
+        if (state->id_setpoint > 0.0f)  state->id_setpoint = 0.0f;
+        if (state->id_setpoint < -CURRENT_LIMIT) state->id_setpoint = -CURRENT_LIMIT;
+
+        if (state->iq_setpoint > CURRENT_LIMIT) state->iq_setpoint = CURRENT_LIMIT;
+        if (state->iq_setpoint < -CURRENT_LIMIT) state->iq_setpoint = -CURRENT_LIMIT;
+
+        float i_max_sq = CURRENT_LIMIT * CURRENT_LIMIT;
+        float id_sq = state->id_setpoint * state->id_setpoint;
+        float iq_limit_sq = i_max_sq - id_sq;
+        float iq_max_limit = (iq_limit_sq > 0.0f) ? sqrtf(iq_limit_sq) : 0.0f;
+
+        if (state->iq_setpoint > iq_max_limit)  state->iq_setpoint = iq_max_limit;
+        if (state->iq_setpoint < -iq_max_limit) state->iq_setpoint = -iq_max_limit;
+    #endif
+
     LUT_SinCos(meas->theta_el, &sin_theta, &cos_theta);
 
     ClarkeTransform(meas->currents.a, meas->currents.b, &state->i_alpha, &state->i_beta);
 
     ParkTransform(state->i_alpha, state->i_beta, &sin_theta, &cos_theta, &state->id, &state->iq);
-    
-    // === Wariant bez priorytetu osi D ===
-    // state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
-    // state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
     
     // === Wariant z priorytetem osi D (ograniczenie na osi Q w zależności od napięcia na osi D)===
     const float VMAX_SQ = PI_LIMIT_ID * PI_LIMIT_ID;

@@ -42,6 +42,8 @@ typedef struct {
     float theta_mech;       // Kąt mechaniczny (rad)
     float omega_mech_rpm;   // Prędkość mechaniczna (rpm)
     float omega_mech_rad_s; // Prędkość mechaniczna (rad/s)
+    float motor_temp;       // Temperatura silnika (°C)
+    float mosfet_temp;      // Temperatura mosfetów (°C)
 } Motor_Measurements_t;
 
 typedef struct {
