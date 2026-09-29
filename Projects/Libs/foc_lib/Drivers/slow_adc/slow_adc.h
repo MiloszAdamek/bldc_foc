@@ -25,9 +25,9 @@ typedef struct {
     float ADC_resolution; // ADC resolution
 } TemperatureSensor_t;
 
-void SlowADC_Init(ADC_HandleTypeDef *hadc);
+void SlowADC_Init(ADC_HandleTypeDef *hadc, float vdd_voltage);
 void SlowADC_Trigger(void);
-void SlowADC_UpdateADCCoefficient(float vdd_voltage);
+void SlowADC_UpdateADCCoefficient();
 void SlowADC_CalculateMeasurements(void);
 
 float SlowADC_GetVBusVoltage_ISR(void);

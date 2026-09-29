@@ -16,25 +16,29 @@ static SpeedMode_t speed_mode = SPEED_MODE_DIRECT;
 
 // RAMPA
 volatile bool speed_ramp_active = false;
-static const float speed_step = 1.0f; // przyrost prędkości na 1 krok przy aktywacji rampy liniowej
+static const float speed_step = 0.8f; // przyrost prędkości na 1 krok przy aktywacji rampy liniowej
 volatile float speed_ramp_out = 0.0f;
 
 static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
+
+volatile float g_speed_target = 0.0f; // debug
+volatile float g_speed_error = 0.0f;  // debug
 
 void SpeedController_Update(Motor_References_t *ref)
 {
     if (speed_mode == SPEED_MODE_RAMP) {
         SpeedController_LinearRamp();
     }
-
-    float target = (speed_mode == SPEED_MODE_RAMP)
+	// float target_speed = (speed_mode == SPEED_MODE_RAMP) ? speed_ramp_out : speed_ref_rpm;
+    g_speed_target = (speed_mode == SPEED_MODE_RAMP)
                    ? speed_ramp_out
                    : speed_ref_rpm;
 
     float estimated_speed_rpm = SpeedEstimator_GetOmegaRPM();
-    float error = target - estimated_speed_rpm;
+    // float error = g_speed_target - estimated_speed_rpm;
+	g_speed_error = g_speed_target - estimated_speed_rpm;
 
-    float iq_ref = pi_control(&pi_speed, error);
+    float iq_ref = pi_control(&pi_speed, g_speed_error);
 
 	// Przepisanie wartości zadanej prądu Iq do struktury referencji dla algorytmu sterowania
 	ref->torque_iq_ref = iq_ref;

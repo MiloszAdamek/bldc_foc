@@ -58,6 +58,10 @@
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION        4096.0f    // 12-bit ADC
 
+// Limity temperatury silnika i mosfetów
+#define MOTOR_MAX_TEMP_C      60.0f
+#define MOSFET_MAX_TEMP_C     70.0f
+
 /* =========================================================================
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
  * ========================================================================= */

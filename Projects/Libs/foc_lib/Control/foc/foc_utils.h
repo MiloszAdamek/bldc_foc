@@ -20,14 +20,39 @@ typedef struct {
     float dt;
 } PI_Controller;
 
-static inline float pi_control(PI_Controller *pi, float error){
+// static inline float pi_control(PI_Controller *pi, float error){
 
+//     float u_p = pi->kp * error;
+//     pi->integral += pi->ki * error * pi->dt;
+//     float u = u_p + pi->integral;
+
+//     if (u > pi->limit) { u = pi->limit; pi->integral = u - u_p; }
+//     else if (u < -pi->limit) { u = -pi->limit; pi->integral = u - u_p; }
+
+//     return u;
+// }
+
+static inline float pi_control(PI_Controller *pi, float error){
     float u_p = pi->kp * error;
-    pi->integral += pi->ki * error * pi->dt;
+    
+    // Całkujemy tylko wtedy, gdy ki jest większe od zera
+    if (pi->ki > 0.0f) {
+        pi->integral += pi->ki * error * pi->dt;
+    } else {
+        pi->integral = 0.0f; // Bezpiecznie zerujemy, jeśli ki = 0
+    }
+
     float u = u_p + pi->integral;
 
-    if (u > pi->limit) { u = pi->limit; pi->integral = u - u_p; }
-    else if (u < -pi->limit) { u = -pi->limit; pi->integral = u - u_p; }
+    // Standardowe ograniczenie wyjścia bez psucia integratora, gdy ki = 0
+    if (u > pi->limit) { 
+        u = pi->limit; 
+        if (pi->ki > 0.0f) { pi->integral = u - u_p; } 
+    }
+    else if (u < -pi->limit) { 
+        u = -pi->limit; 
+        if (pi->ki > 0.0f) { pi->integral = u - u_p; } 
+    }
 
     return u;
 }

@@ -15,10 +15,12 @@ static volatile SlowLoopMeasurements_t slow_loop_measurements = {0};
 static uint16_t adc_raw_buff[3];
 volatile bool slow_adc_ready = false;
 
+static float s_vdd_voltage = 3.3f;
+
 static TemperatureSensor_t motor_temp_sensor = 
 {
     .R25      = 10000.0f, // 10k ohm at 25°C
-    .B        = 3950.0f,  // Beta value
+    .B        = 3375.0f,  // Beta value
     .R_series = 10000.0f, // Series resistor value
     .V_supply = 3.3f,     // Supply voltage
     .V_ref    = 3.3f,     // ADC reference voltage
@@ -28,16 +30,18 @@ static TemperatureSensor_t motor_temp_sensor =
 static TemperatureSensor_t mosfet_temp_sensor = 
 {
     .R25      = 10000.0f, // 10k ohm at 25°C
-    .B        = 3950.0f,  // Beta value
+    .B        = 3350.0f,  // Beta value
     .R_series = 10000.0f, // Series resistor value
     .V_supply = 3.3f,     // Supply voltage
     .V_ref    = 3.3f,     // ADC reference voltage
     .ADC_resolution = 4095.0f, // 12-bit ADC resolution
 };
 
-void SlowADC_Init(ADC_HandleTypeDef *hadc) 
+void SlowADC_Init(ADC_HandleTypeDef *hadc, float vdd_voltage) 
 {
     s_hadc = hadc;
+    s_vdd_voltage = vdd_voltage;
+    SlowADC_UpdateADCCoefficient();
     HAL_ADC_Start_DMA(hadc, (uint32_t*)&adc_raw_buff, 3);
 }
 
@@ -49,16 +53,16 @@ void SlowADC_Trigger(void)
     }
 }
 
-void SlowADC_UpdateADCCoefficient(float vdd_voltage) 
+void SlowADC_UpdateADCCoefficient() 
 {
-    s_adc_to_voltage = VOLTAGE_SENSE_DIV_RATIO * vdd_voltage / (float)ADC_RESOLUTION;
+    s_adc_to_voltage = VOLTAGE_SENSE_DIV_RATIO * s_vdd_voltage / (float)ADC_RESOLUTION;
 }
 
 float NTC_CalculateTemperature_VCC(TemperatureSensor_t *sensor, float adc_value) 
 {
     // Zabezpieczenie przed zwarciem
     if (adc_value < 1.0f) {
-        return 150.0f; // max temperatura
+        return 125.0f; // max temperatura
     }
     // Zabezpieczenie przed rozwarciem
     if (adc_value >= sensor->ADC_resolution) {
@@ -75,7 +79,7 @@ float NTC_CalculateTemperature_GND(TemperatureSensor_t *sensor, float adc_value)
 {
     // Zabezpieczenie przed zwarciem
     if (adc_value < 1.0f) {
-        return 150.0f; // max temperatura
+        return 125.0f; // max temperatura
     }
     // Zabezpieczenie przed rozwarciem
     if (adc_value >= sensor->ADC_resolution) {

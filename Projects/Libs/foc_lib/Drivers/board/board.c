@@ -80,9 +80,8 @@ void Board_Init(BoardHandleTypeDef *board)
     // Voltage sense initialization
     // VoltageSense_Init(board->hadc_VDC);
     // VoltageSense_UpdateADCCoefficient(board->vdd_voltage);
-    SlowADC_Init(board->hadc_VDC);
-    SlowADC_UpdateADCCoefficient(board->vdd_voltage);
-    
+    SlowADC_Init(board->hadc_VDC, board->vdd_voltage);
+
     // Encoder initialization and calibration
     AS5048_Init(board->hspi_enc);
 }

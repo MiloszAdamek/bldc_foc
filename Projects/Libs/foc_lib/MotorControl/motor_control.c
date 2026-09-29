@@ -19,8 +19,9 @@
 #include "encoder_hub.h"
 #include "svpwm.h"
 #include "current_sense.h"
-#include "voltage_sense.h"
+// #include "voltage_sense.h"
 #include "slow_adc.h"
+#include "stdio.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
@@ -79,7 +80,7 @@ static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas)
     monitor_data.theta_el       = meas->theta_el;
     monitor_data.theta_mech     = meas->theta_mech;
     monitor_data.speed          = meas->omega_mech_rpm;
-    // monitor_data.speed_ref      = g_ref.position_ref;
+    monitor_data.speed_ref      = g_ref.speed_ref;
 
     monitor_data.id             = g_telem.id_meas;
     monitor_data.iq             = g_telem.iq_meas;
@@ -163,8 +164,8 @@ void MotorControl_SetSpeed(float rpm)
 
 	g_ref.speed_ref = rpm;
     SpeedController_Reset();
-    SpeedController_SetTarget(rpm);
-//    SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
+    // SpeedController_SetTarget(rpm);
+    SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_RUN;
 }
 
@@ -200,6 +201,85 @@ void MotorControl_Reboot(void)
 void MotorControl_SetState(MotorState_t new_state)
 {
 	g_motor_state = new_state;
+}
+
+static inline void MotorControl_BuildReferences(Motor_References_t *ref)
+{
+    ref->torque_iq_ref   = g_ref.torque_iq_ref;
+    ref->speed_ref       = g_ref.speed_ref;
+    ref->position_ref    = g_ref.position_ref;
+    ref->iq_ramp_enabled = g_ref.iq_ramp_enabled;
+}
+
+static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
+{
+	// ==== Odczyt i przetwarzanie próbek prądów z ADC ===
+	CurrentSense_Process_ISR();
+	CurrentSense_CalculatePhases();
+	CurrentSense_Read(&meas->currents);
+
+	// === Odczyt i przetwarzanie próbek kąta z enkodera ===
+	EncoderSample_t enc;
+
+    static uint32_t encoder_timeout = 0;
+    static float last_theta_mech = 0.0f;
+    static float last_theta_el = 0.0f;
+
+    if (EncoderHub_ConsumeSample(&enc))
+    {
+        last_theta_mech = enc.theta_mech;
+        last_theta_el = MotorAlignment_GetElectricalAngle(last_theta_mech);
+
+        encoder_timeout = 0;
+
+        EncoderHub_PublishAngle(
+            last_theta_mech,
+            last_theta_el
+        );
+    }
+    else
+    {
+        encoder_timeout++;
+
+        if (encoder_timeout > ENCODER_TIMEOUT_LIMIT)
+        {
+            MotorControl_Stop();
+            g_motor_state = STATE_FAULT;
+            return false;
+        }
+    }
+    
+    // Zapis ostatnich wartości kątów, wersja bez ekstrapolacji
+    // meas->theta_mech = last_theta_mech;
+    // meas->theta_el   = last_theta_el;
+
+    // Odczyt prędkości mechanicznej
+    meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
+    meas->omega_mech_rad_s = SpeedEstimator_GetOmegaRad_s_ISR();
+
+
+    // Ekstrapolacja kąta w przód o T_DELAY
+    const float T_DELAY = 125e-6f; // 125 us - na próbę
+    meas->theta_mech = normalize_angle(last_theta_mech + meas->omega_mech_rad_s * T_DELAY);
+    meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
+
+	// Odczyt napięcia Vbus i temperatury
+    meas->v_bus = SlowADC_GetVBusVoltage_ISR();
+    meas->motor_temp = SlowADC_GetMotorTemperature_ISR();
+    meas->mosfet_temp = SlowADC_GetMosfetTemperature_ISR();
+
+	return true;
+}
+
+void MotorControl_SafetyCheck(Motor_Measurements_t *meas)
+{
+    // Sprawdzenie temperatury silnika i mosfetów
+    if (meas->motor_temp > MOTOR_MAX_TEMP_C || meas->mosfet_temp > MOSFET_MAX_TEMP_C)
+    {
+        MotorControl_Stop();
+        g_motor_state = STATE_FAULT;
+        printf("Error: Przekroczona temperatura silnika lub mosfetów!\n");
+    }
 }
 
 void MotorControl_OnCurrentSampleISR(void)
@@ -248,74 +328,6 @@ void MotorControl_OnCurrentSampleISR(void)
 
 	// ADC_Conv_Flag_GPIO_Port->BSRR = ADC_Conv_Flag_Pin; // GPIO_PIN_SET
 	// ADC_Conv_Flag_GPIO_Port->BSRR = (uint32_t)ADC_Conv_Flag_Pin << 16; // GPIO_PIN_RESET
-}
-
-static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
-{
-	// ==== Odczyt i przetwarzanie próbek prądów z ADC ===
-	CurrentSense_Process_ISR();
-	CurrentSense_CalculatePhases();
-	CurrentSense_Read(&meas->currents);
-
-	// === Odczyt i przetwarzanie próbek kąta z enkodera ===
-	EncoderSample_t enc;
-
-    static uint32_t encoder_timeout = 0;
-    static float last_theta_mech = 0.0f;
-    static float last_theta_el = 0.0f;
-
-    if (EncoderHub_ConsumeSample(&enc))
-    {
-        last_theta_mech = enc.theta_mech;
-        last_theta_el = MotorAlignment_GetElectricalAngle(last_theta_mech);
-
-        encoder_timeout = 0;
-
-        EncoderHub_PublishAngle(
-            last_theta_mech,
-            last_theta_el
-        );
-    }
-    else
-    {
-        encoder_timeout++;
-
-        if (encoder_timeout > ENCODER_TIMEOUT_LIMIT)
-        {
-            MotorControl_Stop();
-            g_motor_state = STATE_FAULT;
-            return false;
-        }
-    }
-    
-    // === Zapis ostatnich wartości kątów, wersja bez ekstrapolacji ===
-    // meas->theta_mech = last_theta_mech;
-    // meas->theta_el   = last_theta_el;
-
-    // === Odczyt prędkości mechanicznej ===
-    meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
-    meas->omega_mech_rad_s = SpeedEstimator_GetOmegaRad_s_ISR();
-
-
-    // === Ekstrapolacja kąta w przód o T_DELAY ===
-    const float T_DELAY = 125e-6f; // 125 us - na próbę (zmieniaj 100..150us)
-    meas->theta_mech = normalize_angle(last_theta_mech + meas->omega_mech_rad_s * T_DELAY);
-    meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
-
-	// === Odczyt napięcia Vbus ===
-    meas->v_bus = SlowADC_GetVBusVoltage_ISR();
-    meas->motor_temp = SlowADC_GetMotorTemperature_ISR();
-    meas->mosfet_temp = SlowADC_GetMosfetTemperature_ISR();
-
-	return true;
-}
-
-static inline void MotorControl_BuildReferences(Motor_References_t *ref)
-{
-    ref->torque_iq_ref   = g_ref.torque_iq_ref;
-    ref->speed_ref       = g_ref.speed_ref;
-    ref->position_ref    = g_ref.position_ref;
-    ref->iq_ramp_enabled = g_ref.iq_ramp_enabled;
 }
 
 void MotorControl_OnEncoderSampleISR(void)
