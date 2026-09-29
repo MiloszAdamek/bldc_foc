@@ -14,6 +14,7 @@
  #include "voltage_sense.h"
  #include <stdio.h>
  #include "slow_adc.h"
+ #include "tim.h"
 
  #ifdef DRV8353
 
@@ -69,6 +70,10 @@ void Board_Init(BoardHandleTypeDef *board)
     #endif
 
     Board_GetVddVoltage(board);
+
+    __HAL_TIM_CLEAR_FLAG(board->htim_pwm, TIM_FLAG_BREAK);
+    __HAL_TIM_MOE_ENABLE(board->htim_pwm);
+
     CurrentSense_Init(&board->hadc_currA, &board->hadc_currB, board->vdd_voltage); // Inicjalizacja pomiaru prądów
 
     #ifdef DRV8353

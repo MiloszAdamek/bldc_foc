@@ -259,7 +259,7 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
 
 
     // Ekstrapolacja kąta w przód o T_DELAY
-    const float T_DELAY = 125e-6f; // 125 us - na próbę
+    const float T_DELAY = 150e-6f; // 125 us - na próbę
     meas->theta_mech = normalize_angle(last_theta_mech + meas->omega_mech_rad_s * T_DELAY);
     meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
 
