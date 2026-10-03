@@ -579,4 +579,16 @@ DRV8353_Status_t DRV8353_VerifyConfig(
     return DRV8353_OK;
 }
 
+void DRV8353_PrintRegisterBinary(uint16_t value)
+{
+    printf("0b");
+
+    for(int8_t i = 15; i >= 0; i--)
+    {
+        printf("%d", (value >> i) & 0x01);
+    }
+
+    printf("\r\n");
+}
+
 #endif

@@ -28,7 +28,6 @@ void AS5048_Init(SPI_HandleTypeDef *hspi)
 {
 	s_hspi = hspi;
 	DWT_Init();
-	EncoderHub_Init();
 
 	CS_HIGH();
 
@@ -208,20 +207,6 @@ float AS5048_GetAngleRad(void)
     return angle_rad;
 }
 
-// Transmisja przez DMA
-void AS5048_ReadAngleDMA(void)
-{
-	spi_ready = false;
-	uint16_t cmd = AS_READ | AS_ANGLE;
-	cmd  = AS5048_AddParity(cmd);
-
-	s_tx[0] = (uint8_t)(cmd >> 8);
-	s_tx[1] = (uint8_t)(cmd & 0xFF);
-
-	CS_LOW();
-	HAL_SPI_TransmitReceive_DMA(s_hspi, s_tx, s_rx, 2);
-}
-
 bool AS5048_TryGetMechanicalAngle(float *theta_rad)
 {
     if (!theta_ready) return false;
@@ -236,6 +221,41 @@ float AS5048_GetMechanicalAngle(void) {return (float)raw_angle.position / AS5048
 
 float AS5048_GetMechanicalAngleShifted(void) {return ((float)raw_angle.shifted_pos / (AS5048_RESOLUTION >> AS5048_DECIMATION)) * M_TWOPI;}
 
+// Transmisja przez DMA
+void AS5048_ReadAngleDMA(void)
+{
+	spi_ready = false;
+	uint16_t cmd = AS_READ | AS_ANGLE;
+	cmd  = AS5048_AddParity(cmd);
+
+	s_tx[0] = (uint8_t)(cmd >> 8);
+	s_tx[1] = (uint8_t)(cmd & 0xFF);
+
+	CS_LOW();
+	HAL_SPI_TransmitReceive_DMA(s_hspi, s_tx, s_rx, 2);
+}
+
+/* Wywoływane z HAL_SPI_TxRxCpltCallback - kontekst IRQ */
+void AS5048A_OnDmaComplete(const uint8_t *rx_buf)
+{
+    uint16_t frame =
+        ((uint16_t)rx_buf[0] << 8) | rx_buf[1];
+
+    if (frame & AS_ERROR_BIT)
+        return;
+
+    uint16_t raw = frame & AS_ANGLE;
+
+    EncoderSample_t sample = {
+        .raw = raw,
+        .theta_mech = (float)raw / AS5048_RESOLUTION * M_TWOPI,
+        .tick = DWT->CYCCNT,
+        .valid = true
+    };
+
+    EncoderHub_PublishSample(&sample);
+}
+
 // Callback wywoływany po zakończeniu transmisji po DMA
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 {
@@ -243,24 +263,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 	{
 		CS_HIGH();
 
-		EncoderHub_OnDmaComplete(s_rx);
-
-
-//		uint16_t frame = ((uint16_t)s_rx[0] << 8) | s_rx[1];
-//
-////		spi_ready = true;
-//
-//		if (frame & AS_ERROR_BIT) {
-////			raw_angle.errorFlags = AS5048_GetErrorDetails(); // To funkcja blokująca, nie powinno jej tu być
-//			raw_angle.status = AS5048_ERR_FLAG;
-//		} else {
-//			raw_angle.position = frame & AS_ANGLE;
-//			raw_angle.shifted_pos = raw_angle.position >> AS5048_DECIMATION;
-//			raw_angle.status = AS5048_OK;
-//
-//			theta_ready = true;
-//			encoder_prev_ready = true;
-//		}
+		AS5048A_OnDmaComplete(s_rx);
 
 		spi_ready = true;
 //		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug

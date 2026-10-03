@@ -10,36 +10,20 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include "encoder_types.h"
 
-/* Surowa próbka z enkodera - wypełniana TYLKO przez SPI DMA callback */
-typedef struct {
-    uint16_t  raw;          /* 14-bit pozycja */
-    float     theta_mech;   /* [rad] 0..2pi */
-    uint32_t  tick;         /* DWT timestamp przy odebraniu */
-    bool      valid;
-} EncoderSample_t;
-
-/* Snapshot kąta publikowany przez pętlę FOC */
-typedef struct {
-    volatile uint32_t seq;
-    float     theta_mech;   /* [rad] mechaniczny */
-    float     theta_el;     /* [rad] elektryczny  */
-    uint32_t  tick;
-} AngleSnapshot_t;
-
-/* API */
-void              EncoderHub_Init(void);
-
-/* Wywoływane TYLKO z HAL_SPI_TxRxCpltCallback */
-void              EncoderHub_OnDmaComplete(const uint8_t *rx_buf);
+void EncoderHub_Init(void);
 
 /* Wywoływane TYLKO z FOC 10kHz - zwraca true jeśli nowa próbka */
-bool              EncoderHub_ConsumeSample(EncoderSample_t *out);
+bool EncoderHub_ConsumeSample(EncoderSample_t *out);
 
 /* Wywoływane z FOC 10kHz po wyliczeniu kąta el - publikuje snapshot */
-void              EncoderHub_PublishAngle(float theta_mech, float theta_el);
+void EncoderHub_PublishAngle(float theta_mech, float theta_el);
 
 /* Wywoływane z dowolnego kontekstu (Speed 1kHz, Position 200Hz) */
-AngleSnapshot_t   EncoderHub_GetAngleSnapshot(void);
+AngleSnapshot_t EncoderHub_GetAngleSnapshot(void);
+
+/* Wywoływane z przerwania od DMA AS5048A lub z obsługi enkodera inkrementalnego */
+void EncoderHub_PublishSample(const EncoderSample_t *sample);
 
 #endif /* INC_FOC_ENCODER_HUB_H_ */

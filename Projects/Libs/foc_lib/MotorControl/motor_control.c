@@ -213,31 +213,23 @@ static inline void MotorControl_BuildReferences(Motor_References_t *ref)
 
 static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
 {
-	// ==== Odczyt i przetwarzanie próbek prądów z ADC ===
-	CurrentSense_Process_ISR();
-	CurrentSense_CalculatePhases();
-	CurrentSense_Read(&meas->currents);
+    // Currents
+    CurrentSense_Process_ISR();
+    CurrentSense_CalculatePhases();
+    CurrentSense_Read(&meas->currents);
 
-	// === Odczyt i przetwarzanie próbek kąta z enkodera ===
-	EncoderSample_t enc;
+    // Speed
+    meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
+    meas->omega_mech_rad_s = SpeedEstimator_GetOmegaRad_s_ISR();
 
+    // Angle
     static uint32_t encoder_timeout = 0;
-    static float last_theta_mech = 0.0f;
-    static float last_theta_el = 0.0f;
 
-    if (EncoderHub_ConsumeSample(&enc))
-    {
-        last_theta_mech = enc.theta_mech;
-        last_theta_el = MotorAlignment_GetElectricalAngle(last_theta_mech);
+    EncoderAngle_t encoder;
 
-        encoder_timeout = 0;
-
-        EncoderHub_PublishAngle(
-            last_theta_mech,
-            last_theta_el
-        );
-    }
-    else
+    if (!Encoder_GetAngle(
+            &encoder,
+            meas->omega_mech_rad_s))
     {
         encoder_timeout++;
 
@@ -245,31 +237,38 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
         {
             MotorControl_Stop();
             g_motor_state = STATE_FAULT;
+
             return false;
         }
     }
-    
-    // Zapis ostatnich wartości kątów, wersja bez ekstrapolacji
-    // meas->theta_mech = last_theta_mech;
-    // meas->theta_el   = last_theta_el;
+    else
+    {
+        // Reset timeout if we got a new sample
+        if (encoder.new_sample)
+        {
+            encoder_timeout = 0;
+        }
 
-    // Odczyt prędkości mechanicznej
-    meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
-    meas->omega_mech_rad_s = SpeedEstimator_GetOmegaRad_s_ISR();
+        // Publish raw angle for speed and position control loops
+        float theta_el_raw = MotorAlignment_GetElectricalAngle(encoder.theta_raw);
+        Encoder_PublishAngle(encoder.theta_raw, theta_el_raw);
 
+        // Publish predicted angle for control algorithms
+        meas->theta_mech = encoder.theta_predicted;
+        meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
+    }
 
-    // Ekstrapolacja kąta w przód o T_DELAY
-    const float T_DELAY = 150e-6f; // 125 us - na próbę
-    meas->theta_mech = normalize_angle(last_theta_mech + meas->omega_mech_rad_s * T_DELAY);
-    meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
-
-	// Odczyt napięcia Vbus i temperatury
+    // Vbus and temperatures`
     meas->v_bus = SlowADC_GetVBusVoltage_ISR();
+
     meas->motor_temp = SlowADC_GetMotorTemperature_ISR();
+
     meas->mosfet_temp = SlowADC_GetMosfetTemperature_ISR();
 
-	return true;
+    return true;
 }
+
+
 
 void MotorControl_SafetyCheck(Motor_Measurements_t *meas)
 {

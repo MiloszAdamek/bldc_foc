@@ -10,6 +10,7 @@
 
 #include "powerstage.h"
 #include "motor_types.h"
+#include "encoder.h"
 
 typedef enum
 {    
@@ -30,10 +31,13 @@ typedef struct
     TIM_HandleTypeDef *htim_slow_loop;
     ADC_InjectedChannel_t hadc_currA;
     ADC_InjectedChannel_t hadc_currB;
-    ADC_HandleTypeDef *hadc_VDC;
+    ADC_HandleTypeDef *hadc_vdc;
     SPI_HandleTypeDef *hspi_enc;
     SPI_HandleTypeDef *hspi_drv;
     UART_HandleTypeDef *huart_com;
+
+    // Encoder configuration
+    EncoderType_t encoder_type;
 
     // Powerstage handler
     PowerStage_HandleTypeDef powerstage;

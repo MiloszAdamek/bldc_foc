@@ -70,7 +70,7 @@
 #endif
 
 #if defined(USE_CMD_INTERFACE)
-  extern volatile bool g_cmd_flag;  
+  extern volatile bool g_cmd_flag;
 #endif
 
 BoardHandleTypeDef board = {
@@ -83,10 +83,11 @@ BoardHandleTypeDef board = {
   .htim_slow_loop       = &htim3,
   .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
   .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_2},
-  .hadc_VDC             = &hadc2, 
+  .hadc_vdc             = &hadc2, 
   .hspi_enc             = &hspi3,
   .hspi_drv             = &hspi2,
   .huart_com            = &huart3,
+  .encoder_type         = ENCODER_AS5048A_ABSOLUTE,
 };
 
 #if defined(USE_CAN_INTERFACE)
@@ -115,6 +116,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 int _write(int file, char *ptr, int len)
 {
     uint8_t cr = '\r';
@@ -128,18 +130,6 @@ int _write(int file, char *ptr, int len)
         HAL_UART_Transmit(&huart3, (uint8_t *)&ptr[i], 1, HAL_MAX_DELAY);
     }
     return len;
-}
-
-void DRV8353_PrintRegisterBinary(uint16_t value)
-{
-    printf("0b");
-
-    for(int8_t i = 15; i >= 0; i--)
-    {
-        printf("%d", (value >> i) & 0x01);
-    }
-
-    printf("\r\n");
 }
 
 /* USER CODE END 0 */
@@ -186,8 +176,10 @@ int main(void)
   MX_ADC2_Init();
   MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
-  Board_CalibrateADC(&board);
+  
   // Controller initialization BEGIN
+
+  Board_CalibrateADC(&board);
 
   Board_Init(&board);
 
@@ -215,10 +207,12 @@ int main(void)
   {
     // Obsługa CLI
     #if defined(USE_CMD_INTERFACE)
+
       if (g_cmd_flag) {
         g_cmd_flag = false;
         Commander_Process();
       }
+
     #endif
 
     // Obsługa CAN

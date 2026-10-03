@@ -5,15 +5,13 @@
  *      Author: miloush
  */
 
+ 
 #include <stdint.h>
 #include <stdbool.h>
-#include "math.h"
+#include <string.h>
 #include "encoder_hub.h"
 #include "main.h"
-#include <string.h>
 
-#define AS_ANGLE     0x3FFFu
-#define AS_ERROR_BIT 0x4000u
 
 /* ------------------------------------------------------------------ */
 /*  Wewnętrzny double-buffer: DMA pisze do [write_idx],               */
@@ -36,30 +34,6 @@ void EncoderHub_Init(void)
     memset(&s_angle, 0, sizeof(s_angle));
 }
 
-/* Wywoływane z HAL_SPI_TxRxCpltCallback - kontekst IRQ */
-void EncoderHub_OnDmaComplete(const uint8_t *rx_buf)
-{
-    uint16_t frame = ((uint16_t)rx_buf[0] << 8) | rx_buf[1];
-
-    if (frame & AS_ERROR_BIT) {
-        /* Nie aktualizuj bufora - zostaw poprzednią próbkę */
-        return;
-    }
-
-    /* Zapisz do aktywnego bufora */
-    uint8_t idx = s_write_idx;
-    s_buf[idx].raw        = frame & AS_ANGLE;
-    s_buf[idx].theta_mech = (float)(frame & AS_ANGLE) /
-                             16384.0f * M_TWOPI;
-    s_buf[idx].tick       = DWT->CYCCNT;
-    s_buf[idx].valid      = true;
-
-    /* Opublikuj atomowo - zamień indeks */
-    __DMB();
-    s_write_idx  = idx ^ 1u;   /* FOC zacznie czytać stary idx */
-    s_new_sample = true;
-}
-
 /* Wywoływane TYLKO z FOC 10kHz */
 bool EncoderHub_ConsumeSample(EncoderSample_t *out)
 {
@@ -71,6 +45,24 @@ bool EncoderHub_ConsumeSample(EncoderSample_t *out)
 
     s_new_sample = false;
     return out->valid;
+}
+
+/* Wywoływane z przerwania od DMA AS5048A lub z obsługi enkodera inkrementalnego */
+void EncoderHub_PublishSample(const EncoderSample_t *sample)
+{
+    uint8_t idx = s_write_idx;
+
+    /* Zapisujemy kompletną próbkę do aktualnego bufora */
+    s_buf[idx] = *sample;
+
+    /*
+     * Upewniamy się, że zapis struktury zakończył się
+     * przed zmianą indeksu i ustawieniem flagi.
+     */
+    __DMB();
+
+    s_write_idx = idx ^ 1u;
+    s_new_sample = true;
 }
 
 /* Wywoływane z FOC 10kHz po wyliczeniu kątów */

@@ -22,7 +22,9 @@ target_sources(foc_lib PRIVATE
     Drivers/powerstage/powerstage_ihm03.c
     Drivers/current_sense/current_sense.c
     Drivers/encoder/as5048a.c
+    Drivers/encoder/encoder_incremental.c
     Drivers/encoder/encoder_hub.c
+    Drivers/encoder/encoder.c
     Drivers/voltage_sense/voltage_sense.c
     Drivers/slow_adc/slow_adc.c
 

@@ -10,8 +10,7 @@
  #include "current_sense.h"
  #include "powerstage.h"
  #include "drv8353.h"
- #include "as5048a.h"
- #include "voltage_sense.h"
+ #include "encoder.h"
  #include <stdio.h>
  #include "slow_adc.h"
  #include "tim.h"
@@ -85,10 +84,10 @@ void Board_Init(BoardHandleTypeDef *board)
     // Voltage sense initialization
     // VoltageSense_Init(board->hadc_VDC);
     // VoltageSense_UpdateADCCoefficient(board->vdd_voltage);
-    SlowADC_Init(board->hadc_VDC, board->vdd_voltage);
+    SlowADC_Init(board->hadc_vdc, board->vdd_voltage);
 
     // Encoder initialization and calibration
-    AS5048_Init(board->hspi_enc);
+    Encoder_Init();
 }
 
 void Board_StartMotor(BoardHandleTypeDef *board)
