@@ -79,16 +79,20 @@ bool Encoder_GetAngle(EncoderAngle_t *angle, float omega_rad_s)
         // Time from the last encoder sample to now in seconds
         uint32_t delta_cycles = now - s_last_encoder_tick;
         angle->dt = (float)delta_cycles * DT_S;
+        
 
         // Raw angle
         angle->theta_raw = s_last_theta_mech;
 
         // Predicted angle based on the last sample and the estimated speed
-        angle->theta_predicted =
-            normalize_angle(
-                s_last_theta_mech +
-                omega_rad_s * angle->dt
-            );
+        // angle->theta_predicted =
+        //     normalize_angle(
+        //         s_last_theta_mech +
+        //         omega_rad_s * angle->dt
+        //     );
+
+        // Test
+        angle->theta_predicted = normalize_angle(s_last_theta_mech);
 
 
         angle->valid = true;

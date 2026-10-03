@@ -94,13 +94,27 @@ static inline void InvParkTransform(float vd, float vq, float *sin_theta, float 
 //     return a;
 // }
 
+// static inline float normalize_angle(float angle)
+// {
+//     if (angle >= M_TWOPI)
+//         angle -= M_TWOPI;
+//     else if (angle < 0.0f)
+//         angle += M_TWOPI;
+
+//     return angle;
+// }
+
 static inline float normalize_angle(float angle)
 {
-    if (angle >= M_TWOPI)
-        angle -= M_TWOPI;
-    else if (angle < 0.0f)
-        angle += M_TWOPI;
-
+    const float one_over_two_pi = 1.0f / (2.0f * (float)M_PI);
+    const float two_pi = 2.0f * (float)M_PI;
+    
+    // Obliczenie reszty z dzielenia przez 2*PI
+    angle -= two_pi * floorf(angle * one_over_two_pi);
+    
+    if (angle < 0.0f) {
+        angle += two_pi;
+    }
     return angle;
 }
 

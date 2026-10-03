@@ -52,7 +52,7 @@
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        13.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         1.0f
+#define CURRENT_LIMIT         1.2f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -81,21 +81,33 @@
  * ========================================================================= */
 
 #ifdef DRV8353
-    #define PI_KP_ID 0.1f
-    #define PI_KI_ID 500.0f
+    // #define PI_KP_ID 0.8f
+    // #define PI_KI_ID 250.0f
+    // #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
+
+    // #define PI_KP_IQ 0.8f
+    // #define PI_KI_IQ 250.0f
+    // #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_ID 1.2f
+    #define PI_KI_ID 200.0f
     #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
 
-    #define PI_KP_IQ 0.1f
-    #define PI_KI_IQ 500.0f
+    #define PI_KP_IQ 1.2f
+    #define PI_KI_IQ 200.0f
     #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_V 0.00089f
+    #define PI_KI_V 0.001f
+    #define PI_LIMIT_V CURRENT_LIMIT
 
     #define PI_KP_FW  0.09155f
     #define PI_KI_FW  1500.0f
     #define PI_LIMIT_FW 0.5f
 
-    #define PI_KP_V 0.0004f
-    #define PI_KI_V 0.0002f
-    #define PI_LIMIT_V CURRENT_LIMIT
+    // #define PI_KP_V 0.0004f
+    // #define PI_KI_V 0.0002f
+    // #define PI_LIMIT_V CURRENT_LIMIT
 
     #define PI_KP_P 10.0f
     #define PI_KI_P 2.0f

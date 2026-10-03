@@ -194,17 +194,16 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     ParkTransform(state->i_alpha, state->i_beta, &sin_theta, &cos_theta, &state->id, &state->iq);
     
     // === Wariant z priorytetem osi D (ograniczenie na osi Q w zależności od napięcia na osi D)===
-    const float VMAX_SQ = PI_LIMIT_ID * PI_LIMIT_ID;
+    float v_max = meas->v_bus / M_SQRT3;
+    float v_max_sq = v_max * v_max;
+    state->pi_id.limit = v_max;
     state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
 
     // Dostępne napięcie dla osi Q po uwzględnieniu ograniczenia na osi D
     float vd_sq = state->v_d * state->v_d;
-    float vq_limit_sq = VMAX_SQ - vd_sq;
+    float vq_limit_sq = v_max_sq - vd_sq;
 
-    float max_vq = 0.0f;
-    if (vq_limit_sq > 0.0f) {
-        max_vq = sqrtf(vq_limit_sq); 
-    }
+    float max_vq = (vq_limit_sq > 0.0f) ? sqrtf(vq_limit_sq) : 0.0f;
 
     state->pi_iq.limit = max_vq; // Dynamiczna zmiana limitu dla regulatora PI na osi Q
     state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
