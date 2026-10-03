@@ -42,9 +42,9 @@ typedef enum {
 
 // Flagi błędów z rejestru 0x0001
 typedef struct {
-    bool watchdogError;
-    bool offsetFinished;
-    bool cordicOverflow;
+    bool framingError;
+    bool commandInvalid;
+    bool parityError;
 } AS5048_ErrorFlags;
 
 // Wynik odczytu pozycji

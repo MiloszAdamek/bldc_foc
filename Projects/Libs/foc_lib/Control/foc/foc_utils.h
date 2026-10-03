@@ -87,11 +87,21 @@ static inline void InvParkTransform(float vd, float vq, float *sin_theta, float 
 }
 
 // Normalizacja kąta do zakresu (0, 2pi)
-static inline float normalize_angle(float a)
+// static inline float normalize_angle(float a)
+// {
+//     while (a >= M_TWOPI) a -= M_TWOPI;
+//     while (a < 0.0f)    a += M_TWOPI;
+//     return a;
+// }
+
+static inline float normalize_angle(float angle)
 {
-    while (a >= M_TWOPI) a -= M_TWOPI;
-    while (a < 0.0f)    a += M_TWOPI;
-    return a;
+    if (angle >= M_TWOPI)
+        angle -= M_TWOPI;
+    else if (angle < 0.0f)
+        angle += M_TWOPI;
+
+    return angle;
 }
 
 // Normalizuje kąt do zakresu (-PI, PI]

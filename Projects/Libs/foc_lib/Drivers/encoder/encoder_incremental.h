@@ -11,10 +11,7 @@
  #include "tim.h"
  
 void EncoderIncremental_Init(TIM_HandleTypeDef* htim);
-void EncoderIncremental_Update();
-void EncoderIncremental_GetSample();
-void EncoderIncremental_SetZero();
-
 float EncoderIncremental_GetMechanicalAngle(void);
+void EncoderIncremental_SetZero();
 
 #endif /* INC_FOC_ENCODER_INCREMENTAL_H_ */

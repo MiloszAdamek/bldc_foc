@@ -8,6 +8,8 @@
 #include "motor_alignment.h"
 #include "board.h"
 #include "as5048a.h"
+#include "encoder_incremental.h"
+#include "encoder_types.h"
 #include "lut_sincos.h"
 #include "foc_utils.h"
 #include "config.h"
@@ -15,6 +17,8 @@
 #include <math.h>
 
 extern BoardHandleTypeDef board;
+
+float MotorAlignment_GetAngle();
 
 Motor_Calibration_t g_motor_calib = {
     .direction = 1,
@@ -65,6 +69,10 @@ bool MotorAlignment_AlignSensor(void)
         return true;
     }
 
+    if(board.encoder_type == ENCODER_INCREMENTAL) {
+        EncoderIncremental_SetZero();
+    }
+
     Board_StartMotor(&board);
 
     printf("\n--- Start kalibracji sensora ---\n");
@@ -75,8 +83,9 @@ bool MotorAlignment_AlignSensor(void)
         MotorAlignment_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, theta);
         HAL_Delay(2);
     }
+    
+    float mid_angle = MotorAlignment_GetAngle();
 
-    float mid_angle = AS5048_GetAngleRad();
     if (mid_angle < 0.0f) {
         printf("Błąd: odczyt kąta (mid)\n");
         return (g_motor_calib.aligned = false);
@@ -88,7 +97,8 @@ bool MotorAlignment_AlignSensor(void)
         HAL_Delay(2);
     }
 
-    float end_angle = AS5048_GetAngleRad();
+    float end_angle = MotorAlignment_GetAngle();
+
     if (end_angle < 0.0f) {
         printf("Błąd: odczyt kąta (end)\n");
         return (g_motor_calib.aligned = false);
@@ -111,7 +121,8 @@ bool MotorAlignment_AlignSensor(void)
     MotorAlignment_SetPhaseVoltage(0, VOLTAGE_SENSOR_ALIGN, _3PI_2);
     HAL_Delay(700);
 
-    float mech_angle = AS5048_GetAngleRad();
+    float mech_angle = MotorAlignment_GetAngle();
+
     if (mech_angle < 0.0f) {
         printf("Błąd odczytu kąta przy wyznaczaniu zera.\n");
         return (g_motor_calib.aligned = false);
@@ -136,6 +147,18 @@ bool MotorAlignment_AlignSensor(void)
     printf("=============\n");
 
     return (g_motor_calib.aligned = true);
+}
+
+float MotorAlignment_GetAngle()
+{
+    float theta = -1.0f;
+    if(board.encoder_type == ENCODER_INCREMENTAL) {
+        theta = EncoderIncremental_GetMechanicalAngle();
+    }
+    else if (board.encoder_type == ENCODER_AS5048A_ABSOLUTE) {
+        theta = AS5048_GetAngleRad();
+    }
+    return theta;
 }
 
 bool MotorAlignment_IsAligned(void)

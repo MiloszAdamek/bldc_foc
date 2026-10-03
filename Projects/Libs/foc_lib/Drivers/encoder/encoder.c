@@ -12,7 +12,7 @@
  #include "encoder_incremental.h"
  #include "board.h"
  #include "speed_estimator.h"
-//  #include "foc_utils.h"
+ #include "foc_utils.h"
  #include "math_consts.h"
  #include "main.h"
 
@@ -30,6 +30,7 @@ void Encoder_Init(void)
     {
         EncoderHub_Init();
         AS5048_Init(board.hspi_enc);
+        HAL_Delay(100);
     }
     else if (board.encoder_type == ENCODER_INCREMENTAL)
     {
@@ -39,19 +40,6 @@ void Encoder_Init(void)
     s_last_theta_mech = 0.0f;
     s_last_encoder_tick = 0;
     s_encoder_valid = false;
-}
-
-static inline float normalize_angle(float angle)
-{
-    if (!isfinite(angle))
-        return 0.0f;
-
-    angle = fmodf(angle, M_TWOPI);
-
-    if (angle < 0.0f)
-        angle += M_TWOPI;
-
-    return angle;
 }
 
 bool Encoder_GetAngle(EncoderAngle_t *angle, float omega_rad_s)
@@ -111,18 +99,11 @@ bool Encoder_GetAngle(EncoderAngle_t *angle, float omega_rad_s)
     // Incremental encoder
     if (board.encoder_type == ENCODER_INCREMENTAL)
     {
-        float theta =
-            EncoderIncremental_GetMechanicalAngle();
+        float theta = EncoderIncremental_GetMechanicalAngle();
 
         angle->theta_raw = theta;
-
-        // Incremental encoder is read directly from TIM.
-        // There is no asynchronous sample to extrapolate
-        // from here.
         angle->theta_predicted = theta;
-
-        angle->dt = 0.0f;
-
+        angle->dt = 0.0f; // No prediction for incremental encoder
         angle->new_sample = true;
         angle->valid = true;
 

@@ -11,9 +11,9 @@
 #define INC_BSP_SPEED_ESTIMATOR_H_
 
 #define SPEED_ESTIMATOR_KALMAN
-//#define SPEED_ESTIMATOR_LPF
+// #define SPEED_ESTIMATOR_LPF
 
-#define VELOCITY_ALPHA      0.95f
+#define VELOCITY_ALPHA      0.8f
 #define MAX_DTHETA_RAD      0.2f
 
 typedef struct {

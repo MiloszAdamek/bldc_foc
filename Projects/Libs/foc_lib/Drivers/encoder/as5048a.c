@@ -143,14 +143,14 @@ AS5048_ErrorFlags AS5048_GetErrorDetails(void)
     AS5048_RegRead(AS_CLR_ERR, &response);
     uint16_t reg = response & 0x3FFF;
 
-    err.watchdogError   = reg & (1 << 0);
-    err.offsetFinished  = reg & (1 << 1);
-    err.cordicOverflow  = reg & (1 << 2);
+    err.framingError   = reg & (1 << 0);
+    err.commandInvalid  = reg & (1 << 1);
+    err.parityError  = reg & (1 << 2);
 
     printf("[ERROR] Rejestr błędów: 0x%04X\n", reg);
-    printf("        → Watchdog: %s\n", err.watchdogError ? "TAK" : "nie");
-    printf("        → Offset finished: %s\n", err.offsetFinished ? "TAK" : "nie");
-    printf("        → CORDIC overflow: %s\n", err.cordicOverflow ? "TAK" : "nie");
+    printf("        → Framing: %s\n", err.framingError ? "TAK" : "nie");
+    printf("        → Command invalid: %s\n", err.commandInvalid ? "TAK" : "nie");
+    printf("        → Parity: %s\n", err.parityError ? "TAK" : "nie");
 
     // CLEAR ERROR FLAG mechanizm z dokumentacji: kolejny odczyt kasuje flagę
     uint16_t dummy;

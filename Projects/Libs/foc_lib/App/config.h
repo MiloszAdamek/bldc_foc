@@ -52,7 +52,7 @@
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        13.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         3.0f
+#define CURRENT_LIMIT         1.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -70,7 +70,7 @@
 #define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
 #define MOTOR_VELOCITY_CONSTANT 168		    // Kv
 
-#define VOLTAGE_SENSOR_ALIGN  	4.0f
+#define VOLTAGE_SENSOR_ALIGN  	6.0f
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
 #define SENSOR_DIRECTION_CW   1
@@ -81,20 +81,20 @@
  * ========================================================================= */
 
 #ifdef DRV8353
-    #define PI_KP_ID 0.22f
-    #define PI_KI_ID 1058.0f
+    #define PI_KP_ID 0.1f
+    #define PI_KI_ID 500.0f
     #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
 
-    #define PI_KP_IQ 0.22f
-    #define PI_KI_IQ 1058.0f
+    #define PI_KP_IQ 0.1f
+    #define PI_KI_IQ 500.0f
     #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_FW  0.09155f
     #define PI_KI_FW  1500.0f
     #define PI_LIMIT_FW 0.5f
 
-    #define PI_KP_V 0.0005f
-    #define PI_KI_V 0.0001f
+    #define PI_KP_V 0.0004f
+    #define PI_KI_V 0.0002f
     #define PI_LIMIT_V CURRENT_LIMIT
 
     #define PI_KP_P 10.0f

@@ -253,12 +253,12 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
         float theta_el_raw = MotorAlignment_GetElectricalAngle(encoder.theta_raw);
         Encoder_PublishAngle(encoder.theta_raw, theta_el_raw);
 
-        // Publish predicted angle for control algorithms
+        // Publish predicted angle for control algorithms (if AS5048A is used)
         meas->theta_mech = encoder.theta_predicted;
         meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
     }
 
-    // Vbus and temperatures`
+    // Vbus and temperatures
     meas->v_bus = SlowADC_GetVBusVoltage_ISR();
 
     meas->motor_temp = SlowADC_GetMotorTemperature_ISR();
@@ -267,8 +267,6 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
 
     return true;
 }
-
-
 
 void MotorControl_SafetyCheck(Motor_Measurements_t *meas)
 {
