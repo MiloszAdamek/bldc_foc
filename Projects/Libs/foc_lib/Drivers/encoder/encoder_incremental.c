@@ -22,7 +22,7 @@ void EncoderIncremental_Init(TIM_HandleTypeDef* htim)
 
 float EncoderIncremental_GetMechanicalAngle(void)
 {
-    return ((int32_t)__HAL_TIM_GET_COUNTER(s_htim) * CNT_TO_RAD);
+    return ((float)__HAL_TIM_GET_COUNTER(s_htim) * CNT_TO_RAD); // Zakres 0 do 2*PI
 }
 
 void EncoderIncremental_SetZero()

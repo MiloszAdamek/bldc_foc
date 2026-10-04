@@ -21,4 +21,6 @@ typedef struct {
     void (*GetTelemetry)(const void *ctx, volatile Motor_Telemetry_t *telem);
 } ControlAlgorithm_t;
 
+
+
 #endif /* INC_MOTOR_ALGORITHM_H_ */

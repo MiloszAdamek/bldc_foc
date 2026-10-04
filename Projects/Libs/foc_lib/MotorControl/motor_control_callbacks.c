@@ -28,11 +28,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		return;
 	}
 
-	/* Encoder SPI 10 kHz - priority 1 */
-	else if (htim->Instance == board.htim_enc->Instance)
-	{
-        MotorControl_OnEncoderSampleISR();
-	}
+	#if defined(USE_AS5048A_ENCODER)
+	
+		/* Encoder SPI 10 kHz - priority 1 */
+		else if (htim->Instance == board.htim_enc->Instance)
+		{
+			MotorControl_OnEncoderSampleISR();
+		}
+		
+	#endif
 
 	/* Speed 1 kHz - priority 2 */
 	else if (htim->Instance == board.htim_speed->Instance)

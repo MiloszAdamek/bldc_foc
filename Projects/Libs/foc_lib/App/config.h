@@ -50,9 +50,9 @@
 #define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
-#define VOLTAGE_SUPPLY        13.0f
+#define VOLTAGE_SUPPLY        15.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         2.0f
+#define CURRENT_LIMIT         3.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -69,17 +69,17 @@
 #ifdef GM2804
     #define MOTOR_POLE_PAIRS      	7           // liczba par biegunów silnika
     #define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
-    #define MOTOR_VELOCITY_CONSTANT 168		    // Kv
+    #define MOTOR_VELOCITY_CONSTANT 168.0f		// Kv
 #endif
 
 #ifdef TL50M10
     #define MOTOR_POLE_PAIRS      	14          // liczba par biegunów silnika
     #define MOTOR_TORQUE_CONSTANT 	0.0f		// Kt unknown
-    #define MOTOR_VELOCITY_CONSTANT 130		    // Kv
+    #define MOTOR_VELOCITY_CONSTANT 130.0f		    // Kv
 #endif
 
 
-#define VOLTAGE_SENSOR_ALIGN  	6.0f
+#define VOLTAGE_SENSOR_ALIGN  	12.0f
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
 #define SENSOR_DIRECTION_CW   1

@@ -5,6 +5,8 @@
  *      Author: Milosz Adamek
  */
 
+
+
 #include "as5048a.h"
 #include "encoder_hub.h"
 #include <stdio.h>
@@ -21,8 +23,13 @@ static uint8_t s_rx[2];
 
 volatile AS5048_ReadResult raw_angle;
 
+#if defined(USE_AS5048A_ENCODER)
 static inline void CS_LOW(void)  { HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_RESET); }
 static inline void CS_HIGH(void) { HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_SET); }
+#else
+static inline void CS_HIGH(void) {};
+static inline void CS_LOW(void) {};
+#endif
 
 static void AS5048_ClearError();
 
@@ -282,4 +289,3 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 //		SPI_Flag_GPIO_Port->BSRR = (uint32_t)SPI_Flag_Pin << 16; // GPIO PC9 reset, debug
 	}
 }
-

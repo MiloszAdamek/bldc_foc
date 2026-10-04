@@ -22,6 +22,7 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "spi.h"
+#include "stm32g4xx_hal_tim.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -38,6 +39,13 @@
   #include "can_interface.h"
 
 #endif
+
+#include "motor_alignment.h"
+
+#include "stdio.h"
+
+// #include "encoder_incremental.h"
+// #include "math_consts.h"
 
 // #ifndef __FAST_MATH__
 //   #error "FAST_MATH must be enabled in the project settings"
@@ -113,6 +121,11 @@ BoardHandleTypeDef board = {
   
 #endif
 
+// volatile uint32_t debug_enc_raw_cnt = 0;
+// volatile float debug_mech_angle_rad = 0.0f;
+// volatile float debug_mech_angle_deg = 0.0f;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,6 +151,7 @@ int _write(int file, char *ptr, int len)
     }
     return len;
 }
+
 
 /* USER CODE END 0 */
 
@@ -190,7 +204,7 @@ int main(void)
 
   Board_Init(&board);
 
-  MotorControl_Init(&board);
+  // MotorControl_Init(&board);
 
   #if defined(USE_CMD_INTERFACE)
 
@@ -204,6 +218,8 @@ int main(void)
 
   #endif
 
+  // EncoderIncremental_Init(&htim3);
+
   // Controller initialization END
 
   // Tests BEGIN
@@ -216,6 +232,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+    Motor_Motion_Test();
+    HAL_Delay(1);
+
+    // debug_enc_raw_cnt = __HAL_TIM_GET_COUNTER(&htim3);
+    // debug_mech_angle_rad = EncoderIncremental_GetMechanicalAngle();
+    // debug_mech_angle_deg = debug_mech_angle_rad * (180.0f / (float)M_PI);
+
+    // HAL_Delay(5);
+    
     // Obsługa CLI
     #if defined(USE_CMD_INTERFACE)
 

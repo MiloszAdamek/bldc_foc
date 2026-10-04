@@ -243,42 +243,42 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     // float v_max = meas->v_bus / M_SQRT3;
     // float v_max_sq = v_max * v_max;
 
-    // state->pi_id.limit = v_max;
-    // state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
-
-    // // Dostępne napięcie dla osi Q po uwzględnieniu ograniczenia na osi D
-    // float vd_sq = state->v_d * state->v_d;
-    // float vq_limit_sq = v_max_sq - vd_sq;
-
-    // float max_vq = (vq_limit_sq > 0.0f) ? sqrtf(vq_limit_sq) : 0.0f;
-
-    // state->pi_iq.limit = max_vq; // Dynamiczna zmiana limitu dla regulatora PI na osi Q
-    // state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
-
-    // Wariant bez priorytetu osi D - dla wersji z FW
-    // 1. Obliczenie nieskorelowanych napięć z regulatorów PI
     state->pi_id.limit = v_max;
     state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
 
-    state->pi_iq.limit = v_max;
+    // Dostępne napięcie dla osi Q po uwzględnieniu ograniczenia na osi D
+    float vd_sq = state->v_d * state->v_d;
+    float vq_limit_sq = v_max_sq - vd_sq;
+
+    float max_vq = (vq_limit_sq > 0.0f) ? sqrtf(vq_limit_sq) : 0.0f;
+
+    state->pi_iq.limit = max_vq; // Dynamiczna zmiana limitu dla regulatora PI na osi Q
     state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
 
-    // 2. Skalowanie wektorowe (brak uprzywilejowania którejkolwiek osi)
-    float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
+    // Wariant bez priorytetu osi D - dla wersji z FW
+    // // 1. Obliczenie nieskorelowanych napięć z regulatorów PI
+    // state->pi_id.limit = v_max;
+    // state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
 
-    if (v_mag_sq > v_max_sq)
-    {
-        float v_mag = sqrtf(v_mag_sq);
-        float scale = v_max / v_mag;
+    // state->pi_iq.limit = v_max;
+    // state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
 
-        state->v_d *= scale;
-        state->v_q *= scale;
+    // // 2. Skalowanie wektorowe (brak uprzywilejowania którejkolwiek osi)
+    // float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
 
-        // WAŻNE: Anti-windup dla regulatorów PI!
-        // Jeśli Twoja funkcja pi_control ma wbudowane anti-windup,
-        // należy zaktualizować stan całkujący o faktycznie podane napięcie,
-        // w przeciwnym razie regulatory będą się nasycać.
-    }
+    // if (v_mag_sq > v_max_sq)
+    // {
+    //     float v_mag = sqrtf(v_mag_sq);
+    //     float scale = v_max / v_mag;
+
+    //     state->v_d *= scale;
+    //     state->v_q *= scale;
+
+    //     // WAŻNE: Anti-windup dla regulatorów PI!
+    //     // Jeśli Twoja funkcja pi_control ma wbudowane anti-windup,
+    //     // należy zaktualizować stan całkujący o faktycznie podane napięcie,
+    //     // w przeciwnym razie regulatory będą się nasycać.
+    // }
 
     InvParkTransform(state->v_d, state->v_q, &sin_theta, &cos_theta, &state->v_alpha, &state->v_beta);
     

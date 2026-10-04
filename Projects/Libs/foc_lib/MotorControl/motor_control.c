@@ -117,7 +117,7 @@ void MotorControl_Start(void)
 	if (active_algorithm.Start) {
         active_algorithm.Start(active_algorithm.ctx);
     }
-	MotorControl_SetTorque_Iq(0.15f);
+	// MotorControl_SetTorque_Iq(0.15f);
 }
 
 void MotorControl_Stop(void)
@@ -327,6 +327,7 @@ void MotorControl_OnCurrentSampleISR(void)
 	// ADC_Conv_Flag_GPIO_Port->BSRR = (uint32_t)ADC_Conv_Flag_Pin << 16; // GPIO_PIN_RESET
 }
 
+#if defined(USE_AS5048A_ENCODER)
 void MotorControl_OnEncoderSampleISR(void)
 {
 	if (spi_ready) {
@@ -335,6 +336,7 @@ void MotorControl_OnEncoderSampleISR(void)
 		/* CS_HIGH and spi_ready=true in DMA callback */
 	}
 }
+#endif
 
 void MotorControl_OnSpeedISR(void)
 {

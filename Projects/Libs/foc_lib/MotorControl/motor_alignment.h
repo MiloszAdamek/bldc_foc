@@ -19,4 +19,6 @@ float MotorAlignment_GetElectricalAngle(float mech);
 
 void Motor_Motion_Test(void);
 
+void Test_OpenLoop_Spin(void);
+
 #endif /* INC_MOTOR_ALIGNMENT_H_ */
