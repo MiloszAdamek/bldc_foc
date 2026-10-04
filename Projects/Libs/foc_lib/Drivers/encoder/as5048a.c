@@ -24,12 +24,18 @@ volatile AS5048_ReadResult raw_angle;
 static inline void CS_LOW(void)  { HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_RESET); }
 static inline void CS_HIGH(void) { HAL_GPIO_WritePin(AS5048A_CS_GPIO_Port, AS5048A_CS_Pin, GPIO_PIN_SET); }
 
+static void AS5048_ClearError();
+
 void AS5048_Init(SPI_HandleTypeDef *hspi)
 {
 	s_hspi = hspi;
 	DWT_Init();
 
 	CS_HIGH();
+
+    HAL_Delay(100);
+
+    AS5048_ClearError();
 
 	spi_ready = true;
 }
@@ -132,6 +138,13 @@ static AS5048_Status AS5048_RegWrite(const uint16_t regAddr, const uint16_t valu
     *confirm = (rxBuf3[0] << 8) | rxBuf3[1];
     if (AS5048_HasError(*confirm)) return AS5048_ERR_FLAG;
     return AS5048_OK;
+}
+
+static void AS5048_ClearError() 
+{
+    uint16_t response = 0;
+    AS5048_RegRead(AS_CLR_ERR, &response);
+    AS5048_RegRead(AS_NOP, &response);
 }
 
 AS5048_ErrorFlags AS5048_GetErrorDetails(void)
