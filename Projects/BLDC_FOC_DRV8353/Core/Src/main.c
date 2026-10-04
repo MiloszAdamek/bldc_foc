@@ -92,7 +92,7 @@ BoardHandleTypeDef board = {
   .hspi_drv             = &hspi2, 
   .hspi_enc             = &hspi3,
   .huart_com            = &huart3,
-  .encoder_type         = ENCODER_AS5048A_ABSOLUTE,
+  .encoder_type         = ENCODER_INCREMENTAL,
 };
 
 #if defined(USE_CAN_INTERFACE)

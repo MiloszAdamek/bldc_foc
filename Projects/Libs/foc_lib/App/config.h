@@ -66,9 +66,18 @@
  * ----------------  PARAMETRY SILNIKA I ENKODERA  -------------------------
  * ========================================================================= */
 
-#define MOTOR_POLE_PAIRS      	7           // liczba par biegunów silnika
-#define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
-#define MOTOR_VELOCITY_CONSTANT 168		    // Kv
+#ifdef GM2804
+    #define MOTOR_POLE_PAIRS      	7           // liczba par biegunów silnika
+    #define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
+    #define MOTOR_VELOCITY_CONSTANT 168		    // Kv
+#endif
+
+#ifdef TL50M10
+    #define MOTOR_POLE_PAIRS      	14          // liczba par biegunów silnika
+    #define MOTOR_TORQUE_CONSTANT 	0.0f		// Kt unknown
+    #define MOTOR_VELOCITY_CONSTANT 130		    // Kv
+#endif
+
 
 #define VOLTAGE_SENSOR_ALIGN  	6.0f
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)

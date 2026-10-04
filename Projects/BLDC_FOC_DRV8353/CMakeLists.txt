@@ -35,6 +35,8 @@ add_compile_definitions(USE_CAN_INTERFACE)
 
 add_compile_definitions(USE_CMD_INTERFACE)
 
+add_compile_definitions(TL50M10) # Motor model definition
+
 # Dołączenie foc_lib
 add_subdirectory(
     "${CMAKE_CURRENT_SOURCE_DIR}/../Libs/foc_lib"

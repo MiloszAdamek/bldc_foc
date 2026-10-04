@@ -8,7 +8,8 @@
 #include "math_consts.h"
 #include "encoder_incremental.h"
 
-#define ENCODER_INCREMENTAL_CPR 2048 // Liczba impulsów na obrót
+#define ENCODER_INCREMENTAL_PPR 2048 // Liczba impulsów na obrót - specyfikacja AMT102-V
+#define ENCODER_INCREMENTAL_CPR (ENCODER_INCREMENTAL_PPR * 4) // Liczba zliczeń na obrót (kwadratura)
 #define CNT_TO_RAD (2.0f * M_PI / (float)ENCODER_INCREMENTAL_CPR)
 
 static TIM_HandleTypeDef* s_htim;
