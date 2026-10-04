@@ -52,7 +52,7 @@
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        15.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         3.0f
+#define CURRENT_LIMIT         2.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -79,7 +79,7 @@
 #endif
 
 
-#define VOLTAGE_SENSOR_ALIGN  	12.0f
+#define VOLTAGE_SENSOR_ALIGN  	4.0f
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
 #define SENSOR_DIRECTION_CW   1
