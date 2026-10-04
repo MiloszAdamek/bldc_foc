@@ -264,7 +264,7 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
 
     // 2. Skalowanie wektorowe (brak uprzywilejowania którejkolwiek osi)
-    // float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
+    float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
 
     if (v_mag_sq > v_max_sq)
     {
