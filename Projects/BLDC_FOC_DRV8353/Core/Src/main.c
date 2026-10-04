@@ -40,9 +40,13 @@
 
 #endif
 
+// TEST BEGIN
+
 #include "motor_alignment.h"
 
 #include "stdio.h"
+
+// TEST END
 
 // #include "encoder_incremental.h"
 // #include "math_consts.h"
@@ -121,10 +125,15 @@ BoardHandleTypeDef board = {
   
 #endif
 
+// TEST BEGIN
+
 // volatile uint32_t debug_enc_raw_cnt = 0;
 // volatile float debug_mech_angle_rad = 0.0f;
 // volatile float debug_mech_angle_deg = 0.0f;
 
+int fault_read_cnt = 0;
+
+// TEST END
 
 /* USER CODE END PV */
 
@@ -204,7 +213,7 @@ int main(void)
 
   Board_Init(&board);
 
-  // MotorControl_Init(&board);
+  // MotorControl_Init(&board); // Off during tests
 
   #if defined(USE_CMD_INTERFACE)
 
@@ -233,14 +242,22 @@ int main(void)
   while (1)
   {
 
+    // TEST BEGIN
     Motor_Motion_Test();
     HAL_Delay(1);
+
+    if (++fault_read_cnt >= 1000) {
+        fault_read_cnt = 0;
+        PowerStage_CheckFaults(&board.powerstage);
+    }
 
     // debug_enc_raw_cnt = __HAL_TIM_GET_COUNTER(&htim3);
     // debug_mech_angle_rad = EncoderIncremental_GetMechanicalAngle();
     // debug_mech_angle_deg = debug_mech_angle_rad * (180.0f / (float)M_PI);
 
     // HAL_Delay(5);
+
+    // TEST END
     
     // Obsługa CLI
     #if defined(USE_CMD_INTERFACE)

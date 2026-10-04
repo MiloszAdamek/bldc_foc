@@ -243,7 +243,7 @@ void Motor_Motion_Test(void)
     }
 
     // Bezpieczne napięcie testowe: zacznij od 2.5V - 3.5V zamiast procentu zasilania
-    float Uq = 3.5f; 
+    float Uq = 2.0f; 
     float Ud = 0.0f;
 
     uint32_t t_ms = HAL_GetTick() - t0;
