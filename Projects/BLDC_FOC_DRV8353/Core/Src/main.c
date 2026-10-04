@@ -28,14 +28,15 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
 #include "commander.h"
 #include "motor_control.h"
 #include "board.h"
 #include "powerstage.h"
 
 #if defined(USE_CAN_INTERFACE)
+
   #include "can_interface.h"
+
 #endif
 
 // #ifndef __FAST_MATH__
@@ -64,33 +65,38 @@
 /* USER CODE BEGIN PV */
 
 #if defined(USE_CAN_INTERFACE)
+
   extern volatile bool g_can_heartbeat_flag;
   extern volatile bool g_can_telemetry_flag;
   extern volatile bool g_can_cmd_received_flag;
+
 #endif
 
 #if defined(USE_CMD_INTERFACE)
+
   extern volatile bool g_cmd_flag;
+
 #endif
 
 BoardHandleTypeDef board = {
   .type                 = BOARD_DRV8353,
   .powerstage.pwm_mode  = POWERSTAGE_PWM_MODE_3PWM,
   .htim_pwm             = &htim1,
-  .htim_enc             = &htim3,
   .htim_speed           = &htim2,
-  .htim_pos             = &htim5,
+  .htim_enc             = &htim3,
   .htim_slow_loop       = &htim4,
+  .htim_pos             = &htim5,
   .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
   .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_2},
-  .hadc_vdc             = &hadc2, 
+  .hadc_vdc             = &hadc2,
+  .hspi_drv             = &hspi2, 
   .hspi_enc             = &hspi3,
-  .hspi_drv             = &hspi2,
   .huart_com            = &huart3,
   .encoder_type         = ENCODER_AS5048A_ABSOLUTE,
 };
 
 #if defined(USE_CAN_INTERFACE)
+
   static CAN_Slave_Callbacks_t can_callbacks =
   {
       .start = MotorControl_Start,
@@ -104,6 +110,7 @@ BoardHandleTypeDef board = {
       .get_heartbeat = MotorControl_GetCANHeartbeat,
       .get_telemetry = MotorControl_GetCANTelemetry
   };
+  
 #endif
 
 /* USER CODE END PV */
@@ -186,11 +193,15 @@ int main(void)
   MotorControl_Init(&board);
 
   #if defined(USE_CMD_INTERFACE)
+
     Commander_Init(&board);
+
   #endif
 
   #if defined(USE_CAN_INTERFACE)
+
     CAN_Slave_Init(&hfdcan1, SLAVE_NODE_ID, &can_callbacks);
+
   #endif
 
   // Controller initialization END
@@ -208,7 +219,8 @@ int main(void)
     // Obsługa CLI
     #if defined(USE_CMD_INTERFACE)
 
-      if (g_cmd_flag) {
+      if (g_cmd_flag) 
+      {
         g_cmd_flag = false;
         Commander_Process();
       }

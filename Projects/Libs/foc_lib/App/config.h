@@ -25,7 +25,7 @@
 // #define CURRENT_SENSE_TRIPLE_SHUNT
 #define DUAL_ADC
 
-// #define ENABLE_CURRENT_LIMIT
+#define ENABLE_CURRENT_LIMIT
 // #define ENABLE_FIELD_WEAKENING
 
 #define ENABLE_SERIAL_DEBUGGING
@@ -52,7 +52,7 @@
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        13.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         1.2f
+#define CURRENT_LIMIT         2.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC

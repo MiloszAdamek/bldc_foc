@@ -13,8 +13,6 @@
  #include "board.h"
  #include "speed_estimator.h"
  #include "foc_utils.h"
- #include "math_consts.h"
- #include "main.h"
 
 extern BoardHandleTypeDef board;
 

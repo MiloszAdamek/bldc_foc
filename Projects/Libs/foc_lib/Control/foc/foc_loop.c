@@ -152,26 +152,71 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
         state->iq_setpoint = state->iq_target_raw;
     #endif
 
+    // FW od prędkości
+    // #ifdef ENABLE_FIELD_WEAKENING
+
+    //     const float BASE_SPEED_RPM = 1500.0f;
+    //     const float FW_MAX_RPM     = 2500.0f;
+    //     const float FW_ID_MAX      = 1.0f;
+
+    //     float rpm = fabsf(meas->omega_mech_rpm);
+
+    //     if (rpm <= BASE_SPEED_RPM)
+    //     {
+    //         state->id_setpoint = 0.0f;
+    //     }
+    //     else if (rpm >= FW_MAX_RPM)
+    //     {
+    //         state->id_setpoint = -FW_ID_MAX;
+    //     }
+    //     else
+    //     {
+    //         float fw = (rpm - BASE_SPEED_RPM) / (FW_MAX_RPM - BASE_SPEED_RPM);
+
+    //         state->id_setpoint = -FW_ID_MAX * fw;
+    //     }
+
+    // #else
+
+    //     state->id_setpoint = 0.0f;
+
+    // #endif
+
+    // FW od napięcia
+    float v_max = meas->v_bus / M_SQRT3;
+    float v_max_sq = v_max * v_max;
+
     #ifdef ENABLE_FIELD_WEAKENING
-        float v_mag_sq = (state->v_d * state->v_d) + (state->v_q * state->v_q);
+            
+        const float V_HIGH = 0.97f;
+        const float V_LOW  = 0.93f;
+        const float ID_STEP = 0.001f;
+        const float ID_MAX = 1.0f;
         
-        float v_limit_max = (meas->v_bus / M_SQRT3) * FIELD_WEAKENING_THRESHOLD; 
-        float v_threshold_sq = v_limit_max * v_limit_max;
+        float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
 
-        const float BASE_SPEED_RPM = 1800.0f;
+        if (v_mag_sq > (V_HIGH * V_HIGH * v_max_sq))
+        {
+            state->id_setpoint -= ID_STEP;
 
-        if ((v_mag_sq > v_threshold_sq) && (meas->omega_mech_rpm > BASE_SPEED_RPM)) {
-            float voltage_error = sqrtf(v_mag_sq) - v_limit_max;
-            state->id_setpoint = -pi_control(&state->pi_field_weakening, voltage_error);
-        } else {
-            state->pi_field_weakening.integral = 0.0f;
-            state->id_setpoint = 0.0f;
+            if (state->id_setpoint < -ID_MAX)
+                state->id_setpoint = -ID_MAX;
+        }
+        else if (v_mag_sq < (V_LOW * V_LOW * v_max_sq))
+        {
+            state->id_setpoint += ID_STEP;
+
+            if (state->id_setpoint > 0.0f)
+                state->id_setpoint = 0.0f;
         }
     #else
+
         state->id_setpoint = 0.0f;
+        
     #endif
 
     #ifdef ENABLE_CURRENT_LIMIT
+
         if (state->id_setpoint > 0.0f)  state->id_setpoint = 0.0f;
         if (state->id_setpoint < -CURRENT_LIMIT) state->id_setpoint = -CURRENT_LIMIT;
 
@@ -185,6 +230,7 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
 
         if (state->iq_setpoint > iq_max_limit)  state->iq_setpoint = iq_max_limit;
         if (state->iq_setpoint < -iq_max_limit) state->iq_setpoint = -iq_max_limit;
+
     #endif
 
     LUT_SinCos(meas->theta_el, &sin_theta, &cos_theta);
@@ -194,19 +240,45 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     ParkTransform(state->i_alpha, state->i_beta, &sin_theta, &cos_theta, &state->id, &state->iq);
     
     // === Wariant z priorytetem osi D (ograniczenie na osi Q w zależności od napięcia na osi D)===
-    float v_max = meas->v_bus / M_SQRT3;
-    float v_max_sq = v_max * v_max;
+    // float v_max = meas->v_bus / M_SQRT3;
+    // float v_max_sq = v_max * v_max;
+
+    // state->pi_id.limit = v_max;
+    // state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
+
+    // // Dostępne napięcie dla osi Q po uwzględnieniu ograniczenia na osi D
+    // float vd_sq = state->v_d * state->v_d;
+    // float vq_limit_sq = v_max_sq - vd_sq;
+
+    // float max_vq = (vq_limit_sq > 0.0f) ? sqrtf(vq_limit_sq) : 0.0f;
+
+    // state->pi_iq.limit = max_vq; // Dynamiczna zmiana limitu dla regulatora PI na osi Q
+    // state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
+
+    // Wariant bez priorytetu osi D - dla wersji z FW
+    // 1. Obliczenie nieskorelowanych napięć z regulatorów PI
     state->pi_id.limit = v_max;
     state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
 
-    // Dostępne napięcie dla osi Q po uwzględnieniu ograniczenia na osi D
-    float vd_sq = state->v_d * state->v_d;
-    float vq_limit_sq = v_max_sq - vd_sq;
-
-    float max_vq = (vq_limit_sq > 0.0f) ? sqrtf(vq_limit_sq) : 0.0f;
-
-    state->pi_iq.limit = max_vq; // Dynamiczna zmiana limitu dla regulatora PI na osi Q
+    state->pi_iq.limit = v_max;
     state->v_q = pi_control(&state->pi_iq, state->iq_setpoint - state->iq);
+
+    // 2. Skalowanie wektorowe (brak uprzywilejowania którejkolwiek osi)
+    // float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
+
+    if (v_mag_sq > v_max_sq)
+    {
+        float v_mag = sqrtf(v_mag_sq);
+        float scale = v_max / v_mag;
+
+        state->v_d *= scale;
+        state->v_q *= scale;
+
+        // WAŻNE: Anti-windup dla regulatorów PI!
+        // Jeśli Twoja funkcja pi_control ma wbudowane anti-windup,
+        // należy zaktualizować stan całkujący o faktycznie podane napięcie,
+        // w przeciwnym razie regulatory będą się nasycać.
+    }
 
     InvParkTransform(state->v_d, state->v_q, &sin_theta, &cos_theta, &state->v_alpha, &state->v_beta);
     
