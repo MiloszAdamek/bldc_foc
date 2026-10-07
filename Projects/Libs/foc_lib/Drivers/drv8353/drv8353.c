@@ -53,18 +53,39 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
         return DRV8353_ERROR;
     }
 
-    DRV8353_Config_t default_config = {
-        .pwm_mode   = pwm_mode,
-        .csa_gain   = DRV8353_CSA_GAIN_40V,
-        .idriven_hs = DRV8353_IDRIVEN_300mA,
-        .idrivep_hs = DRV8353_IDRIVEP_150mA,
-        .idriven_ls = DRV8353_IDRIVEN_300mA,
-        .idrivep_ls = DRV8353_IDRIVEP_150mA,
-        .dead_time  = DRV8353_DEADTIME_100ns,
-        .ocp_level  = DRV8353_VDS_OCP_60mV,
-        .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
-        .drive_time = DRV8353_DRIVETIME_1000ns
-    };
+    #ifdef GM2804
+
+        DRV8353_Config_t default_config = {
+            .pwm_mode   = pwm_mode,
+            .csa_gain   = DRV8353_CSA_GAIN_40V,
+            .idriven_hs = DRV8353_IDRIVEN_300mA,
+            .idrivep_hs = DRV8353_IDRIVEP_150mA,
+            .idriven_ls = DRV8353_IDRIVEN_300mA,
+            .idrivep_ls = DRV8353_IDRIVEP_150mA,
+            .dead_time  = DRV8353_DEADTIME_100ns,
+            .ocp_level  = DRV8353_VDS_OCP_60mV,
+            .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
+            .drive_time = DRV8353_DRIVETIME_1000ns
+        };
+
+    #endif
+
+    #ifdef TL50M10
+
+        DRV8353_Config_t default_config = {
+            .pwm_mode   = pwm_mode,
+            .csa_gain   = DRV8353_CSA_GAIN_40V,
+            .idriven_hs = DRV8353_IDRIVEN_300mA,
+            .idrivep_hs = DRV8353_IDRIVEP_150mA,
+            .idriven_ls = DRV8353_IDRIVEN_300mA,
+            .idrivep_ls = DRV8353_IDRIVEP_150mA,
+            .dead_time  = DRV8353_DEADTIME_100ns,
+            .ocp_level  = DRV8353_VDS_OCP_60mV,
+            .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
+            .drive_time = DRV8353_DRIVETIME_1000ns
+        };
+        
+    #endif
 
     DRV8353_SetOutputState(drv, DRV_OUTPUT_COAST);
 

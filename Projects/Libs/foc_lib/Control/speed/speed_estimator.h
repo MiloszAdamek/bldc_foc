@@ -14,7 +14,7 @@
 // #define SPEED_ESTIMATOR_LPF
 
 #define VELOCITY_ALPHA      0.8f
-#define MAX_DTHETA_RAD      0.2f
+#define MAX_DTHETA_RAD      1.0f
 
 typedef struct {
     float theta;       // rad

@@ -24,9 +24,11 @@ bool s_encoder_valid = false;
 
 void Encoder_Init(void)
 {
+    EncoderHub_Init(); // Na razie tak, ponieważ przekazuje dane do estymatora prędkości, bez względu na rodzaj enkodera
+    // Do poprawy, bo enkoder inkrementalny nie potrzebuje DMA i bufora
     if (board.encoder_type == ENCODER_AS5048A_ABSOLUTE)
     {
-        EncoderHub_Init();
+        
         AS5048_Init(board.hspi_enc);
     }
     else if (board.encoder_type == ENCODER_INCREMENTAL)

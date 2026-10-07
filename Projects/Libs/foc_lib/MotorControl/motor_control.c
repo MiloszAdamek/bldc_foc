@@ -117,7 +117,7 @@ void MotorControl_Start(void)
 	if (active_algorithm.Start) {
         active_algorithm.Start(active_algorithm.ctx);
     }
-	// MotorControl_SetTorque_Iq(0.15f);
+	MotorControl_SetTorque_Iq(0.15f);
 }
 
 void MotorControl_Stop(void)
@@ -253,9 +253,15 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
         float theta_el_raw = MotorAlignment_GetElectricalAngle(encoder.theta_raw);
         Encoder_PublishAngle(encoder.theta_raw, theta_el_raw);
 
-        // Publish predicted angle for control algorithms (if AS5048A is used)
-        meas->theta_mech = encoder.theta_predicted;
-        meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
+        if(board.encoder_type == ENCODER_INCREMENTAL) {
+            // For incremental encoder, we only have raw angle, no predicted angle
+            meas->theta_mech = encoder.theta_raw;
+            meas->theta_el = theta_el_raw;
+        } else {
+            // For absolute encoder (AS5048A), we use predicted angle for current control loops
+            meas->theta_mech = encoder.theta_predicted;
+            meas->theta_el = MotorAlignment_GetElectricalAngle(meas->theta_mech);
+        }
     }
 
     // Vbus and temperatures

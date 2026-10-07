@@ -24,7 +24,7 @@ extern Motor_Calibration_t g_calibration;
 extern Motor_Stats_t g_stats;
 
 // RAMPA
-#define IQ_RAMP_RATE_A_S 0.1f // A/s
+#define IQ_RAMP_RATE_A_S 0.5f // A/s
 
 // FIELD WEAKENING
 #define FIELD_WEAKENING_THRESHOLD 0.95f // 95% napięcia szyny DC (Vbus / sqrt(3))

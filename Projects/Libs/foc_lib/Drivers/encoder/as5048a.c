@@ -36,8 +36,7 @@ static void AS5048_ClearError();
 void AS5048_Init(SPI_HandleTypeDef *hspi)
 {
 	s_hspi = hspi;
-	DWT_Init();
-
+	
 	CS_HIGH();
 
     HAL_Delay(100);

@@ -40,13 +40,13 @@
 
 #endif
 
-// TEST BEGIN
+#if defined(TEST_MODE)
 
-#include "motor_alignment.h"
+  #include "motor_alignment.h"
+  #include "stdio.h"
 
-#include "stdio.h"
+#endif
 
-// TEST END
 
 // #include "encoder_incremental.h"
 // #include "math_consts.h"
@@ -125,13 +125,15 @@ BoardHandleTypeDef board = {
   
 #endif
 
-// TEST BEGIN
+#if defined(TEST_MODE)
 
-// volatile uint32_t debug_enc_raw_cnt = 0;
-// volatile float debug_mech_angle_rad = 0.0f;
-// volatile float debug_mech_angle_deg = 0.0f;
+  volatile uint32_t debug_enc_raw_cnt = 0;
+  volatile float debug_mech_angle_rad = 0.0f;
+  volatile float debug_mech_angle_deg = 0.0f;
 
-int fault_read_cnt = 0;
+  int fault_read_cnt = 0;
+
+#endif  
 
 // TEST END
 
@@ -160,7 +162,6 @@ int _write(int file, char *ptr, int len)
     }
     return len;
 }
-
 
 /* USER CODE END 0 */
 
@@ -213,7 +214,11 @@ int main(void)
 
   Board_Init(&board);
 
-  // MotorControl_Init(&board); // Off during tests
+  #ifndef TEST_MODE
+
+    MotorControl_Init(&board); // Off during tests
+
+  #endif
 
   #if defined(USE_CMD_INTERFACE)
 
@@ -227,14 +232,8 @@ int main(void)
 
   #endif
 
-  // EncoderIncremental_Init(&htim3);
-
   // Controller initialization END
 
-  // Tests BEGIN
-
-  // Tests END
-  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -242,23 +241,23 @@ int main(void)
   while (1)
   {
 
-    // TEST BEGIN
-    Motor_Motion_Test();
-    HAL_Delay(1);
+    #if defined(TEST_MODE)
+      // TEST BEGIN
+      Motor_Motion_Test();
+      HAL_Delay(1);
 
-    if (++fault_read_cnt >= 1000) {
-        fault_read_cnt = 0;
-        PowerStage_CheckFaults(&board.powerstage);
-    }
+      if (++fault_read_cnt >= 1000) {
+          fault_read_cnt = 0;
+          PowerStage_CheckFaults(&board.powerstage);
+      }
 
-    // debug_enc_raw_cnt = __HAL_TIM_GET_COUNTER(&htim3);
-    // debug_mech_angle_rad = EncoderIncremental_GetMechanicalAngle();
-    // debug_mech_angle_deg = debug_mech_angle_rad * (180.0f / (float)M_PI);
+      // debug_enc_raw_cnt = __HAL_TIM_GET_COUNTER(&htim3);
+      // debug_mech_angle_rad = EncoderIncremental_GetMechanicalAngle();
+      // debug_mech_angle_deg = debug_mech_angle_rad * (180.0f / (float)M_PI);
 
-    // HAL_Delay(5);
+      // HAL_Delay(5);
+    #endif
 
-    // TEST END
-    
     // Obsługa CLI
     #if defined(USE_CMD_INTERFACE)
 

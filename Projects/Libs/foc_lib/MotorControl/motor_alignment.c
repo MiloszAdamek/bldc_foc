@@ -78,7 +78,7 @@ bool MotorAlignment_AlignSensor(void)
 
     const float steps = 600.0f;
 
-    const float sweep_angle = 3.0f * M_PI; // 3 okresy elektryczne, 3 * (360 / 14) = 77 stopni mechanicznych
+    const float sweep_angle = 3.0f * M_TWOPI; // 3 okresy elektryczne, 3 * (360 / 14) = 77 stopni mechanicznych
 
     printf("Krok 1: Wykrywanie kierunku...\n");
 
@@ -131,7 +131,7 @@ bool MotorAlignment_AlignSensor(void)
 
     if (board.encoder_type == ENCODER_INCREMENTAL) {
         EncoderIncremental_SetZero();
-        g_motor_calib.zero_electric_angle = 0.0f;
+        g_motor_calib.zero_electric_angle = _3PI_2;
     }
     else
     {
@@ -243,7 +243,7 @@ void Motor_Motion_Test(void)
     }
 
     // Bezpieczne napięcie testowe: zacznij od 2.5V - 3.5V zamiast procentu zasilania
-    float Uq = 2.0f; 
+    float Uq = 0.5f; 
     float Ud = 0.0f;
 
     uint32_t t_ms = HAL_GetTick() - t0;
@@ -251,7 +251,7 @@ void Motor_Motion_Test(void)
 
     // Bardzo wolny obrót pola elektrycznego: 1.5 Hz
     // 1.5 Hz / 14 par biegunów = ok. 0.1 obr/s (pełny obrót wału w ~9 sekund)
-    float freq = 10.0f; 
+    float freq = 1.5f; 
     float angle = 2.0f * (float)M_PI * freq * t;
 
     // Bezpieczna normalizacja kąta

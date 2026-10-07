@@ -50,9 +50,9 @@
 #define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
-#define VOLTAGE_SUPPLY        15.0f
+#define VOLTAGE_SUPPLY        20.0f
 #define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
-#define CURRENT_LIMIT         2.0f
+#define CURRENT_LIMIT         5.0f
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -67,19 +67,39 @@
  * ========================================================================= */
 
 #ifdef GM2804
+
     #define MOTOR_POLE_PAIRS      	7           // liczba par biegunów silnika
     #define MOTOR_TORQUE_CONSTANT 	0.0306f		// Kt
     #define MOTOR_VELOCITY_CONSTANT 168.0f		// Kv
+    #define VOLTAGE_SENSOR_ALIGN  	4.0f
+
+    #define PI_KP_ID 1.2f
+    #define PI_KI_ID 200.0f
+    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_IQ 1.2f
+    #define PI_KI_IQ 200.0f
+    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+
 #endif
 
 #ifdef TL50M10
+
     #define MOTOR_POLE_PAIRS      	14          // liczba par biegunów silnika
     #define MOTOR_TORQUE_CONSTANT 	0.0f		// Kt unknown
-    #define MOTOR_VELOCITY_CONSTANT 130.0f		    // Kv
+    #define MOTOR_VELOCITY_CONSTANT 130.0f		// Kv 
+    #define VOLTAGE_SENSOR_ALIGN  	0.5f  
+
+    #define PI_KP_ID 0.64f
+    #define PI_KI_ID 10.0f
+    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
+
+    #define PI_KP_IQ 0.64f
+    #define PI_KI_IQ 10.0f
+    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+
 #endif
-
-
-#define VOLTAGE_SENSOR_ALIGN  	4.0f
+ 
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
 #define SENSOR_DIRECTION_CW   1
@@ -97,14 +117,6 @@
     // #define PI_KP_IQ 0.8f
     // #define PI_KI_IQ 250.0f
     // #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
-
-    #define PI_KP_ID 1.2f
-    #define PI_KI_ID 200.0f
-    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
-
-    #define PI_KP_IQ 1.2f
-    #define PI_KI_IQ 200.0f
-    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
 
     #define PI_KP_V 0.00089f
     #define PI_KI_V 0.001f
