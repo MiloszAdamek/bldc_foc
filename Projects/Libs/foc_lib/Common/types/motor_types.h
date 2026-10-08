@@ -76,6 +76,7 @@ typedef struct {
 typedef struct {
     ADC_HandleTypeDef *hadc;
     uint32_t rank;            // Ranga w grupie Injected (np. ADC_INJECTED_RANK_1)
+    volatile uint32_t *jdr;
 } ADC_InjectedChannel_t;
 
 typedef struct {

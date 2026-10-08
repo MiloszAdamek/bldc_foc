@@ -6,13 +6,16 @@
  */
 
 #include "board.h"
+#include "ntc_sense.h"
 #include "slow_adc.h"
-#include "math.h"
+
+#define NUM_SLOW_ADC_CHANNELS 2
 
 static ADC_HandleTypeDef *s_hadc;
 static float s_adc_to_voltage;
 static volatile SlowLoopMeasurements_t slow_loop_measurements = {0};
-static uint16_t adc_raw_buff[3];
+
+static uint16_t adc_raw_buff[NUM_SLOW_ADC_CHANNELS];
 volatile bool slow_adc_ready = false;
 
 static float s_vdd_voltage = 3.3f;
@@ -42,12 +45,12 @@ void SlowADC_Init(ADC_HandleTypeDef *hadc, float vdd_voltage)
     s_hadc = hadc;
     s_vdd_voltage = vdd_voltage;
     SlowADC_UpdateADCCoefficient();
-    HAL_ADC_Start_DMA(hadc, (uint32_t*)&adc_raw_buff, 3);
+    HAL_ADC_Start_DMA(hadc, (uint32_t*)&adc_raw_buff, NUM_SLOW_ADC_CHANNELS);
 }
 
 void SlowADC_Trigger(void) 
 {
-    // Wymuszenie startu sekwencji 3 kanałów przez software
+    // Wymuszenie startu sekwencji 3 kanałów regular przez software
     if (!(s_hadc->Instance->CR & ADC_CR_ADSTART)) {
         s_hadc->Instance->CR |= ADC_CR_ADSTART;
     }
@@ -58,45 +61,12 @@ void SlowADC_UpdateADCCoefficient()
     s_adc_to_voltage = VOLTAGE_SENSE_DIV_RATIO * s_vdd_voltage / (float)ADC_RESOLUTION;
 }
 
-float NTC_CalculateTemperature_VCC(TemperatureSensor_t *sensor, float adc_value) 
-{
-    // Zabezpieczenie przed zwarciem
-    if (adc_value < 1.0f) {
-        return 125.0f; // max temperatura
-    }
-    // Zabezpieczenie przed rozwarciem
-    if (adc_value >= sensor->ADC_resolution) {
-        return -40.0f;
-    }
-
-    float r_ntc = sensor->R_series * ((sensor->ADC_resolution - adc_value) / adc_value);
-    float temp_kelvin = 1.0f / ((1.0f / (25.0f + 273.15f)) + (1.0f / sensor->B) * logf(r_ntc / sensor->R25));
-    float temp_celsius = temp_kelvin - 273.15f;
-    return temp_celsius;
-}
-
-float NTC_CalculateTemperature_GND(TemperatureSensor_t *sensor, float adc_value)
-{
-    // Zabezpieczenie przed zwarciem
-    if (adc_value < 1.0f) {
-        return 125.0f; // max temperatura
-    }
-    // Zabezpieczenie przed rozwarciem
-    if (adc_value >= sensor->ADC_resolution) {
-        return -40.0f;
-    }
-
-    float r_ntc = sensor->R_series * (adc_value / (sensor->ADC_resolution - adc_value));
-    float temp_kelvin = 1.0f / ((1.0f / (25.0f + 273.15f)) + (1.0f / sensor->B) * logf(r_ntc / sensor->R25));
-    float temp_celsius = temp_kelvin - 273.15f;
-    return temp_celsius;
-}
-
 void SlowADC_CalculateMeasurements(void) 
 {
-    slow_loop_measurements.v_bus = (float)adc_raw_buff[0] * s_adc_to_voltage;
-    slow_loop_measurements.mosfet_temp = NTC_CalculateTemperature_VCC(&mosfet_temp_sensor, (float)adc_raw_buff[1]);
-    slow_loop_measurements.motor_temp = NTC_CalculateTemperature_GND(&motor_temp_sensor, (float)adc_raw_buff[2]);
+
+    // slow_loop_measurements.v_bus = (float)adc_raw_buff[0] * s_adc_to_voltage;
+    slow_loop_measurements.mosfet_temp = NTC_CalculateTemperature_VCC(&mosfet_temp_sensor, (float)adc_raw_buff[0]);
+    slow_loop_measurements.motor_temp = NTC_CalculateTemperature_GND(&motor_temp_sensor, (float)adc_raw_buff[1]);
 }
 
 float SlowADC_GetMotorTemperature_ISR() 

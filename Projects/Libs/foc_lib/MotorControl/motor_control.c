@@ -19,7 +19,7 @@
 #include "encoder_hub.h"
 #include "svpwm.h"
 #include "current_sense.h"
-// #include "voltage_sense.h"
+#include "voltage_sense.h"
 #include "slow_adc.h"
 #include "stdio.h"
 
@@ -215,8 +215,11 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
 {
     // Currents
     CurrentSense_Process_ISR();
-    CurrentSense_CalculatePhases();
     CurrentSense_Read(&meas->currents);
+
+    // Vbus
+    VoltageSense_Process_ISR();
+    VoltageSense_Read(&meas->v_bus);
 
     // Speed
     meas->omega_mech_rpm = SpeedEstimator_GetOmegaRPM_ISR();
@@ -265,7 +268,7 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
     }
 
     // Vbus and temperatures
-    meas->v_bus = SlowADC_GetVBusVoltage_ISR();
+    // meas->v_bus = SlowADC_GetVBusVoltage_ISR();
 
     meas->motor_temp = SlowADC_GetMotorTemperature_ISR();
 

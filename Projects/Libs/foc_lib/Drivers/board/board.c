@@ -15,6 +15,7 @@
  #include "slow_adc.h"
  #include "tim.h"
  #include "delay_us.h"
+ #include "voltage_sense.h"
 
  #ifdef DRV8353
 
@@ -83,9 +84,9 @@ void Board_Init(BoardHandleTypeDef *board)
     #endif
 
     // Voltage sense initialization
-    // VoltageSense_Init(board->hadc_VDC);
+    VoltageSense_Init(&board->hadc_vbus, board->vdd_voltage);
     // VoltageSense_UpdateADCCoefficient(board->vdd_voltage);
-    SlowADC_Init(board->hadc_vdc, board->vdd_voltage);
+    SlowADC_Init(board->hadc_temp, board->vdd_voltage);
 
     DWT_Init();
 

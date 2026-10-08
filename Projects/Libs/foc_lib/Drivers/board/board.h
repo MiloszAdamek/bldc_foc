@@ -31,7 +31,8 @@ typedef struct
     TIM_HandleTypeDef *htim_slow_loop;
     ADC_InjectedChannel_t hadc_currA;
     ADC_InjectedChannel_t hadc_currB;
-    ADC_HandleTypeDef *hadc_vdc;
+    ADC_InjectedChannel_t hadc_vbus;
+    ADC_HandleTypeDef *hadc_temp;
     SPI_HandleTypeDef *hspi_enc;
     SPI_HandleTypeDef *hspi_drv;
     UART_HandleTypeDef *huart_com;

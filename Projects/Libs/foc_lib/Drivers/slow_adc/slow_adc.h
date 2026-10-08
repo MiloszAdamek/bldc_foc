@@ -16,15 +16,6 @@ typedef struct {
     float mosfet_temp;
 } SlowLoopMeasurements_t;
 
-typedef struct {
-    float R25;       // Resistance at 25°C
-    float B;         // Beta value
-    float R_series;  // Series resistor value
-    float V_supply;  // Supply voltage
-    float V_ref;     // ADC reference voltage
-    float ADC_resolution; // ADC resolution
-} TemperatureSensor_t;
-
 void SlowADC_Init(ADC_HandleTypeDef *hadc, float vdd_voltage);
 void SlowADC_Trigger(void);
 void SlowADC_UpdateADCCoefficient();

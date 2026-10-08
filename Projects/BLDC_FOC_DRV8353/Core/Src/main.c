@@ -22,7 +22,6 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "spi.h"
-#include "stm32g4xx_hal_tim.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -98,9 +97,10 @@ BoardHandleTypeDef board = {
   .htim_enc             = &htim3,
   .htim_slow_loop       = &htim4,
   .htim_pos             = &htim5,
-  .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_1},
-  .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_2},
-  .hadc_vdc             = &hadc2,
+  .hadc_currA           = (ADC_InjectedChannel_t){.hadc = &hadc1, .rank = ADC_INJECTED_RANK_2, .jdr = &ADC1->JDR2},
+  .hadc_currB           = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_2, .jdr = &ADC2->JDR2},
+  .hadc_vbus            = (ADC_InjectedChannel_t){.hadc = &hadc2, .rank = ADC_INJECTED_RANK_1, .jdr = &ADC2->JDR1},
+  .hadc_temp            = &hadc2,
   .hspi_drv             = &hspi2, 
   .hspi_enc             = &hspi3,
   .huart_com            = &huart3,
