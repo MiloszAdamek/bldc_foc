@@ -102,7 +102,10 @@ void Board_StartMotor(BoardHandleTypeDef *board)
 void Board_StartPeripherals(BoardHandleTypeDef *board)
 {
     __HAL_TIM_SET_COUNTER(board->htim_pwm, 0);
-    __HAL_TIM_SET_COUNTER(board->htim_enc, 0);
+
+    if (board->encoder_type != ENCODER_INCREMENTAL) {
+        __HAL_TIM_SET_COUNTER(board->htim_enc, 0);
+    }
     
     HAL_TIM_Base_Start_IT(board->htim_enc);
     HAL_TIM_OC_Start(board->htim_pwm, TIM_CHANNEL_4);
@@ -120,6 +123,10 @@ void Board_StopMotor(BoardHandleTypeDef *board)
 
 void Board_StopPeripherals(BoardHandleTypeDef *board)
 {
+    // if(board->encoder_type == ENCODER_INCREMENTAL) {
+    //     EncoderIncremental_SafeStop();
+    // }
+
     HAL_TIM_Base_Stop(board->htim_pwm);
     
 	HAL_TIM_Base_Stop_IT(board->htim_enc);

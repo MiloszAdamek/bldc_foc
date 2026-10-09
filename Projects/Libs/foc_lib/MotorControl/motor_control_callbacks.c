@@ -38,10 +38,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 	#endif
 
-	/* Speed 1 kHz - priority 2 */
+	/* Speed & DMA ADC regular conversions 1 kHz - priority 2 */
 	else if (htim->Instance == board.htim_speed->Instance)
 	{
         MotorControl_OnSpeedISR();
+		MotorControl_SlowLoopMeasurementsISR(); 
 	}
 
 	/* Position 200 Hz - priority 3 */
@@ -49,20 +50,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
         MotorControl_OnPositionISR();
 	}
-
-	// /* CAN heartbeat & telemetry 1 kHz - priority 4 */
-	// else if (htim->Instance == board.htim_can->Instance)
-	// {
-	// 	MotorControl_OnCANISR();
-	// }
 	
-	/* Slow loop measurements 100 Hz - priority 4 */
+	/* CLI 100 Hz - priority 4 */
 	else if (htim->Instance == board.htim_slow_loop->Instance)
 	{
 		#if defined(USE_CMD_INTERFACE)
         	MotorControl_OnCommandISR();
 		#endif
-		MotorControl_SlowLoopMeasurementsISR(); 
 	}
 }
 

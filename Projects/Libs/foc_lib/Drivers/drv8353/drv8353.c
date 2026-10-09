@@ -36,20 +36,23 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
     {
         return DRV8353_ERROR;
     }
-    HAL_Delay(1);
+    
+    HAL_Delay(10);
+
+    DRV8353_Status_t clear_faults_status = DRV8353_ClearFaults(drv);
+    if(clear_faults_status != DRV8353_OK)
+    {
+        printf("DRV8353 clear faults failed!\r\n");
+        return DRV8353_ERROR;
+    }
+
+    HAL_Delay(10);
 
     // sprawdź nFAULT po wake
     if(DRV8353_CheckFaultPin(drv) != DRV8353_OK)
     {
         DRV8353_GetFaults(drv, &drv->faults);
         DRV8353_PrintFaults(&drv->faults);
-        return DRV8353_ERROR;
-    }
-
-    DRV8353_Status_t clear_faults_status = DRV8353_ClearFaults(drv);
-    if(clear_faults_status != DRV8353_OK)
-    {
-        printf("DRV8353 clear faults failed!\r\n");
         return DRV8353_ERROR;
     }
 
