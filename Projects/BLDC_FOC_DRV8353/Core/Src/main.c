@@ -22,7 +22,6 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "spi.h"
-#include "stm32g4xx_hal_tim.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"

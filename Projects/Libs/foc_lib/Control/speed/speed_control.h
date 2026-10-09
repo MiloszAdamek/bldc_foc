@@ -9,13 +9,14 @@
 #define INC_FOC_SPEED_CONTROL_H_
 
 #include <stdint.h>
+#include "motor_types.h"
 
 typedef enum {
     SPEED_MODE_DIRECT = 0,
     SPEED_MODE_RAMP
 } SpeedMode_t;
 
-void SpeedControl_Init(void);
+void SpeedControl_Init(Motor_References_t *ref);
 
 // Aktualizacja regulatora prędkości (wywoływane w pętli 1 kHz)
 void SpeedController_Update();

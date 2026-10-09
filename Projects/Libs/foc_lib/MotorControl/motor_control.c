@@ -117,7 +117,7 @@ void MotorControl_Start(void)
 	if (active_algorithm.Start) {
         active_algorithm.Start(active_algorithm.ctx);
     }
-	MotorControl_SetTorque_Iq(0.15f);
+	MotorControl_SetTorque_Iq(0.0f);
 }
 
 void MotorControl_Stop(void)
@@ -128,6 +128,8 @@ void MotorControl_Stop(void)
         active_algorithm.Stop(active_algorithm.ctx);
     }
     g_motor_state = STATE_IDLE;
+
+    SpeedController_Reset(); // Reset całki regulatora prędkości
 }
 
 void MotorControl_SetPosition(float position)
@@ -161,9 +163,8 @@ void MotorControl_SetSpeed(float rpm)
 
 	// WYŁĄCZ rampę momentu (pracuje tylko rampa regulatora prędkości)
     g_ref.iq_ramp_enabled = false;
-
 	g_ref.speed_ref = rpm;
-    SpeedController_Reset();
+    
     // SpeedController_SetTarget(rpm);
     SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_RUN;
@@ -369,9 +370,9 @@ void MotorControl_OnCommandISR(void)
 void MotorControl_SlowLoopMeasurementsISR(void)
 {
     SlowADC_Trigger();
-    if(slow_adc_ready)
-    {
-        slow_adc_ready = false;
-        SlowADC_CalculateMeasurements();
-    }
+    // if(slow_adc_ready)
+    // {
+    //     slow_adc_ready = false;
+    //     SlowADC_CalculateMeasurements();
+    // }
 }

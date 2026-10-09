@@ -8,7 +8,6 @@
 #include "speed_control.h"
 #include "foc_utils.h"
 #include "speed_estimator.h"
-#include "motor_types.h"
 #include "config.h"
 
 volatile float speed_ref_rpm = 0.0f;

@@ -42,7 +42,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	else if (htim->Instance == board.htim_speed->Instance)
 	{
         MotorControl_OnSpeedISR();
-		MotorControl_SlowLoopMeasurementsISR(); 
+		// MotorControl_SlowLoopMeasurementsISR(); 
 	}
 
 	/* Position 200 Hz - priority 3 */
@@ -69,6 +69,8 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
 		#if defined(USE_CAN_INTERFACE)
 			MotorControl_OnCANISR();
 		#endif
+
+		MotorControl_SlowLoopMeasurementsISR();
 		
         // if (__HAL_TIM_IS_TIM_COUNTING_DOWN(board.htim_pwm)){ // 10 kHz - gdy center aligned mode 3
         //     MotorControl_OnCurrentSampleISR();

@@ -123,6 +123,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if(hadc == s_hadc)
     {
-        slow_adc_ready = true;
+        // slow_adc_ready = true;
+        SlowADC_CalculateMeasurements();
     }
 }
