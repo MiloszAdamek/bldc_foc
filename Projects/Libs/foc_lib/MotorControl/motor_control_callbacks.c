@@ -9,6 +9,7 @@
 #include "board.h"
 
 extern BoardHandleTypeDef board;
+extern MotorState_t g_motor_state;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -76,4 +77,15 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef* hadc)
         //     MotorControl_OnCurrentSampleISR();
         // }
     }
+}
+
+void HAL_TIMEx_BreakCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == board.htim_pwm->Instance)
+	{
+		// Obsługa przerwania Break - np. wyłączenie PWM, ustawienie flagi FAULT
+		Board_StopMotor(&board);
+		g_motor_state = STATE_FAULT;
+		MotorControl_GetFaults();
+	}
 }

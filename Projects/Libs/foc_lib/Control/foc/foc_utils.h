@@ -60,7 +60,7 @@ static inline float pi_control(PI_Controller *pi, float error){
 static inline void ClarkeTransform(float ia, float ib, float *ialpha, float *ibeta)
 {
     *ialpha = ia;
-    *ibeta  = (ia + 2.0f * ib) * ONE_OVER_SQRT_3;  // 1/sqrt(3) ≈ 0.577
+    *ibeta  = (ia + 2.0f * ib) * INV_SQRT3;  // 1/sqrt(3) ≈ 0.577
 }
 
 // Odwrotna transformacja Clarka,: αβ → (a,b,c)
@@ -105,14 +105,12 @@ static inline void InvParkTransform(float vd, float vq, float *sin_theta, float 
 
 static inline float normalize_angle(float angle)
 {
-    const float one_over_two_pi = 1.0f / (2.0f * (float)M_PI);
-    const float two_pi = 2.0f * (float)M_PI;
-    
+
     // Obliczenie reszty z dzielenia przez 2*PI
-    angle -= two_pi * floorf(angle * one_over_two_pi);
+    angle -= M_TWOPI * floorf(angle * INV_TWO_PI);
     
     if (angle < 0.0f) {
-        angle += two_pi;
+        angle += M_TWOPI;
     }
     return angle;
 }
@@ -121,6 +119,11 @@ static inline float normalize_angle(float angle)
 static inline float wrap_pi(float x){
     x = fmodf(x + M_PI, M_TWOPI);
     return (x < 0) ? x + M_TWOPI - M_PI : x - M_PI;
+}
+
+static inline float clampf(float value, float min, float max)
+{
+    return (value < min) ? min : (value > max) ? max : value;
 }
 
 #endif /* INC_CONTROLLER_UTILS_H_ */

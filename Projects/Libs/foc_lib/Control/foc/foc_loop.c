@@ -42,6 +42,9 @@ static void Flags_Reset(FocFlags_t *flags);
 static void FOC_StatsReset(void);
 static void FOC_GetTelemetry(const void *ctx, volatile Motor_Telemetry_t *telem);
 static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_References_t *ref, Motor_Output_t *out);
+static inline void FOC_CurrentLimit(PI_FOC_State_t *state);
+static inline void FOC_FieldWeakingSpeed(PI_FOC_State_t *state, float omega_mech_rpm);
+static inline void FOC_FieldWeakingVoltage(PI_FOC_State_t *state, float v_max_sq);
 
 ControlAlgorithm_t PI_FOC_Create(void)
 {
@@ -95,7 +98,8 @@ void FOC_Init(void *ctx)
     #endif
 }
 
-void FOC_Start(void *ctx){
+void FOC_Start(void *ctx)
+{
     PI_FOC_State_t *state = (PI_FOC_State_t*)ctx;
 
     PI_Reset(&state->pi_id);
@@ -118,8 +122,8 @@ void FOC_Start(void *ctx){
     AS5048_ReadAngleDMA();
 }
 
-void FOC_Stop(void *ctx){
-
+void FOC_Stop(void *ctx)
+{
     PI_FOC_State_t *state = (PI_FOC_State_t*)ctx;
 
     Flags_Reset(&state->flags);
@@ -135,6 +139,7 @@ void FOC_Stop(void *ctx){
     PI_Reset(&state->pi_id);
     PI_Reset(&state->pi_iq);
     PI_Reset(&state->pi_field_weakening);
+
     FOC_StatsReset();
 }
 
@@ -152,85 +157,18 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
         state->iq_setpoint = state->iq_target_raw;
     #endif
 
-    // FW od prędkości
-    // #ifdef ENABLE_FIELD_WEAKENING
-
-    //     const float BASE_SPEED_RPM = 1500.0f;
-    //     const float FW_MAX_RPM     = 2500.0f;
-    //     const float FW_ID_MAX      = 1.0f;
-
-    //     float rpm = fabsf(meas->omega_mech_rpm);
-
-    //     if (rpm <= BASE_SPEED_RPM)
-    //     {
-    //         state->id_setpoint = 0.0f;
-    //     }
-    //     else if (rpm >= FW_MAX_RPM)
-    //     {
-    //         state->id_setpoint = -FW_ID_MAX;
-    //     }
-    //     else
-    //     {
-    //         float fw = (rpm - BASE_SPEED_RPM) / (FW_MAX_RPM - BASE_SPEED_RPM);
-
-    //         state->id_setpoint = -FW_ID_MAX * fw;
-    //     }
-
-    // #else
-
-    //     state->id_setpoint = 0.0f;
-
-    // #endif
-
-    // FW od napięcia
-    float v_max = meas->v_bus / M_SQRT3;
+    float v_max = meas->v_bus * INV_SQRT3; // v_max = Vbus / sqrt(3)
     float v_max_sq = v_max * v_max;
 
     #ifdef ENABLE_FIELD_WEAKENING
-            
-        const float V_HIGH = 0.97f;
-        const float V_LOW  = 0.93f;
-        const float ID_STEP = 0.001f;
-        const float ID_MAX = 1.0f;
-        
-        float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
-
-        if (v_mag_sq > (V_HIGH * V_HIGH * v_max_sq))
-        {
-            state->id_setpoint -= ID_STEP;
-
-            if (state->id_setpoint < -ID_MAX)
-                state->id_setpoint = -ID_MAX;
-        }
-        else if (v_mag_sq < (V_LOW * V_LOW * v_max_sq))
-        {
-            state->id_setpoint += ID_STEP;
-
-            if (state->id_setpoint > 0.0f)
-                state->id_setpoint = 0.0f;
-        }
+        // FOC_FieldWeakingVoltage(state, v_max_sq);
+        FOC_FieldWeakingSpeed(state, meas->omega_mech_rpm);
     #else
-
         state->id_setpoint = 0.0f;
-        
     #endif
 
     #ifdef ENABLE_CURRENT_LIMIT
-
-        if (state->id_setpoint > 0.0f)  state->id_setpoint = 0.0f;
-        if (state->id_setpoint < -CURRENT_LIMIT) state->id_setpoint = -CURRENT_LIMIT;
-
-        if (state->iq_setpoint > CURRENT_LIMIT) state->iq_setpoint = CURRENT_LIMIT;
-        if (state->iq_setpoint < -CURRENT_LIMIT) state->iq_setpoint = -CURRENT_LIMIT;
-
-        float i_max_sq = CURRENT_LIMIT * CURRENT_LIMIT;
-        float id_sq = state->id_setpoint * state->id_setpoint;
-        float iq_limit_sq = i_max_sq - id_sq;
-        float iq_max_limit = (iq_limit_sq > 0.0f) ? sqrtf(iq_limit_sq) : 0.0f;
-
-        if (state->iq_setpoint > iq_max_limit)  state->iq_setpoint = iq_max_limit;
-        if (state->iq_setpoint < -iq_max_limit) state->iq_setpoint = -iq_max_limit;
-
+        FOC_CurrentLimit(state);
     #endif
 
     LUT_SinCos(meas->theta_el, &sin_theta, &cos_theta);
@@ -240,9 +178,6 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     ParkTransform(state->i_alpha, state->i_beta, &sin_theta, &cos_theta, &state->id, &state->iq);
     
     // === Wariant z priorytetem osi D (ograniczenie na osi Q w zależności od napięcia na osi D)===
-    // float v_max = meas->v_bus / M_SQRT3;
-    // float v_max_sq = v_max * v_max;
-
     state->pi_id.limit = v_max;
     state->v_d = pi_control(&state->pi_id, state->id_setpoint - state->id);
 
@@ -283,6 +218,70 @@ static void FOC_Update(void *ctx, const Motor_Measurements_t *meas, const Motor_
     InvParkTransform(state->v_d, state->v_q, &sin_theta, &cos_theta, &state->v_alpha, &state->v_beta);
     
     SVPWM_Update(state->v_alpha, state->v_beta);
+}
+
+static inline void FOC_FieldWeakingSpeed(PI_FOC_State_t *state, float omega_mech_rpm)
+{
+    const float BASE_SPEED_RPM = 2800.0f;
+    const float FW_MAX_RPM     = 4000.0f;
+    const float FW_ID_MAX      = CURRENT_LIMIT * 0.5f;
+
+    float rpm = fabsf(omega_mech_rpm);
+
+    if (rpm <= BASE_SPEED_RPM)
+    {
+        state->id_setpoint = 0.0f;
+    }
+    else if (rpm >= FW_MAX_RPM)
+    {
+        state->id_setpoint = -FW_ID_MAX;
+    }
+    else
+    {
+        float fw = (rpm - BASE_SPEED_RPM) / (FW_MAX_RPM - BASE_SPEED_RPM);
+
+        state->id_setpoint = -FW_ID_MAX * fw;
+    }
+}
+
+static inline void FOC_FieldWeakingVoltage(PI_FOC_State_t *state, float v_max_sq)
+{
+    const float V_HIGH = 0.97f;
+    const float V_LOW  = 0.93f;
+    const float ID_STEP = 0.001f;
+    const float ID_MAX = 1.0f;
+    
+    float v_mag_sq = state->v_d * state->v_d + state->v_q * state->v_q;
+
+    if (v_mag_sq > (V_HIGH * V_HIGH * v_max_sq))
+    {
+        state->id_setpoint -= ID_STEP;
+
+        if (state->id_setpoint < -ID_MAX)
+            state->id_setpoint = -ID_MAX;
+    }
+    else if (v_mag_sq < (V_LOW * V_LOW * v_max_sq))
+    {
+        state->id_setpoint += ID_STEP;
+
+        if (state->id_setpoint > 0.0f)
+            state->id_setpoint = 0.0f;
+    }
+}
+
+static inline void FOC_CurrentLimit(PI_FOC_State_t *state)
+{   
+    const float i_max_sq = CURRENT_LIMIT * CURRENT_LIMIT;
+
+    state->id_setpoint = clampf(state->id_setpoint, -CURRENT_LIMIT, 0.0f);
+    state->iq_setpoint = clampf(state->iq_setpoint, -CURRENT_LIMIT, CURRENT_LIMIT);
+
+    float id_sq = state->id_setpoint * state->id_setpoint;
+    float iq_limit_sq = i_max_sq - id_sq;
+
+    float iq_max_limit = (iq_limit_sq > 0.0f) ? sqrtf(iq_limit_sq) : 0.0f;
+
+    state->iq_setpoint = clampf(state->iq_setpoint, -iq_max_limit, iq_max_limit);
 }
 
 static void FOC_GetTelemetry(const void *ctx, volatile Motor_Telemetry_t *telem)

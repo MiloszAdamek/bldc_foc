@@ -36,6 +36,8 @@ void Commander_Init(BoardHandleTypeDef* board) {
     printf(" B               		(Stop Motor / Idle)\r\n");
     printf(" V <velocity>    		(RPM)\r\n");
     printf(" T <torque>      		(Amps)\r\n");
+    printf(" P <position>    		(Radians)\r\n");
+    printf(" F      		        (Faults)\r\n");
     printf(" R               		(Reboot Slave)\r\n");
     printf("> ");
 }
@@ -101,6 +103,12 @@ static void process_command(char* cmd) {
 		case 'b': {
 			printf("CMD: Stop\r\n");
 			MotorControl_Stop();
+			break;
+		}
+        case 'F': // Print faults
+		case 'f': {
+			printf("CMD: Faults\r\n");
+			MotorControl_GetFaults();
 			break;
 		}
 		default:

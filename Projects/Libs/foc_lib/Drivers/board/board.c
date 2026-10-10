@@ -72,6 +72,8 @@ void Board_Init(BoardHandleTypeDef *board)
     Board_GetVddVoltage(board);
 
     __HAL_TIM_CLEAR_FLAG(board->htim_pwm, TIM_FLAG_BREAK);
+    volatile uint32_t sr_after_clear = TIM1->SR;
+    __HAL_TIM_ENABLE_IT(board->htim_pwm, TIM_IT_BREAK); // Enable Break interrupt
     __HAL_TIM_MOE_ENABLE(board->htim_pwm);
 
     CurrentSense_Init(&board->hadc_currA, &board->hadc_currB, board->vdd_voltage); // Inicjalizacja pomiaru prądów

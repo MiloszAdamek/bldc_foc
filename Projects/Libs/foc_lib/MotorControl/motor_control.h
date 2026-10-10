@@ -33,6 +33,8 @@ void MotorControl_Reboot(void);
 
 void MotorControl_SetState(MotorState_t new_state);
 
+void MotorControl_GetFaults(void);
+
 // Motor control callbacks for ISRs
 void MotorControl_OnCurrentSampleISR(void);
 void MotorControl_OnEncoderSampleISR(void);

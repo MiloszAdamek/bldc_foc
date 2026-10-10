@@ -204,6 +204,11 @@ void MotorControl_SetState(MotorState_t new_state)
 	g_motor_state = new_state;
 }
 
+void MotorControl_GetFaults()
+{
+    Board_CheckFaults(&board);
+}
+
 static inline void MotorControl_BuildReferences(Motor_References_t *ref)
 {
     ref->torque_iq_ref   = g_ref.torque_iq_ref;
