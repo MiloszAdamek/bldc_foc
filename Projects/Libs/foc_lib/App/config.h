@@ -56,6 +56,8 @@
 #define UNDERVOLTAGE_TRESHOLD 0.70f * VOLTAGE_SUPPLY
 #define CURRENT_LIMIT         10.0f
 
+#define SPEED_MAX_RPM         0.90f * MOTOR_VELOCITY_CONSTANT * VOLTAGE_MAX
+
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
 #define ADC_RESOLUTION        4096.0f    // 12-bit ADC

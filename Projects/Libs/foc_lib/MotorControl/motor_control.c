@@ -198,7 +198,9 @@ void MotorControl_SetSpeed(float rpm)
 	g_ref.speed_ref = rpm;
     
     // SpeedController_SetTarget(rpm);
-    SpeedController_SetTarget_Ramp(rpm); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
+    g_ref.speed_ref = clampf(rpm, -SPEED_MAX_RPM, SPEED_MAX_RPM);
+
+    SpeedController_SetTarget_Ramp(g_ref.speed_ref); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_RUN;
 }
 
