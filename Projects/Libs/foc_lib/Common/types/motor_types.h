@@ -93,6 +93,5 @@ typedef struct {
     uint8_t active_algo;        // 0 = None, 1 = PI_FOC, 2 = CCS_MPC
 } Motor_Telemetry_t;
 
-
-
 #endif /* INC_MOTOR_TYPES_H_ */
+

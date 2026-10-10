@@ -9,6 +9,7 @@
 #include "motor_algorithm.h"
 #include "motor_alignment.h"
 #include "motor_types.h"
+#include "motor_control_faults.h"
 #include "config.h"
 #include "board.h"
 #include "foc_loop.h"
@@ -37,6 +38,8 @@ volatile Motor_Stats_t g_stats; // Volatile, bo może być modyfikowane w ISR
 static ControlAlgorithm_t active_algorithm;
 
 MotorState_t g_motor_state = STATE_IDLE;
+
+extern MotorFaults_t g_motor_faults;
 
 volatile uint32_t spi_ready_err = 0;
 volatile uint32_t spi_ready_ok = 0;
@@ -108,6 +111,7 @@ void MotorControl_Start(void)
 			if (!MotorAlignment_AlignSensor()) {
 				MotorControl_Stop();
 				g_motor_state = STATE_FAULT;
+                MOTOR_FAULT_SET(g_motor_faults, MOTOR_FAULT_ENCODER);
 				return;
 			}
 		}
@@ -127,7 +131,10 @@ void MotorControl_Stop(void)
     if (active_algorithm.Stop) {
         active_algorithm.Stop(active_algorithm.ctx);
     }
-    g_motor_state = STATE_IDLE;
+    // W przypadku fault nie zmieniamy stanu, by uniemożliwić ponowne uruchomienie silnika
+    if (g_motor_state != STATE_FAULT) { 
+        g_motor_state = STATE_IDLE;
+    }
 
     SpeedController_Reset(); // Reset całki regulatora prędkości
 }
@@ -204,11 +211,6 @@ void MotorControl_SetState(MotorState_t new_state)
 	g_motor_state = new_state;
 }
 
-void MotorControl_GetFaults()
-{
-    Board_CheckFaults(&board);
-}
-
 static inline void MotorControl_BuildReferences(Motor_References_t *ref)
 {
     ref->torque_iq_ref   = g_ref.torque_iq_ref;
@@ -243,6 +245,7 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
         {
             MotorControl_Stop();
             g_motor_state = STATE_FAULT;
+            MOTOR_FAULT_SET(g_motor_faults, MOTOR_FAULT_INVALID_MEASUREMENTS);
 
             return false;
         }
@@ -280,14 +283,15 @@ static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas)
     return true;
 }
 
-void MotorControl_SafetyCheck(Motor_Measurements_t *meas)
+void MotorControl_CheckFaults(void)
 {
-    // Sprawdzenie temperatury silnika i mosfetów
-    if (meas->motor_temp > MOTOR_MAX_TEMP_C || meas->mosfet_temp > MOSFET_MAX_TEMP_C)
+    if (g_motor_faults != MOTOR_FAULT_NONE)
     {
-        MotorControl_Stop();
-        g_motor_state = STATE_FAULT;
-        printf("Error: Przekroczona temperatura silnika lub mosfetów!\n");
+        MotorControl_PrintFaults(g_motor_faults);
+    }
+    else
+    {
+        printf("No motor faults detected.\r\n");
     }
 }
 
@@ -301,6 +305,8 @@ void MotorControl_OnCurrentSampleISR(void)
 	{
 		return;
 	}
+
+    MotorControl_ProcessControlFaults(&meas);
 
 	MotorControl_BuildReferences(&ref);
 
@@ -340,14 +346,14 @@ void MotorControl_OnCurrentSampleISR(void)
 }
 
 #if defined(USE_AS5048A_ENCODER)
-void MotorControl_OnEncoderSampleISR(void)
-{
-	if (spi_ready) {
-		// SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET
-		AS5048_ReadAngleDMA();
-		/* CS_HIGH and spi_ready=true in DMA callback */
-	}
-}
+    void MotorControl_OnEncoderSampleISR(void)
+    {
+        if (spi_ready) {
+            // SPI_Flag_GPIO_Port->BSRR = SPI_Flag_Pin; // GPIO_PIN_SET
+            AS5048_ReadAngleDMA();
+            /* CS_HIGH and spi_ready=true in DMA callback */
+        }
+    }
 #endif
 
 void MotorControl_OnSpeedISR(void)

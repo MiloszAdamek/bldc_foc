@@ -280,7 +280,7 @@ static void Board_SetPinsToPWM(BoardHandleTypeDef *board)
 }
 
 void Board_CheckFaults(BoardHandleTypeDef *board)
-{
+{   
     DRV8353_Faults_t faults;
     if (DRV8353_GetFaults(&board->powerstage.drv, &faults) == DRV8353_OK)
     {

@@ -56,6 +56,15 @@ typedef enum
 
 typedef struct
 {
+    bool fault;
+    bool gate_fault;
+    bool overcurrent;
+    bool overtemperature;
+    bool undervoltage;
+} PowerStage_Faults_t;
+
+typedef struct
+{
     GPIO_TypeDef *port;
     uint16_t      pin;
     uint32_t      alternate;   // AF dla PWM
@@ -79,6 +88,7 @@ typedef struct
     PowerStage_PWM_Mode_t pwm_mode; // 3PWM / 6PWM
     PowerStage_Status_t status;
     DRV8353_HandleTypeDef drv;      // DRV8353 handle
+    PowerStage_Faults_t faults;     // Statusy błędów
 } PowerStage_HandleTypeDef;
 
 PowerStage_Status_t PowerStage_Init(PowerStage_HandleTypeDef *ps, SPI_HandleTypeDef *hspi, TIM_HandleTypeDef *htim, const PowerStage_Pins_t *pins);
@@ -87,5 +97,7 @@ PowerStage_Status_t PowerStage_Off(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_CheckFaults(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_SetCalibrationMode(PowerStage_HandleTypeDef *ps, bool enable);
+
+PowerStage_Faults_t PowerStage_GetFaults(PowerStage_HandleTypeDef *ps);
 
 #endif /* POWERSTAGE_H */

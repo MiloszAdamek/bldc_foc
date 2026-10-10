@@ -108,7 +108,7 @@ static void process_command(char* cmd) {
         case 'F': // Print faults
 		case 'f': {
 			printf("CMD: Faults\r\n");
-			MotorControl_GetFaults();
+			MotorControl_CheckFaults();
 			break;
 		}
 		default:

@@ -51,7 +51,9 @@
 
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        25.0f
-#define VOLTAGE_LIMIT         VOLTAGE_SUPPLY - 1.0f
+#define VOLTAGE_MAX           0.95 * VOLTAGE_SUPPLY
+#define OVERVOLTAGE_TRESHOLD  1.10f * VOLTAGE_SUPPLY
+#define UNDERVOLTAGE_TRESHOLD 12.0f
 #define CURRENT_LIMIT         10.0f
 
 // Rezystor pomiarowy i wzmocnienie
@@ -75,11 +77,11 @@
 
     #define PI_KP_ID 1.2f
     #define PI_KI_ID 200.0f
-    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
+    #define PI_LIMIT_ID (VOLTAGE_MAX / M_SQRT3)
 
     #define PI_KP_IQ 1.2f
     #define PI_KI_IQ 200.0f
-    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+    #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
 
 #endif
 
@@ -92,11 +94,11 @@
 
     #define PI_KP_ID 0.64f
     #define PI_KI_ID 10.0f
-    #define PI_LIMIT_ID (VOLTAGE_LIMIT / M_SQRT3)
+    #define PI_LIMIT_ID (VOLTAGE_MAX / M_SQRT3)
 
     #define PI_KP_IQ 0.64f
     #define PI_KI_IQ 10.0f
-    #define PI_LIMIT_IQ (VOLTAGE_LIMIT / M_SQRT3)
+    #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
 
 #endif
  

@@ -33,8 +33,6 @@ void MotorControl_Reboot(void);
 
 void MotorControl_SetState(MotorState_t new_state);
 
-void MotorControl_GetFaults(void);
-
 // Motor control callbacks for ISRs
 void MotorControl_OnCurrentSampleISR(void);
 void MotorControl_OnEncoderSampleISR(void);
@@ -46,5 +44,7 @@ void MotorControl_OnCANISR(void);
 
 void MotorControl_GetCANTelemetry(float *pos_rev, float *vel_rpm);
 void MotorControl_GetCANHeartbeat(uint16_t *state, uint16_t *faults);
+
+void MotorControl_CheckFaults(void);
 
 #endif /* INC_MOTOR_CONTROL_H_ */

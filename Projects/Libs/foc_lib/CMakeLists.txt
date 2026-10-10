@@ -33,6 +33,7 @@ target_sources(foc_lib PRIVATE
     MotorControl/motor_control_can.c
     MotorControl/motor_control_callbacks.c
     MotorControl/motor_alignment.c
+    MotorControl/motor_control_faults.c
 )
 
 target_include_directories(foc_lib PUBLIC

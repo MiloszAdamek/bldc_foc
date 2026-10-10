@@ -32,6 +32,7 @@
 #include "motor_control.h"
 #include "board.h"
 #include "powerstage.h"
+#include "motor_control_faults.h"
 
 #if defined(USE_CAN_INTERFACE)
 
@@ -256,6 +257,8 @@ int main(void)
 
       // HAL_Delay(5);
     #endif
+    
+    MotorControl_OnFaultDetected(); // Flagi ustawiane w przerwaniu od TIM1 Break
 
     // Obsługa CLI
     #if defined(USE_CMD_INTERFACE)

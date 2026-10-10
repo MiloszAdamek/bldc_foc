@@ -22,13 +22,15 @@ PowerStage_Status_t PowerStage_Init(
 {
     ps->htim = htim;
     ps->pins = *pins;
-    ps->status = POWERSTAGE_OK;
-
-    if (DRV8353_Init(&ps->drv, hspi, htim, ps->pwm_mode) != DRV8353_OK)
+    
+    if (DRV8353_Init(&ps->drv, hspi, htim, (DRV8353_PWM_Mode_t)ps->pwm_mode) != DRV8353_OK)
     {
         ps->status = POWERSTAGE_ERROR;
         return POWERSTAGE_ERROR;
     }
+
+    ps->status = POWERSTAGE_OK;
+    ps->faults = (PowerStage_Faults_t){0};
 
     return POWERSTAGE_OK;
 }
@@ -57,10 +59,24 @@ PowerStage_Status_t PowerStage_On(PowerStage_HandleTypeDef *ps)
 
 PowerStage_Status_t PowerStage_CheckFaults(PowerStage_HandleTypeDef *ps)
 {
-    DRV8353_GetFaults(&ps->drv, &ps->drv.faults);
-    DRV8353_PrintFaults(&ps->drv.faults);
+    if (DRV8353_GetFaults(&ps->drv, &ps->drv.faults) == DRV8353_OK)
+    {
+        DRV8353_PrintFaults(&ps->drv.faults);
+    }
 
     return POWERSTAGE_OK;
+}
+
+PowerStage_Faults_t PowerStage_GetFaults(PowerStage_HandleTypeDef *ps)
+{
+    DRV8353_GetFaults(&ps->drv, &ps->drv.faults);
+    ps->faults.fault = ps->drv.faults.fault;
+    ps->faults.gate_fault = ps->drv.faults.gate_fault;
+    ps->faults.overcurrent = ps->drv.faults.overcurrent;
+    ps->faults.overtemperature = ps->drv.faults.overtemperature;
+    ps->faults.undervoltage = ps->drv.faults.undervoltage;
+
+    return ps->faults;
 }
 
 PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps)
