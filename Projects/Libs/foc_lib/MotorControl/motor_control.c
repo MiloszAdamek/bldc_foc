@@ -55,6 +55,7 @@ volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section"
 static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas);
 static inline bool MotorControl_BuildMeasurements(Motor_Measurements_t *meas);
 static inline void MotorControl_BuildReferences(Motor_References_t *ref);
+static void MotorControl_Reset(void);
 
 void MotorControl_Init(BoardHandleTypeDef* p_board)
 {
@@ -104,30 +105,37 @@ static inline void MotorControl_LogCubeMonitor(const Motor_Measurements_t *meas)
 
 void MotorControl_Start(void)
 {
-	// Jeśli sensor nie jest skalibrowany, to uruchom procedurę kalibracji
-	if(!MotorAlignment_IsAligned()){
-		if (g_motor_state == STATE_IDLE) {
-			g_motor_state = STATE_ALIGNMENT;
-			if (!MotorAlignment_AlignSensor()) {
-				MotorControl_Stop();
-				g_motor_state = STATE_FAULT;
-                MOTOR_FAULT_SET(g_motor_faults, MOTOR_FAULT_ENCODER);
-				return;
-			}
-		}
-	}
-	Board_StartMotor(&board);
-	Board_StartPeripherals(&board);
-	if (active_algorithm.Start) {
-        active_algorithm.Start(active_algorithm.ctx);
+    if (g_motor_state == STATE_RUN)
+        return;
+
+    if (g_motor_state == STATE_FAULT)
+        return;
+
+    if (!MotorAlignment_IsAligned())
+    {
+        g_motor_state = STATE_ALIGNMENT;
+
+        if (!MotorAlignment_AlignSensor())
+        {
+            MOTOR_FAULT_SET(g_motor_faults, MOTOR_FAULT_ENCODER);
+            g_motor_state = STATE_FAULT;
+            return;
+        }
     }
-	MotorControl_SetTorque_Iq(0.0f);
+
+    Board_StartMotor(&board);
+    Board_StartPeripherals(&board);
+
+    if (active_algorithm.Start)
+        active_algorithm.Start(active_algorithm.ctx);
+
+    MotorControl_Reset();
 }
 
 void MotorControl_Stop(void)
 {
 	Board_StopMotor(&board);
-	Board_StopPeripherals(&board);
+	// Board_StopPeripherals(&board);
     if (active_algorithm.Stop) {
         active_algorithm.Stop(active_algorithm.ctx);
     }
@@ -135,17 +143,31 @@ void MotorControl_Stop(void)
     if (g_motor_state != STATE_FAULT) { 
         g_motor_state = STATE_IDLE;
     }
+}
 
-    SpeedController_Reset(); // Reset całki regulatora prędkości
+void MotorControl_Reset(void)
+{
+    speed_loop_enabled = false;
+    position_loop_enabled = false;
+    
+    g_ref.torque_iq_ref = 0.0f;
+    g_ref.speed_ref = 0.0f;
+    g_ref.position_ref = 0.0f;
+    
+    SpeedController_Reset();
+    PositionController_Reset();
 }
 
 void MotorControl_SetPosition(float position)
 {
-	if (g_motor_state == STATE_IDLE) {
-	    if (active_algorithm.Start) {
-        active_algorithm.Start(active_algorithm.ctx);
+    if (g_motor_state == STATE_IDLE)
+    {
+        MotorControl_Start();
+
+        if (g_motor_state == STATE_FAULT)
+            return;
     }
-	}
+
     speed_loop_enabled = true;
     position_loop_enabled = true;
 
@@ -160,11 +182,14 @@ void MotorControl_SetPosition(float position)
 
 void MotorControl_SetSpeed(float rpm)
 {
-	if (g_motor_state == STATE_IDLE) {
-	    if (active_algorithm.Start) {
-	        active_algorithm.Start(active_algorithm.ctx);
-	    }
-	}
+    if (g_motor_state == STATE_IDLE)
+    {
+        MotorControl_Start();
+
+        if (g_motor_state == STATE_FAULT)
+            return;
+    }
+
     speed_loop_enabled = true;
     position_loop_enabled = false;
 
@@ -179,11 +204,14 @@ void MotorControl_SetSpeed(float rpm)
 
 void MotorControl_SetTorque_Iq(float iq)
 {
-	if (g_motor_state == STATE_IDLE) {
-	    if (active_algorithm.Start) {
-	        active_algorithm.Start(active_algorithm.ctx);
-	    }
-	}
+    if (g_motor_state == STATE_IDLE)
+    {
+        MotorControl_Start();
+
+        if (g_motor_state == STATE_FAULT)
+            return;
+    }
+
     speed_loop_enabled = false;
     position_loop_enabled = false;
 
@@ -209,6 +237,11 @@ void MotorControl_Reboot(void)
 void MotorControl_SetState(MotorState_t new_state)
 {
 	g_motor_state = new_state;
+}
+
+void MotorControl_GetMeasurements(Motor_Measurements_t *meas)
+{
+    MotorControl_BuildMeasurements(meas);
 }
 
 static inline void MotorControl_BuildReferences(Motor_References_t *ref)

@@ -79,6 +79,12 @@ PowerStage_Faults_t PowerStage_GetFaults(PowerStage_HandleTypeDef *ps)
     return ps->faults;
 }
 
+PowerStage_Status_t PowerStage_ClearFaults(PowerStage_HandleTypeDef *ps)
+{
+    DRV8353_ClearFaults(&ps->drv);
+    return POWERSTAGE_OK;
+}
+
 PowerStage_Status_t PowerStage_Tests(PowerStage_HandleTypeDef *ps)
 {
     DRV8353_SetOutputState(&ps->drv, DRV_OUTPUT_RUN);

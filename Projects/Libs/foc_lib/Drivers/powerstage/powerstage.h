@@ -99,5 +99,6 @@ PowerStage_Status_t PowerStage_CheckFaults(PowerStage_HandleTypeDef *ps);
 PowerStage_Status_t PowerStage_SetCalibrationMode(PowerStage_HandleTypeDef *ps, bool enable);
 
 PowerStage_Faults_t PowerStage_GetFaults(PowerStage_HandleTypeDef *ps);
+PowerStage_Status_t PowerStage_ClearFaults(PowerStage_HandleTypeDef *ps);
 
 #endif /* POWERSTAGE_H */

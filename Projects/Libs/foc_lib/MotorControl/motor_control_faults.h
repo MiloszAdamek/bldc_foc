@@ -69,5 +69,6 @@ void MotorControl_ProcessControlFaults(Motor_Measurements_t *meas);
 void MotorControl_ProcessDriverFaults(void);
 void MotorControl_PrintFaults(MotorFaults_t faults);
 void MotorControl_OnFaultDetected(void);
+void MotorControl_ClearFaults(void);
 
 #endif /* MOTOR_CONTROL_FAULTS_H */

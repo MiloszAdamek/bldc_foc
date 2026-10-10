@@ -116,13 +116,50 @@ void MotorControl_PrintFaults(MotorFaults_t faults)
     }
 }
 
+void MotorControl_ClearFaults(void)
+{
+    g_motor_state = STATE_FAULT;
+
+    g_drv_fault_pending = true;
+    g_motor_stop_pending = false;
+
+    Board_ClearFaults(&board);
+
+    g_motor_faults = MOTOR_FAULT_NONE;
+
+    Motor_Measurements_t meas;
+    MotorControl_GetMeasurements(&meas);
+
+    MotorControl_ProcessControlFaults(&meas);
+
+    MotorControl_ProcessDriverFaults();
+
+    if (g_motor_faults != MOTOR_FAULT_NONE)
+    {
+        printf("Failed to clear faults.\r\n");
+        MotorControl_PrintFaults(g_motor_faults);
+        g_motor_state = STATE_FAULT;
+        return;
+    }
+
+    // Allow motor to be started again
+    
+    HAL_NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn);
+
+    g_break_event_latched = false;
+    g_motor_state = STATE_IDLE;
+
+    printf("Faults cleared.\r\n");
+}
+
 // while(1) loop in main.c should call this function to handle pending faults
 void MotorControl_OnFaultDetected(void)
 {
     if (g_motor_stop_pending)
     {
         g_motor_stop_pending = false;
-        Board_StopMotor(&board);
+        // Board_StopMotor(&board);
+        MotorControl_Stop();
     }
 
     MotorControl_ProcessDriverFaults();

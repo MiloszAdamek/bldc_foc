@@ -26,7 +26,7 @@
 #define DUAL_ADC
 
 #define ENABLE_CURRENT_LIMIT
-#define ENABLE_FIELD_WEAKENING
+// #define ENABLE_FIELD_WEAKENING
 
 #define ENABLE_SERIAL_DEBUGGING
 #define ENABLE_RAMP
@@ -50,10 +50,10 @@
 #define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
-#define VOLTAGE_SUPPLY        25.0f
+#define VOLTAGE_SUPPLY        31.0f
 #define VOLTAGE_MAX           0.95 * VOLTAGE_SUPPLY
 #define OVERVOLTAGE_TRESHOLD  1.10f * VOLTAGE_SUPPLY
-#define UNDERVOLTAGE_TRESHOLD 12.0f
+#define UNDERVOLTAGE_TRESHOLD 0.70f * VOLTAGE_SUPPLY
 #define CURRENT_LIMIT         10.0f
 
 // Rezystor pomiarowy i wzmocnienie

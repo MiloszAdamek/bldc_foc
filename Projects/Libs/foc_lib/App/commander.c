@@ -7,6 +7,7 @@
 
 #include "commander.h"
 #include "motor_control.h"
+#include "motor_control_faults.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -109,6 +110,12 @@ static void process_command(char* cmd) {
 		case 'f': {
 			printf("CMD: Faults\r\n");
 			MotorControl_CheckFaults();
+			break;
+		}
+        case 'C': // Clear faults
+		case 'c': {
+			printf("CMD: Clear faults\r\n");
+			MotorControl_ClearFaults();
 			break;
 		}
 		default:

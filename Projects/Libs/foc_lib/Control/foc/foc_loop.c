@@ -119,7 +119,9 @@ void FOC_Start(void *ctx)
     FOC_StatsReset();
     
     // Rozpoczęcie pobierania danych
-    AS5048_ReadAngleDMA();
+    if(board.encoder_type == ENCODER_AS5048A_ABSOLUTE){
+        AS5048_ReadAngleDMA();
+    }
 }
 
 void FOC_Stop(void *ctx)
