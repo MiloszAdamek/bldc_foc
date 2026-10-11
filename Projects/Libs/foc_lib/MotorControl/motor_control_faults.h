@@ -70,5 +70,6 @@ void MotorControl_ProcessDriverFaults(void);
 void MotorControl_PrintFaults(MotorFaults_t faults);
 void MotorControl_OnFaultDetected(void);
 void MotorControl_ClearFaults(void);
+MotorFaults_t MotorControl_GetCurrentFaults(void);
 
 #endif /* MOTOR_CONTROL_FAULTS_H */

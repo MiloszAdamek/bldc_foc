@@ -8,8 +8,11 @@
 
 #include "motor_control.h"
 #include "math_consts.h"
+#include "motor_control_faults.h"
 
 extern volatile Motor_Telemetry_t g_telem;
+
+extern volatile MotorFaults_t g_motor_faults;
 
 extern volatile uint32_t g_heartbeat_period_ticks;
 extern volatile uint32_t g_telemetry_period_ticks;
@@ -70,6 +73,6 @@ void MotorControl_GetCANHeartbeat(uint16_t *state, uint16_t *faults)
     __disable_irq();
     *state = g_telem.motor_state;
     // Jeśli masz mechanizm błędów, dodaj odczyt faults
-    *faults = 0; 
+    *faults = g_motor_faults; 
     __set_PRIMASK(primask);
 }

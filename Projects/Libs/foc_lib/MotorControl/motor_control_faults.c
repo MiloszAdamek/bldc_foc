@@ -1,6 +1,7 @@
 
 #include "motor_control_faults.h"
 #include "motor_control.h"
+#include <stdint.h>
 #include <stdio.h>
 
 extern MotorState_t g_motor_state;
@@ -163,6 +164,11 @@ void MotorControl_OnFaultDetected(void)
     }
 
     MotorControl_ProcessDriverFaults();
+}
+
+uint16_t MotorControl_GetCurrentFaults()
+{
+    return g_motor_faults;
 }
 
 void HAL_TIMEx_BreakCallback(TIM_HandleTypeDef *htim)

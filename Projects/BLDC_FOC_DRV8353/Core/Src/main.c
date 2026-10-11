@@ -120,7 +120,11 @@ BoardHandleTypeDef board = {
       .reboot = MotorControl_Reboot,
 
       .get_heartbeat = MotorControl_GetCANHeartbeat,
-      .get_telemetry = MotorControl_GetCANTelemetry
+      .get_telemetry = MotorControl_GetCANTelemetry,
+
+      .clear_faults = MotorControl_ClearFaults,
+
+      .get_faults = MotorControl_GetCurrentFaults
   };
   
 #endif
