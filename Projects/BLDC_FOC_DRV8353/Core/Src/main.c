@@ -104,6 +104,7 @@ BoardHandleTypeDef board = {
   .hspi_drv             = &hspi2, 
   .hspi_enc             = &hspi3,
   .huart_com            = &huart3,
+  .htim_brake_chopper   = NULL, // &htim8,
   .encoder_type         = ENCODER_INCREMENTAL,
 };
 

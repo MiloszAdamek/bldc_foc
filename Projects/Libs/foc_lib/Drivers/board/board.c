@@ -13,7 +13,7 @@
  #include "encoder.h"
  #include <stdio.h>
  #include "slow_adc.h"
- #include "tim.h"
+ #include "brake_chopper.h"
  #include "delay_us.h"
 
  #ifdef DRV8353
@@ -92,6 +92,8 @@ void Board_Init(BoardHandleTypeDef *board)
 
     // Encoder initialization and calibration
     Encoder_Init();
+
+    BrakeChopper_Init();
 }
 
 void Board_StartMotor(BoardHandleTypeDef *board)

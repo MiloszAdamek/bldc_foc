@@ -28,6 +28,8 @@
 #define ENABLE_CURRENT_LIMIT
 // #define ENABLE_FIELD_WEAKENING
 
+#define ENABLE_BRAKE_CHOPPER
+
 #define ENABLE_SERIAL_DEBUGGING
 #define ENABLE_RAMP
 // #define TEST_MODE
@@ -103,6 +105,23 @@
     #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
 
 #endif
+
+#ifdef D5312S
+
+    #define MOTOR_POLE_PAIRS      	7          // liczba par biegunów silnika
+    #define MOTOR_TORQUE_CONSTANT 	0.025f		// Kt unknown
+    #define MOTOR_VELOCITY_CONSTANT 330.0f		// Kv 
+    #define VOLTAGE_SENSOR_ALIGN  	0.5f  
+
+    #define PI_KP_ID 0.64f
+    #define PI_KI_ID 10.0f
+    #define PI_LIMIT_ID (VOLTAGE_MAX / M_SQRT3)
+
+    #define PI_KP_IQ 0.64f
+    #define PI_KI_IQ 10.0f
+    #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
+
+#endif
  
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
@@ -137,6 +156,31 @@
     #define PI_KP_P 10.0f
     #define PI_KI_P 2.0f
     #define PI_LIMIT_P (1000.0f * 2.0f * M_PI / 60.0f) // 500 RPM -> rad/s
+
+    #ifdef ENABLE_BRAKE_CHOPPER
+
+        #define BRAKE_R_OHM              10.0f
+        #define BRAKE_DUTY_MAX           0.95f
+
+        // Progi VBUS (dopasuj do OV fault, ale dla 13S to dobry start)
+        #define BRAKE_V_ON               55.2f   // włącz chopper powyżej
+        #define BRAKE_V_TARGET           54.9f   // PI trzyma okolice targetu
+        #define BRAKE_V_OFF              54.6f   // wyłącz poniżej
+
+        #define BRAKE_P_CONT_W           50.0f   // limit ciągły (bezpieczny start)
+        #define BRAKE_P_TRIP_W           85.0f   // “za dużo” -> latch jeśli trwa odpowiednio długo
+
+        // Filtr “grzania” + czas trip
+        #define BRAKE_HEAT_TAU_SEC       8.0f    // 5..20 s typowo
+        #define BRAKE_TRIP_TIME_SEC      0.8f    // ile sekund powyżej P_TRIP aby zadziałał latch
+
+        // PI (zwykle mały Kp i dość małe Ki; stroisz na logach duty/Vbus)
+        #define BRAKE_KP                 0.12f
+        #define BRAKE_KI                 1.20f
+
+    #endif
+
+
 #endif
 
 #ifdef IHM03

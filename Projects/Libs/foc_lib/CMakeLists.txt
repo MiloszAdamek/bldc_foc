@@ -13,6 +13,7 @@ target_sources(foc_lib PRIVATE
     Control/pwm/svpwm.c
     Control/speed/speed_control.c
     Control/speed/speed_estimator.c
+    Control/brake_chopper/brake_chopper.c
 
     # Drivers
     Drivers/board/board.c
@@ -46,6 +47,7 @@ target_include_directories(foc_lib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/Control/position
     ${CMAKE_CURRENT_SOURCE_DIR}/Control/pwm
     ${CMAKE_CURRENT_SOURCE_DIR}/Control/speed
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/brake_chopper
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/board
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/delay_us
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/drv8353
