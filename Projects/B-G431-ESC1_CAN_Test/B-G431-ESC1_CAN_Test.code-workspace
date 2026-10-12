@@ -1,10 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "BLDC_FOC_DRV8353"
+			"path": "."
 		},
 		{
-			"path": "foc_lib"
+			"path": "../Libs"
 		}
 	],
 	"settings": {}

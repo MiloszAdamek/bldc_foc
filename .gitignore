@@ -6,6 +6,8 @@ Debug/
 .settings/
 */.settings/
 
+**/Drivers
+
 # Eclipse workspace metadata
 .metadata/
 
