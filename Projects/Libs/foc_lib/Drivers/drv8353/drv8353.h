@@ -67,6 +67,8 @@
 #define DRV8353_VDS_OCP_Pos    0U
 #define DRV8353_VDS_OCP_Msk    (0x0FU << DRV8353_VDS_OCP_Pos)
 
+#define DRV8353_OCP_DEG_Pos    4U
+#define DRV8353_OCP_DEG_Msk    (0x03U << DRV8353_OCP_DEG_Pos)
 #define DRV8353_OCP_MODE_Pos   6U
 #define DRV8353_OCP_MODE_Msk   (0x03U << DRV8353_OCP_MODE_Pos)
 
@@ -180,6 +182,13 @@ typedef enum {
 } DRV8353_VDS_OCP_t;
 
 typedef enum {
+    DRV8353_OCP_DEG_1us   = 0b00,
+    DRV8353_OCP_DEG_2us   = 0b01,
+    DRV8353_OCP_DEG_4us   = 0b10,
+    DRV8353_OCP_DEG_8us   = 0b11
+} DRV8353_OCP_Deg_t;
+
+typedef enum {
     DRV8353_OCP_MODE_LATCHED     = 0b00,
     DRV8353_OCP_MODE_AUTO_RETRY  = 0b01,
     DRV8353_OCP_MODE_REPORT_ONLY = 0b10,
@@ -196,6 +205,7 @@ typedef struct {
     DRV8353_DeadTime_t dead_time;
     DRV8353_VDS_OCP_t ocp_level;
     DRV8353_OCP_Mode_t ocp_mode;
+    DRV8353_OCP_Deg_t ocp_deg;
     DRV8353_DriveTime_t drive_time;
 } DRV8353_Config_t;
 
@@ -268,7 +278,7 @@ DRV8353_Status_t DRV8353_SetAmplifierGain(DRV8353_HandleTypeDef *drv, DRV8353_CS
 
 DRV8353_Status_t DRV8353_SetDeadTime(DRV8353_HandleTypeDef *drv, DRV8353_DeadTime_t dead_time);
 
-DRV8353_Status_t DRV8353_SetOvercurrentProtection(DRV8353_HandleTypeDef *drv, DRV8353_VDS_OCP_t ocp, DRV8353_OCP_Mode_t ocp_mode);
+DRV8353_Status_t DRV8353_SetOvercurrentProtection(DRV8353_HandleTypeDef *drv, DRV8353_VDS_OCP_t ocp, DRV8353_OCP_Mode_t ocp_mode, DRV8353_OCP_Deg_t ocp_deg);
 
 DRV8353_Status_t DRV8353_SetGateDriveCurrent(DRV8353_HandleTypeDef *drv, DRV8353_IDRIVEP_t idrivep_hs, DRV8353_IDRIVEN_t idriven_hs, DRV8353_IDRIVEP_t idrivep_ls, DRV8353_IDRIVEN_t idriven_ls, DRV8353_DriveTime_t drive_time);
 

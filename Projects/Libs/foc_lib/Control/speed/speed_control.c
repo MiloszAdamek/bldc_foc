@@ -18,7 +18,7 @@ volatile bool speed_ramp_active = false;
 static const float speed_step = 0.8f; // przyrost prędkości na 1 krok przy aktywacji rampy liniowej
 volatile float speed_ramp_out = 0.0f;
 
-static PI_Controller pi_speed = { .kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
+static PI_Controller pi_speed = {.kp = PI_KP_V, .ki = PI_KI_V, .limit = PI_LIMIT_V, .integral = 0.0f, .dt = SPEED_PERIOD_SEC};
 
 volatile float g_speed_target = 0.0f; // debug
 volatile float g_speed_error = 0.0f;  // debug

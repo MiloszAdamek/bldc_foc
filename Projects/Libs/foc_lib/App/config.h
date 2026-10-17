@@ -31,7 +31,7 @@
 #define ENABLE_BRAKE_CHOPPER
 
 #define ENABLE_SERIAL_DEBUGGING
-#define ENABLE_RAMP
+// #define ENABLE_RAMP
 // #define TEST_MODE
 
 /* =========================================================================
@@ -54,7 +54,7 @@
 // Napięcie zasilania i limity napięcia dla FOC
 #define VOLTAGE_SUPPLY        25.0f
 #define VOLTAGE_MAX           0.95 * VOLTAGE_SUPPLY
-#define OVERVOLTAGE_TRESHOLD  1.10f * VOLTAGE_SUPPLY
+#define OVERVOLTAGE_TRESHOLD  1.20f * VOLTAGE_SUPPLY
 #define UNDERVOLTAGE_TRESHOLD 0.70f * VOLTAGE_SUPPLY
 #define CURRENT_LIMIT         10.0f
 
