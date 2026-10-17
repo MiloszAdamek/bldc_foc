@@ -65,8 +65,8 @@ void SpeedEstimator_Update(void)
         Kalman_Predict(&kf_state, &kf_params);
     } else {
         last_tick = snap.tick;
-        float theta_unwrapped = AngleUnwrap_Update(&enc_unwrap, snap.theta_mech);
-        Kalman_Update(&kf_state, &kf_params, theta_unwrapped);
+        // float theta_unwrapped = AngleUnwrap_Update(&enc_unwrap, snap.theta_mech);
+        Kalman_Update_Fast(&kf_state, &kf_params, snap.theta_mech);
     }
     Publish(kf_state.x[0], kf_state.x[1]);
 
@@ -166,6 +166,7 @@ void Kalman_Init(KalmanState *s, KalmanParams *p, float dt){
 	// Initial state
 	s->x[0] = 0.0; // theta
 	s->x[1] = 0.0; // omega
+    s->initialized = false;
 
 	// P
 	s->P[0][0] = 1.0; s->P[0][1] = 0.0;
@@ -215,6 +216,61 @@ void Kalman_Update(KalmanState *s, KalmanParams *p, float z)
     s->P[0][1] = IKH00*Pp01 + IKH01*Pp11;
     s->P[1][0] = IKH10*Pp00 + IKH11*Pp10;
     s->P[1][1] = IKH10*Pp01 + IKH11*Pp11;
+}
+
+void Kalman_Update_Fast(KalmanState *s, KalmanParams *p, float z_wrapped)
+{
+    // Start przy pierwszej próbce, ustawianie stanu na podstawie pomiaru
+    if (!s->initialized) {
+        s->x[0] = z_wrapped;// Startujemy dokładnie z aktualnego kąta wału
+        s->x[1] = 0.0f;     // Zakładamy prędkość początkową 0 rad/s
+        s->initialized = true;
+        return;             // Pomijamy korekcję w 1. kroku - brak skoku innowacji!
+    }
+
+    const float dt = p->dt;
+
+    /* 1. Predykcja stanu (z zawijaniem kąta do 0..2pi) */
+    float x0_pred = s->x[0] + dt * s->x[1];
+    if (x0_pred >= TWO_PI) x0_pred -= TWO_PI;
+    else if (x0_pred < 0.0f) x0_pred += TWO_PI;
+    
+    float x1_pred = s->x[1];
+
+    /* 2. Predykcja kowariancji P_pred = A*P*A^T + Q */
+    float p00 = s->P[0][0];
+    float p01 = s->P[0][1];
+    float p10 = s->P[1][0];
+    float p11 = s->P[1][1];
+
+    float Pp00 = p00 + dt * (p10 + p01 + dt * p11) + p->Q[0][0];
+    float Pp01 = p01 + dt * p11;
+    float Pp10 = p10 + dt * p11;
+    float Pp11 = p11 + p->Q[1][1];
+
+    /* 3. Innowacja na kącie zawiniętym (-pi, pi) */
+    float y = z_wrapped - x0_pred;
+    if (y > (float)M_PI)       y -= TWO_PI;
+    else if (y < -(float)M_PI) y += TWO_PI;
+
+    /* 4. Wzmocnienie Kalmana (dla H = [1, 0]) */
+    float S_inv = 1.0f / (Pp00 + p->R);
+    float K0 = Pp00 * S_inv;
+    float K1 = Pp10 * S_inv;
+
+    /* 5. Aktualizacja stanu */
+    s->x[0] = x0_pred + K0 * y;
+    if (s->x[0] >= TWO_PI) s->x[0] -= TWO_PI;
+    else if (s->x[0] < 0.0f) s->x[0] += TWO_PI;
+
+    s->x[1] = x1_pred + K1 * y;
+
+    /* 6. Aktualizacja kowariancji P = (I - K*H)*P_pred */
+    float omK0 = 1.0f - K0;
+    s->P[0][0] = omK0 * Pp00;
+    s->P[0][1] = omK0 * Pp01;
+    s->P[1][0] = Pp10 - K1 * Pp00;
+    s->P[1][1] = Pp11 - K1 * Pp01;
 }
 
 void Kalman_Predict(KalmanState *s, KalmanParams *p)

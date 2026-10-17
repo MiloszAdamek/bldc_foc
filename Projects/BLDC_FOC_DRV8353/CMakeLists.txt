@@ -35,8 +35,8 @@ add_compile_definitions(USE_CAN_INTERFACE)
 
 add_compile_definitions(USE_CMD_INTERFACE)
 
-add_compile_definitions(TL50M10) # Motor model definition
-# add_compile_definitions(D5312S)
+# add_compile_definitions(TL50M10) # Motor model definition
+add_compile_definitions(D5312S)
 
 # add_compile_definitions(TEST_MODE)
 

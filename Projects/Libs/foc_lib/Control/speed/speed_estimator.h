@@ -34,6 +34,7 @@ typedef struct {
 typedef struct {
 	float x[2];     // [theta, omega]
     float P[2][2];  // Cov matrix, state
+    bool initialized; // Flag for first initialization - on start
 } KalmanState;
 
 typedef struct {
@@ -46,6 +47,7 @@ typedef struct {
 
 void Kalman_Init(KalmanState *s, KalmanParams *p, float dt);
 void Kalman_Update(KalmanState *s, KalmanParams *p, float z);
+void Kalman_Update_Fast(KalmanState *s, KalmanParams *p, float z_wrapped);
 void Kalman_Predict(KalmanState *s, KalmanParams *p);
 
 #endif /* SPEED_ESTIMATOR_KALMAN */
