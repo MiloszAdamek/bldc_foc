@@ -52,7 +52,11 @@ TaskHandle_t task_esc_init_handle;
 TaskHandle_t task_slave_monitor_handle;
 TaskHandle_t task_handle_commands;
 
-SlaveState_t esc_status[NUM_SLAVES];
+__attribute__((used)) SlaveState_t esc_status_0 = {0};
+__attribute__((used)) SlaveState_t esc_status_1 = {0};
+
+SlaveState_t* const esc_status_ptr[2] = {&esc_status_0, &esc_status_1};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,6 +132,10 @@ int main(void)
   // Zadanie inicjalizacji ESC
   status = xTaskCreate(esc_init_task, "ESC_Init_Task", 1024, NULL, 6, &task_esc_init_handle);
   configASSERT(status == pdPASS);
+
+  status = xTaskCreate(slave_monitor_task, "SlaveMonitorTask", 1024, NULL, 5, &task_slave_monitor_handle);
+  configASSERT(status == pdPASS);
+
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */
@@ -236,30 +244,30 @@ static void slave_monitor_task(void *pvParameters)
     for (int role = 0; role < NUM_SLAVES; role++)
     {
 
-      SlaveDriver_GetStateCopy_RTOS((SlaveRole_t)role, &esc_status[role]);
+      SlaveDriver_GetStateCopy_RTOS((SlaveRole_t)role, esc_status_ptr[role]);
 
-      if (esc_status[role].last_heartbeat_tick == 0 ||
-          (HAL_GetTick() - esc_status[role].last_heartbeat_tick) > 2000)
-      {
-        // logger(LOG_ERROR, "Motor %d lost heartbeat!", role);
-        SlaveDriver_StopAll();
-        // disarm();
+      // if (esc_status[role].last_heartbeat_tick == 0 ||
+      //     (HAL_GetTick() - esc_status[role].last_heartbeat_tick) > 2000)
+      // {
+      //   // logger(LOG_ERROR, "Motor %d lost heartbeat!", role);
+      //   SlaveDriver_StopAll();
+      //   // disarm();
 
-        break;
-      }
+      //   break;
+      // }
 
-      if (esc_status[role].occurred_faults != MC_NO_ERROR)
-      {
-        if (esc_status[role].axis_error != MC_NO_ERROR)
-        {
-          // logger(LOG_ERROR, "Motor %d Axis Error: 0x%X", role, esc_status[role].axis_error);
+      // if (esc_status[role].occurred_faults != MOTOR_FAULT_NONE)
+      // {
+      //   if (esc_status[role].axis_error != MOTOR_FAULT_NONE)
+      //   {
+      //     // logger(LOG_ERROR, "Motor %d Axis Error: 0x%X", role, esc_status[role].axis_error);
 
-          // logger(LOG_INFO, "System przechodzi w stan awaryjny (ERROR). Zatrzymywanie silnikow.");
-          SlaveDriver_StopAll();
-          // disarm();
-          break;
-        }
-      }
+      //     // logger(LOG_INFO, "System przechodzi w stan awaryjny (ERROR). Zatrzymywanie silnikow.");
+      //     SlaveDriver_StopAll();
+      //     // disarm();
+      //     break;
+      //   }
+      // }
     }
   }
 }

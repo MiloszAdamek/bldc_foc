@@ -34,6 +34,18 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+# Debug symbols and no optimization
+set(CMAKE_BUILD_TYPE Debug)
+
+add_compile_options(
+    -O0
+    -g3
+)
+
+add_link_options(
+    -g3
+)
+
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
@@ -81,4 +93,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
 )
 
-
+# target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+#     -Wl,--no-gc-sections
+# )

@@ -52,7 +52,7 @@
 #define POSITION_PERIOD_SEC   (1.0f / POSITION_FREQ_HZ)
 
 // Napięcie zasilania i limity napięcia dla FOC
-#define VOLTAGE_SUPPLY        31.0f
+#define VOLTAGE_SUPPLY        25.0f
 #define VOLTAGE_MAX           0.95 * VOLTAGE_SUPPLY
 #define OVERVOLTAGE_TRESHOLD  1.10f * VOLTAGE_SUPPLY
 #define UNDERVOLTAGE_TRESHOLD 0.70f * VOLTAGE_SUPPLY

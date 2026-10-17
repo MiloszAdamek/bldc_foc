@@ -166,9 +166,14 @@ void MotorControl_OnFaultDetected(void)
     MotorControl_ProcessDriverFaults();
 }
 
-uint16_t MotorControl_GetCurrentFaults()
+void MotorControl_GetCurrentFaults(MotorFaults_t *faults)
 {
-    return g_motor_faults;
+    if (faults == NULL)
+    {
+        return;
+    }
+
+    *faults = g_motor_faults;
 }
 
 void HAL_TIMEx_BreakCallback(TIM_HandleTypeDef *htim)
