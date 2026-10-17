@@ -97,20 +97,21 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
 
         DRV8353_Config_t default_config = {
             .pwm_mode   = pwm_mode,
-            .csa_gain   = DRV8353_CSA_GAIN_40V,      // Zmień z 40V na 20V!
-
-            .idrivep_hs = DRV8353_IDRIVEP_150mA,     // Wolne załączanie
-            .idriven_hs = DRV8353_IDRIVEN_300mA,     // SZYBKIE wyłączanie (minimum 800-1000mA, NIE 300mA!)
+            .csa_gain   = DRV8353_CSA_GAIN_20V, // Koniecznie
+            
+            .idrivep_hs = DRV8353_IDRIVEP_300mA,
+            .idriven_hs = DRV8353_IDRIVEN_600mA,
             .idrivep_ls = DRV8353_IDRIVEP_150mA,
-            .idriven_ls = DRV8353_IDRIVEN_300mA,     // SZYBKIE wyłączanie!
-
-            .drive_time = DRV8353_DRIVETIME_1000ns,
-            .dead_time  = DRV8353_DEADTIME_100ns,
-
-            .ocp_level  = DRV8353_VDS_OCP_300mV,     // 400mV wystarczy, żeby nie uszkodzić kluczy
+            .idriven_ls = DRV8353_IDRIVEN_600mA,
+            
+            .drive_time = DRV8353_DRIVETIME_4000ns,
+            .dead_time  = DRV8353_DEADTIME_400ns,
+            
+            .ocp_level  = DRV8353_VDS_OCP_200mV,
             .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
             .ocp_deg    = DRV8353_OCP_DEG_8us
         };
+
                 
     #endif
 

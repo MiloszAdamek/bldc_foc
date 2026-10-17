@@ -27,7 +27,6 @@
 
 #ifdef DRV8353
     #define SHUNT_RESISTOR           0.0005f
-    #define CURRENT_SENSE_GAIN       40.0f
 
     // Voltage divider ratio for BATT/BackEMF voltage sensing
     #define R_HIGH 56000.0f

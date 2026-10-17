@@ -87,6 +87,8 @@
     #define PI_KI_IQ 200.0f
     #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
 
+    #define CURRENT_SENSE_GAIN       40.0f
+
 #endif
 
 #ifdef TL50M10
@@ -104,6 +106,8 @@
     #define PI_KI_IQ 10.0f
     #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
 
+    #define CURRENT_SENSE_GAIN       40.0f
+
 #endif
 
 #ifdef D5312S
@@ -113,13 +117,15 @@
     #define MOTOR_VELOCITY_CONSTANT 330.0f		// Kv 
     #define VOLTAGE_SENSOR_ALIGN  	0.5f  
 
-    #define PI_KP_ID 0.64f
-    #define PI_KI_ID 10.0f
+    #define PI_KP_ID 0.64f / 2.0f
+    #define PI_KI_ID 10.0 / 2.0f
     #define PI_LIMIT_ID (VOLTAGE_MAX / M_SQRT3)
 
-    #define PI_KP_IQ 0.64f
-    #define PI_KI_IQ 10.0f
+    #define PI_KP_IQ 0.64f / 2.0f
+    #define PI_KI_IQ 10.0f / 2.0f
     #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
+
+    #define CURRENT_SENSE_GAIN       20.0f
 
 #endif
  
