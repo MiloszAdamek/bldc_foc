@@ -40,6 +40,8 @@ void Commander_Init(BoardHandleTypeDef* board) {
     printf(" P <position>    		(Radians)\r\n");
     printf(" F      		        (Faults)\r\n");
     printf(" R               		(Reboot Slave)\r\n");
+	printf(" C               		(Clear Faults)\r\n");
+	printf(" L <speed> <torque>		(Set Limits (rpm, A))\r\n");
     printf("> ");
 }
 
@@ -110,6 +112,15 @@ static void process_command(char* cmd) {
 		case 'f': {
 			printf("CMD: Faults\r\n");
 			MotorControl_CheckFaults();
+			break;
+		}
+		case 'L': // Set limits
+		case 'l': {
+			float speed_limit = atof(strtok(args, " "));
+			float torque_limit = atof(strtok(NULL, " "));
+			printf("CMD: Set limits\r\n");
+			MotorControl_SetSpeedLimit(speed_limit);
+			MotorControl_SetTorqueLimit_A(torque_limit);
 			break;
 		}
         case 'C': // Clear faults

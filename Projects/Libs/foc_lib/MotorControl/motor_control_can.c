@@ -14,10 +14,16 @@ extern volatile Motor_Telemetry_t g_telem;
 
 extern volatile MotorFaults_t g_motor_faults;
 
+extern volatile MotorState_t g_motor_state;
+
 extern volatile uint32_t g_heartbeat_period_ticks;
 extern volatile uint32_t g_telemetry_period_ticks;
 extern volatile bool g_can_heartbeat_flag;
 extern volatile bool g_can_telemetry_flag;
+
+extern volatile uint32_t g_comm_timeout_cnt;
+extern uint32_t watchdog_timeout_ms;
+extern volatile bool g_watchdog_enabled;
 
 void MotorControl_OnCANISR(void)
 {
@@ -75,4 +81,38 @@ void MotorControl_GetCANHeartbeat(uint16_t *state, uint16_t *faults)
     // Jeśli masz mechanizm błędów, dodaj odczyt faults
     *faults = g_motor_faults; 
     __set_PRIMASK(primask);
+}
+
+void MotorControl_SetWatchdog(uint16_t timeout_ms)
+{
+    if (timeout_ms == 0) {
+        // Przesłanie 0 ms wyłącza watchdoga
+        g_watchdog_enabled = false;
+        g_comm_timeout_cnt = 0;
+    } else {
+        // Najpierw zerujemy licznik i ustawiamy próg, potem uzbrajamy 
+        g_comm_timeout_cnt  = 0;
+        watchdog_timeout_ms = (uint32_t)timeout_ms;
+        __DMB();
+        g_watchdog_enabled  = true;
+    }
+}
+
+void MotorControl_WatchdogCAN(void)
+{
+    if (!g_watchdog_enabled) {
+        return;
+    }
+
+    if (g_motor_state == STATE_RUN) {
+        g_comm_timeout_cnt++;
+        if (g_comm_timeout_cnt > watchdog_timeout_ms) {
+            g_motor_state = STATE_FAULT;
+            MOTOR_FAULT_SET(g_motor_faults, MOTOR_FAULT_COMM_TIMEOUT);
+            MotorControl_Stop();
+
+        }
+    } else {
+        g_comm_timeout_cnt = 0;
+    }
 }

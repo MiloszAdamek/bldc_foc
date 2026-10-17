@@ -4,7 +4,7 @@ R_g = 0; %Ohm,  Brak rezystora bramki
 f_pwm = 20 * 1e3; %khz
 T_pwm = 1/f_pwm;
 
-t_sw = 0.015 * T_pwm; % Czas przełączania na poziomie max 3% okresu PWM
+t_sw = 0.015 * T_pwm; % Czas przełączania na poziomie max 1.5% okresu PWM
 
 % Dla V_gs = 10V
 Rds_on = 1.7 * 1e-3; %Ohm

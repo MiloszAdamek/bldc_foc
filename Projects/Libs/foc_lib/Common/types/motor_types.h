@@ -68,6 +68,12 @@ typedef struct {
 } Motor_Calibration_t;
 
 typedef struct {
+    float speed_limit_rpm;       // Limit prędkości w rpm
+    float torque_limit_Nm;      // Limit momentu w mNm
+    float torque_limit_A;      // Limit momentu w mNm
+} Motor_Limits_t;
+
+typedef struct {
     uint32_t loop_ok;
     uint32_t loop_err;
     uint32_t currents_err;

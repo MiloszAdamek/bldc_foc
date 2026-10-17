@@ -31,7 +31,7 @@ volatile bool g_cmd_flag = false; // Flaga ustawiona w przerwaniu TIM, komenda p
 volatile Motor_References_t g_ref; // Volatile, bo może być modyfikowane w ISR Commander_Process() i w ISR MotorControl_SlowLoopMeasurementsISR()
 volatile Motor_Telemetry_t g_telem; // Zapisywane w ISR MotorControl_OnCurrentSampleISR() i odczytywane w ISR MotorControl_SlowLoopMeasurementsISR()
 
-Motor_Calibration_t g_calibration; // Ustawiane tylko raz na starcie, potem odczyt
+volatile Motor_Limits_t g_limits;
 
 volatile Motor_Stats_t g_stats; // Volatile, bo może być modyfikowane w ISR
 
@@ -72,6 +72,13 @@ void MotorControl_Init(BoardHandleTypeDef* p_board)
 	SpeedEstimator_Init(SPEED_PERIOD_SEC);
 	Board_Init(p_board);
 	SVPWM_Init(p_board->htim_pwm);
+
+    // default limits
+    g_limits = (Motor_Limits_t){
+            .speed_limit_rpm = SPEED_LIMIT_RPM,
+            .torque_limit_Nm = CURRENT_LIMIT,
+            .torque_limit_A = CURRENT_LIMIT / MOTOR_TORQUE_CONSTANT
+        };
 
 	MotorControl_Start();
 }
@@ -198,7 +205,7 @@ void MotorControl_SetSpeed(float rpm)
 	g_ref.speed_ref = rpm;
     
     // SpeedController_SetTarget(rpm);
-    g_ref.speed_ref = clampf(rpm, -SPEED_MAX_RPM, SPEED_MAX_RPM);
+    g_ref.speed_ref = clampf(rpm, -g_limits.speed_limit_rpm, g_limits.speed_limit_rpm);
 
     SpeedController_SetTarget_Ramp(g_ref.speed_ref); // Aktywacja rampy tylko przy zmianie wartości zadanej w wierszu poleceń
     g_motor_state = STATE_RUN;
@@ -224,10 +231,10 @@ void MotorControl_SetTorque_Iq(float iq)
     g_motor_state = STATE_RUN;
 }
 
-void MotorControl_SetTorque_mNm(float torque_mNm)
+void MotorControl_SetTorque_Nm(float torque_Nm)
 {
-    // Iq = (T_mNm / 1000) / Kt
-    float target_iq = (torque_mNm / 1000.0f) / MOTOR_TORQUE_CONSTANT;
+    // Iq = T_Nm / Kt
+    float target_iq = torque_Nm / MOTOR_TORQUE_CONSTANT;
 	MotorControl_SetTorque_Iq(target_iq);
 }
 
@@ -244,6 +251,23 @@ void MotorControl_SetState(MotorState_t new_state)
 void MotorControl_GetMeasurements(Motor_Measurements_t *meas)
 {
     MotorControl_BuildMeasurements(meas);
+}
+
+void MotorControl_SetSpeedLimit(float speed_limit_rpm)
+{
+    g_limits.speed_limit_rpm = speed_limit_rpm;
+}
+
+void MotorControl_SetTorqueLimit_Nm(float torque_limit_Nm)
+{
+    g_limits.torque_limit_Nm = torque_limit_Nm;
+    g_limits.torque_limit_A = torque_limit_Nm / MOTOR_TORQUE_CONSTANT; // Przeliczenie na prąd Iq w A
+}
+
+void MotorControl_SetTorqueLimit_A(float torque_limit_A)
+{
+    g_limits.torque_limit_A = torque_limit_A;
+    g_limits.torque_limit_Nm = torque_limit_A * MOTOR_TORQUE_CONSTANT; // Przeliczenie na moment Nm
 }
 
 static inline void MotorControl_BuildReferences(Motor_References_t *ref)

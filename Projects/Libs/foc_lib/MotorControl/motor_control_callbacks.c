@@ -43,7 +43,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	else if (htim->Instance == board.htim_speed->Instance)
 	{
         MotorControl_OnSpeedISR();
-		// MotorControl_SlowLoopMeasurementsISR(); 
+		// MotorControl_SlowLoopMeasurementsISR();
+		#if defined(USE_CAN_INTERFACE)
+			MotorControl_WatchdogCAN();
+		#endif
+		
 	}
 
 	/* Position 200 Hz - priority 3 */

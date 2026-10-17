@@ -56,9 +56,9 @@
 #define VOLTAGE_MAX           0.95 * VOLTAGE_SUPPLY
 #define OVERVOLTAGE_TRESHOLD  1.20f * VOLTAGE_SUPPLY
 #define UNDERVOLTAGE_TRESHOLD 0.70f * VOLTAGE_SUPPLY
-#define CURRENT_LIMIT         10.0f
 
-#define SPEED_MAX_RPM         0.75f * MOTOR_VELOCITY_CONSTANT * VOLTAGE_MAX
+#define CURRENT_LIMIT         10.0f
+#define SPEED_LIMIT_RPM       0.75f * MOTOR_VELOCITY_CONSTANT * VOLTAGE_MAX
 
 // Rezystor pomiarowy i wzmocnienie
 #define ADC_REF_VOLTAGE   	  3.3f       // Vref zasilania ADC
@@ -113,8 +113,8 @@
 #ifdef D5312S
 
     #define MOTOR_POLE_PAIRS      	7          // liczba par biegunów silnika
-    #define MOTOR_TORQUE_CONSTANT 	0.025f		// Kt unknown
-    #define MOTOR_VELOCITY_CONSTANT 330.0f		// Kv 
+    #define MOTOR_TORQUE_CONSTANT 	0.025f	   // Kt
+    #define MOTOR_VELOCITY_CONSTANT 330.0f	   // Kv 
     #define VOLTAGE_SENSOR_ALIGN  	0.5f  
 
     #define PI_KP_ID 0.64f / 2.0f

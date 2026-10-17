@@ -20,7 +20,7 @@ extern BoardHandleTypeDef board;
 
 static PI_FOC_State_t s_foc;
 
-extern Motor_Calibration_t g_calibration;
+extern volatile Motor_Limits_t g_limits;
 extern Motor_Stats_t g_stats;
 
 // RAMPA
@@ -226,7 +226,7 @@ static inline void FOC_FieldWeakingSpeed(PI_FOC_State_t *state, float omega_mech
 {
     const float BASE_SPEED_RPM = 2800.0f;
     const float FW_MAX_RPM     = 4000.0f;
-    const float FW_ID_MAX      = CURRENT_LIMIT * 0.5f;
+    const float FW_ID_MAX      = g_limits.torque_limit_A * 0.5f;
 
     float rpm = fabsf(omega_mech_rpm);
 
@@ -273,10 +273,10 @@ static inline void FOC_FieldWeakingVoltage(PI_FOC_State_t *state, float v_max_sq
 
 static inline void FOC_CurrentLimit(PI_FOC_State_t *state)
 {   
-    const float i_max_sq = CURRENT_LIMIT * CURRENT_LIMIT;
+    const float i_max_sq = g_limits.torque_limit_A * g_limits.torque_limit_A;
 
-    state->id_setpoint = clampf(state->id_setpoint, -CURRENT_LIMIT, 0.0f);
-    state->iq_setpoint = clampf(state->iq_setpoint, -CURRENT_LIMIT, CURRENT_LIMIT);
+    state->id_setpoint = clampf(state->id_setpoint, -g_limits.torque_limit_A, 0.0f);
+    state->iq_setpoint = clampf(state->iq_setpoint, -g_limits.torque_limit_A, g_limits.torque_limit_A);
 
     float id_sq = state->id_setpoint * state->id_setpoint;
     float iq_limit_sq = i_max_sq - id_sq;

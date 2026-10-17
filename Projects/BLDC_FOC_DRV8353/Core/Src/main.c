@@ -125,7 +125,13 @@ BoardHandleTypeDef board = {
 
       .clear_faults = MotorControl_ClearFaults,
 
-      .get_faults = MotorControl_GetCurrentFaults
+      .get_faults = MotorControl_GetCurrentFaults,
+
+      .set_speed_limit = MotorControl_SetSpeedLimit,
+      .set_torque_limit_A = MotorControl_SetTorqueLimit_A,
+      .set_torque_limit_Nm = MotorControl_SetTorqueLimit_Nm,
+
+      .set_watchdog_timeout = MotorControl_SetWatchdog
   };
   
 #endif

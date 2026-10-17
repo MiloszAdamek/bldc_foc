@@ -31,6 +31,7 @@ typedef uint16_t MotorFaults_t;
 #define MOTOR_FAULT_ENCODER                 (1UL << 10)
 #define MOTOR_FAULT_CONTROL                 (1UL << 11)
 #define MOTOR_FAULT_INVALID_MEASUREMENTS    (1UL << 12)
+#define MOTOR_FAULT_COMM_TIMEOUT            (1UL << 13)
 
 typedef struct
 {
@@ -53,6 +54,7 @@ static const MotorFaultDescription_t fault_descriptions[] =
     { MOTOR_FAULT_ENCODER,              "Encoder fault" },
     { MOTOR_FAULT_CONTROL,              "Control loop fault" },
     { MOTOR_FAULT_INVALID_MEASUREMENTS, "Invalid measurements" },
+    { MOTOR_FAULT_COMM_TIMEOUT,         "CAN Communication timeout" }
 };
 
 /* Registry operations */

@@ -33,6 +33,12 @@ void MotorControl_Reboot(void);
 
 void MotorControl_SetState(MotorState_t new_state);
 
+void MotorControl_SetSpeedLimit(float speed_limit_rpm);
+
+void MotorControl_SetTorqueLimit_A(float torque_limit_A);
+
+void MotorControl_SetTorqueLimit_Nm(float torque_limit_Nm);
+
 // Motor control callbacks for ISRs
 void MotorControl_OnCurrentSampleISR(void);
 void MotorControl_OnEncoderSampleISR(void);
@@ -41,6 +47,8 @@ void MotorControl_OnPositionISR(void);
 void MotorControl_OnCommandISR(void);
 void MotorControl_SlowLoopMeasurementsISR(void);
 void MotorControl_OnCANISR(void);
+void MotorControl_WatchdogCAN(void);
+void MotorControl_SetWatchdog(uint16_t timeout_ms);
 
 void MotorControl_GetCANTelemetry(float *pos_rev, float *vel_rpm);
 void MotorControl_GetCANHeartbeat(uint16_t *state, uint16_t *faults);

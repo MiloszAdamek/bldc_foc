@@ -33,6 +33,8 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
 add_compile_definitions(USE_CAN_INTERFACE)
 
+add_compile_definitions(WATCHDOG_ENABLED)
+
 add_compile_definitions(USE_CMD_INTERFACE)
 
 # add_compile_definitions(TL50M10) # Motor model definition
