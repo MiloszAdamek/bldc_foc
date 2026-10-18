@@ -75,21 +75,24 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
     #endif
 
     #ifdef TL50M10
-
+        
         DRV8353_Config_t default_config = {
             .pwm_mode   = pwm_mode,
-            .csa_gain   = DRV8353_CSA_GAIN_40V,
-            .idriven_hs = DRV8353_IDRIVEN_300mA,
-            .idrivep_hs = DRV8353_IDRIVEP_150mA,
-            .idriven_ls = DRV8353_IDRIVEN_300mA,
-            .idrivep_ls = DRV8353_IDRIVEP_150mA,
-            .dead_time  = DRV8353_DEADTIME_100ns,
-            .ocp_level  = DRV8353_VDS_OCP_60mV,
+            .csa_gain   = DRV8353_CSA_GAIN_20V, // Koniecznie
+            
+            .idrivep_hs = DRV8353_IDRIVEP_300mA,
+            .idriven_hs = DRV8353_IDRIVEN_600mA,
+            .idrivep_ls = DRV8353_IDRIVEP_300mA,
+            .idriven_ls = DRV8353_IDRIVEN_600mA,
+            
+            .drive_time = DRV8353_DRIVETIME_4000ns,
+            .dead_time  = DRV8353_DEADTIME_200ns,
+            
+            .ocp_level  = DRV8353_VDS_OCP_200mV,
             .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
-            .drive_time = DRV8353_DRIVETIME_1000ns,
-            .ocp_deg    = DRV8353_OCP_DEG_4us
+            .ocp_deg    = DRV8353_OCP_DEG_8us
         };
-        
+
     #endif
 
     

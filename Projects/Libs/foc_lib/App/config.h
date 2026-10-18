@@ -96,7 +96,7 @@
     #define MOTOR_POLE_PAIRS      	14          // liczba par biegunów silnika
     #define MOTOR_TORQUE_CONSTANT 	0.0f		// Kt unknown
     #define MOTOR_VELOCITY_CONSTANT 130.0f		// Kv 
-    #define VOLTAGE_SENSOR_ALIGN  	0.5f  
+    #define VOLTAGE_SENSOR_ALIGN  	1.5f  
 
     #define PI_KP_ID 0.64f
     #define PI_KI_ID 10.0f
@@ -106,7 +106,7 @@
     #define PI_KI_IQ 10.0f
     #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
 
-    #define CURRENT_SENSE_GAIN       40.0f
+    #define CURRENT_SENSE_GAIN       20.0f
 
 #endif
 
@@ -165,27 +165,24 @@
 
     #ifdef ENABLE_BRAKE_CHOPPER
 
-        #define BRAKE_R_OHM              10.0f
         #define BRAKE_DUTY_MAX           0.95f
 
-        // Progi VBUS (dopasuj do OV fault, ale dla 13S to dobry start)
-        #define BRAKE_V_ON               55.2f   // włącz chopper powyżej
-        #define BRAKE_V_TARGET           54.9f   // PI trzyma okolice targetu
-        #define BRAKE_V_OFF              54.6f   // wyłącz poniżej
+        // Progi VBUS (13S)
+        #define BRAKE_V_ON               55.2f
+        #define BRAKE_V_TARGET           54.9f
+        #define BRAKE_V_OFF              54.6f
 
-        #define BRAKE_P_CONT_W           50.0f   // limit ciągły (bezpieczny start)
-        #define BRAKE_P_TRIP_W           85.0f   // “za dużo” -> latch jeśli trwa odpowiednio długo
+        // Zabezpieczenie temperaturowe rezystora
+        #define BRAKE_TEMP_MAX_TRIP      100.0f  // odcięcie choppera + fault
+        #define BRAKE_TEMP_HYST          10.0f    // histereza do odblokowania
 
-        // Filtr “grzania” + czas trip
-        #define BRAKE_HEAT_TAU_SEC       8.0f    // 5..20 s typowo
-        #define BRAKE_TRIP_TIME_SEC      0.8f    // ile sekund powyżej P_TRIP aby zadziałał latch
-
-        // PI (zwykle mały Kp i dość małe Ki; stroisz na logach duty/Vbus)
+        // Nastawy PI
         #define BRAKE_KP                 0.12f
         #define BRAKE_KI                 1.20f
 
-    #endif
+        #define BRAKE_R_OHM              10.0f
 
+    #endif
 
 #endif
 
