@@ -101,11 +101,11 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
             
             .idrivep_hs = DRV8353_IDRIVEP_300mA,
             .idriven_hs = DRV8353_IDRIVEN_600mA,
-            .idrivep_ls = DRV8353_IDRIVEP_150mA,
+            .idrivep_ls = DRV8353_IDRIVEP_300mA,
             .idriven_ls = DRV8353_IDRIVEN_600mA,
             
             .drive_time = DRV8353_DRIVETIME_4000ns,
-            .dead_time  = DRV8353_DEADTIME_400ns,
+            .dead_time  = DRV8353_DEADTIME_200ns,
             
             .ocp_level  = DRV8353_VDS_OCP_200mV,
             .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
@@ -486,7 +486,7 @@ DRV8353_Status_t DRV8353_SetDeadTime(
 
     return DRV8353_UpdateRegisterBits(
             drv,
-            DRV8353_REG_DRIVER_CONF,
+            DRV8353_REG_OCP_CONTROL,
             DRV8353_DEADTIME_Msk,
             ((uint16_t)dead_time << DRV8353_DEADTIME_Pos));
 }
@@ -602,8 +602,8 @@ DRV8353_Status_t DRV8353_VerifyConfig(
        drive_time != cfg->drive_time)
         return DRV8353_ERROR;
 
-    // DRIVER_CONF (DEADTIME)
-    if(DRV8353_ReadRegister(drv, DRV8353_REG_DRIVER_CONF, &reg) != DRV8353_OK)
+    // OCP_CONTROL (DEADTIME)
+    if(DRV8353_ReadRegister(drv, DRV8353_REG_OCP_CONTROL, &reg) != DRV8353_OK)
         return DRV8353_ERROR;
 
     uint16_t dead_time = (reg & DRV8353_DEADTIME_Msk) >> DRV8353_DEADTIME_Pos;
