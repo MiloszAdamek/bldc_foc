@@ -5,6 +5,8 @@
  *      Author: Milosz Adamek
  */
 
+ #ifdef ENABLE_BRAKE_CHOPPER
+
  #include "brake_chopper.h"
  #include "board.h"
  #include "foc_utils.h"
@@ -33,6 +35,7 @@ void BrakeChopper_Init(void)
     s_chopper.power_w = 0.0f;
     s_chopper.temp_c  = 0.0f;
 
+    HAL_TIM_Base_Start_IT(board.htim_brake_chopper);
     __HAL_TIM_SET_COMPARE(board.htim_brake_chopper, TIM_CHANNEL_1, 0);
     HAL_TIM_PWM_Start(board.htim_brake_chopper, TIM_CHANNEL_1);
 }
@@ -103,5 +106,7 @@ void BrakeChopper_Update(Motor_Measurements_t *meas, float dt)
 
     s_chopper.power_w = s_chopper.duty * (v * v) / BRAKE_R_OHM;
 }
+
+#endif // ENABLE_BRAKE_CHOPPER
 
 

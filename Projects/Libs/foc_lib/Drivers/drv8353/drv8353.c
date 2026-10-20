@@ -114,9 +114,30 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
             .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
             .ocp_deg    = DRV8353_OCP_DEG_8us
         };
-
-                
+ 
     #endif
+
+        #ifdef M8325S
+
+        DRV8353_Config_t default_config = {
+            .pwm_mode   = pwm_mode,
+            .csa_gain   = DRV8353_CSA_GAIN_20V, // Koniecznie
+            
+            .idrivep_hs = DRV8353_IDRIVEP_300mA,
+            .idriven_hs = DRV8353_IDRIVEN_600mA,
+            .idrivep_ls = DRV8353_IDRIVEP_300mA,
+            .idriven_ls = DRV8353_IDRIVEN_600mA,
+            
+            .drive_time = DRV8353_DRIVETIME_4000ns,
+            .dead_time  = DRV8353_DEADTIME_200ns,
+            
+            .ocp_level  = DRV8353_VDS_OCP_300mV,
+            .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
+            .ocp_deg    = DRV8353_OCP_DEG_8us
+        };
+ 
+    #endif
+
 
     DRV8353_SetOutputState(drv, DRV_OUTPUT_COAST);
 

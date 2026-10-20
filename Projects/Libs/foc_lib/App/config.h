@@ -28,8 +28,6 @@
 #define ENABLE_CURRENT_LIMIT
 // #define ENABLE_FIELD_WEAKENING
 
-#define ENABLE_BRAKE_CHOPPER
-
 #define ENABLE_SERIAL_DEBUGGING
 // #define ENABLE_RAMP
 // #define TEST_MODE
@@ -128,6 +126,25 @@
     #define CURRENT_SENSE_GAIN       20.0f
 
 #endif
+
+#ifdef M8325S
+
+    #define MOTOR_POLE_PAIRS      	20          // liczba par biegunów silnika
+    #define MOTOR_TORQUE_CONSTANT 	0.083f	   // Kt
+    #define MOTOR_VELOCITY_CONSTANT 100.0f	   // Kv 
+    #define VOLTAGE_SENSOR_ALIGN  	0.5f  
+
+    #define PI_KP_ID 0.008f
+    #define PI_KI_ID 10.0
+    #define PI_LIMIT_ID (VOLTAGE_MAX / M_SQRT3)
+
+    #define PI_KP_IQ 0.008f
+    #define PI_KI_IQ 10.0f
+    #define PI_LIMIT_IQ (VOLTAGE_MAX / M_SQRT3)
+
+    #define CURRENT_SENSE_GAIN       20.0f
+
+#endif
  
 #define ENCODER_RESOLUTION    	16384.0f    // enkoder AS5048A (14 bit)
 
@@ -167,20 +184,27 @@
 
         #define BRAKE_DUTY_MAX           0.95f
 
-        // Progi VBUS (13S)
-        #define BRAKE_V_ON               55.2f
-        #define BRAKE_V_TARGET           54.9f
-        #define BRAKE_V_OFF              54.6f
+        // // Progi VBUS (13S)
+        // #define BRAKE_V_ON               55.2f   // start choppera
+        // #define BRAKE_V_TARGET           54.8f   // ref dla reuglatora
+        // #define BRAKE_V_OFF              54.6f   // wyłączenie choppera
+
+
+        // Zasilacz laboratoryjny 25V
+        #define BRAKE_V_ON               26.2f
+        #define BRAKE_V_TARGET           25.8f
+        #define BRAKE_V_OFF              25.6f
+
 
         // Zabezpieczenie temperaturowe rezystora
         #define BRAKE_TEMP_MAX_TRIP      100.0f  // odcięcie choppera + fault
         #define BRAKE_TEMP_HYST          10.0f    // histereza do odblokowania
 
         // Nastawy PI
-        #define BRAKE_KP                 0.12f
-        #define BRAKE_KI                 1.20f
+        #define BRAKE_KP                 0.45f
+        #define BRAKE_KI                 0.00f
 
-        #define BRAKE_R_OHM              10.0f
+        #define BRAKE_R_OHM              8.0f
 
     #endif
 

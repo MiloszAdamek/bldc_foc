@@ -23,6 +23,7 @@
 // #include "voltage_sense.h"
 #include "slow_adc.h"
 #include "stdio.h"
+#include "brake_chopper.h"
 
 #define ENCODER_TIMEOUT_LIMIT 100
 
@@ -48,6 +49,10 @@ volatile bool speed_loop_enabled = false;
 volatile bool position_loop_enabled = false;
 
 extern volatile bool slow_adc_ready;
+
+volatile Motor_Measurements_t meas;
+volatile Motor_References_t ref;
+volatile Motor_Output_t out;
 
 // Debug - cubemonitor
 volatile MonitorData_t monitor_data __attribute__((section(".fixed_logs_section")));
@@ -356,10 +361,6 @@ void MotorControl_CheckFaults(void)
 
 void MotorControl_OnCurrentSampleISR(void)
 {	
-    Motor_Measurements_t meas;
-    Motor_References_t ref;
-    Motor_Output_t out;
-
 	if (!MotorControl_BuildMeasurements(&meas))
 	{
 		return;
@@ -445,4 +446,9 @@ void MotorControl_SlowLoopMeasurementsISR(void)
     //     slow_adc_ready = false;
     //     SlowADC_CalculateMeasurements();
     // }
+}
+
+void MotorControl_OnBrakeChopperISR(void)
+{
+    BrakeChopper_Update(&meas, 0.001f); // dt = 1ms
 }
