@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=8" /> 
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Simulink Performance Advisor Report for 'pmsm'</title>  
+<style type="text/css">
+/* Copyright 2013-2026 The MathWorks, Inc. */
+<!--
+@media screen {    
+    /* Table Formatting */
+    .AdvTable th { 
+        background:#80a0c1 url(data:image/gif;base64,R0lGODlhAQAaAKIAAHSRr3mXtn+fv2V/mX2cvG2JpVxzi4CgwSH5BAAAAAAALAAAAAABABoAAAMJeLrcLCSAMkwCADs=) repeat-x bottom left; 
+    }
+}
+
+@media all {
+    *{ font-family: sans-serif; }
+
+	H3 {
+		font-size: 14pt;
+		font-weight: 200;
+	}
+	H4 {
+		font-size: 9pt;
+		font-weight: normal;
+	}
+	H5 {
+		font-size: 12pt;
+		font-style: italic;
+		font-weight: bold;
+		color: #333333;
+		margin-bottom: 2px;
+	}
+	a[href] {
+		color: #005FCE;
+	}
+	.subsection {
+		padding-left: 30px;
+	}
+    
+    .CheckHeading {
+		font-size:1.05em;
+		font-weight:bold;
+	}
+
+    /* Table Formatting */
+    table.AdvTable { 
+        border-collapse:collapse; border:1px solid #ececec; border-right:none; border-bottom:none; 
+    }
+
+    .AdvTable th { 
+        padding-left:5px; 
+        padding-right:5px; 
+        color:#fff; 
+        line-height:120%; 
+        background:#80a0c1 url(data:image/gif;base64,R0lGODlhAQAaAKIAAHSRr3mXtn+fv2V/mX2cvG2JpVxzi4CgwSH5BAAAAAAALAAAAAABABoAAAMJeLrcLCSAMkwCADs=) repeat-x bottom left; 
+        border-right: 1px solid #ececec; 
+        border-bottom: 1px solid #ececec; 
+    }
+
+    .AdvTable td {
+        padding-left:5px;
+        padding-right:5px;
+        border-right:1px solid #ececec;
+        border-bottom: 1px solid #ececec;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    
+    .AdvTable th p { 
+        margin-bottom:0px; 
+    }
+
+    .AdvTable p { 
+        margin-bottom:10px; 
+    }
+    
+    .AdvTableNoBorder p { 
+        margin-bottom:10px; 
+    }
+
+    table+span.SDCollapseControl { 
+        font-size:0.8em; 
+        font-weight:bold; 
+    }
+
+    ul+span.SDCollapseControl { 
+        margin-left:25px; 
+        font-size:0.8em;
+        font-weight:bold; 
+    }
+
+    ol+span.SDCollapseControl { 
+        margin-left:25px; 
+        font-size:0.8em; 
+        font-weight:bold; 
+    }
+
+    .SystemdefinedCollapse { 
+        margin-top:0px;
+        margin-bottom:5px; 
+    }
+
+    div.AllCollapse p, div.AllCollapse table, div.AllCollapse ol, div.AllCollapse ul { 
+        margin-top:0pt;
+        margin-bottom:0pt; 
+        margin-left:18px;
+    }
+
+    div.AllCollapse + div { 
+        margin-top:0pt;
+        margin-bottom:0pt; 
+        margin-left:18px; 
+    }
+
+    img.CollapseAllControlImage { 
+        float:left; 
+    }
+
+    .SubResultsSummary {
+        padding-left:30px;
+    }
+
+    .EmptyFolderMessage {
+        color:gray;
+        margin:10px 0 0 30px;
+        font-size:0.8em;
+    }
+	
+    .CsEml-Symbol-Status-Pass
+    { 
+        color: green;
+        font-family: monospace;
+    }
+
+    .CsEml-Symbol-Status-Warn
+        { 
+        color: orange;
+        font-family: monospace;
+    }
+
+    .CsEml-Symbol-Status-Fail
+    { 
+        color: red;
+        font-family: monospace;
+    }
+    
+    .CsEml-Line-Number
+    {
+        color: #A0A0A0;
+        font-style: italic;
+        font-family: monospace;
+    }
+
+    .CsEml-Code
+    {
+        color: blue;
+        font-family: monospace;
+    }
+
+    .CsEml-Code-Fragment
+    {
+        color: blue;
+        font-weight: bold;
+        font-family: monospace;
+        margin-right: 0;
+        padding-right: 0;
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    .CsEml-Function-Type
+    {
+        color:       #A0A0A0;
+        font-style:  italic;
+        font-family: monospace;
+    }
+
+}
+-->
+
+</style>
+
+<script type="text/javascript"> <!-- /* Copyright 2013-2025 The MathWorks, Inc. */
+'use strict';
+/* define String.trim() method if not defined (used by filterByText() function) */
+if (!String.prototype.trim) {
+    // eslint-disable-next-line no-extend-native
+    String.prototype.trim = function () {
+        return this.replace(/^\s+|\s+$/g, '');
+    };
+}
+
+// rtwreport needs it
+function init () {
+    const showFailed = document.getElementById('Failed Checkbox');
+    const showPassed = document.getElementById('Passed Checkbox');
+    const showWarning = document.getElementById('Warning Checkbox');
+    const showNotRun = document.getElementById('Not Run Checkbox');
+    const showJustified = document.getElementById('Justified Checkbox');
+    const showIncomplete = document.getElementById('Incomplete Checkbox');
+
+    const urlQueryStringRegexp = /\?(.*)/.exec(window.location.search);
+
+    if (urlQueryStringRegexp === null) {
+        /* refresh check boxes and search input */
+        showFailed.checked = true;
+        showPassed.checked = true;
+        showWarning.checked = true;
+        showNotRun.checked = true;
+        showJustified.checked = true;
+        showIncomplete.checked = true;
+    } else {
+        showFailed.checked = false;
+        showPassed.checked = false;
+        showWarning.checked = false;
+        showNotRun.checked = false;
+
+        const urlQueryString = urlQueryStringRegexp[1];
+
+        let queryArgs = [];
+
+        if (urlQueryString.indexOf('&') === -1) {
+            // Only 1 argument
+            queryArgs[0] = urlQueryString;
+        } else {
+            queryArgs = urlQueryString.split('&');
+        }
+
+        for (let idx = 0; idx < queryArgs.length; ++idx) {
+            // get in
+            if (queryArgs[idx].localeCompare('showPassedChecks') === 0) {
+                showPassed.checked = true;
+            } else if (queryArgs[idx].localeCompare('showWarningChecks') === 0) {
+                showWarning.checked = true;
+            } else if (queryArgs[idx].localeCompare('showFailedChecks') === 0) {
+                showFailed.checked = true;
+            } else if (queryArgs[idx].localeCompare('showNotRunChecks') === 0) {
+                showNotRun.checked = true;
+            }
+        }
+
+        // if nothing is selected, select everything
+        if (!showFailed.checked && !showPassed.checked &&
+            !showWarning.checked && !showNotRun.checked) {
+            showFailed.checked = true;
+            showPassed.checked = true;
+            showWarning.checked = true;
+            showNotRun.checked = true;
+            showJustified.checked = true;
+            showIncomplete.checked = true;
+        }
+    }
+
+    updateVisibleChecks();
+}
+
+function markEmptyFolders () {
+    const nodeTypes = ['FailedCheck', 'PassedCheck', 'WarningCheck', 'NotRunCheck'];
+    const folderArray = document.querySelectorAll('div.FolderContent');
+
+    for (let n = 0; n < folderArray.length; n++) {
+        /* get direct check result children and check visibility */
+        const childNodes = folderArray[n].childNodes;
+        let noneVisible = true;
+        let noChecksInFolder = true;
+
+        for (let ni = 0; ni < childNodes.length; ni++) {
+            if (childNodes[ni].nodeType === 1 && childNodes[ni].tagName.toLowerCase() === 'div') {
+                if (childNodes[ni].className === nodeTypes[0] || childNodes[ni].className === nodeTypes[1] || childNodes[ni].className === nodeTypes[2] || childNodes[ni].className === nodeTypes[3]) {
+                    noChecksInFolder = false;
+                    if (childNodes[ni].style.display !== 'none') {
+                        noneVisible = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /* Only display hidden message if any checks inside the folders and not just other folders */
+        if (!noChecksInFolder) {
+            const hiddenMessage = folderArray[n].querySelector('div.EmptyFolderMessage');
+
+            if (hiddenMessage && noneVisible === true) {
+                hiddenMessage.style.display = '';
+            } else if (hiddenMessage && noneVisible === false) {
+                hiddenMessage.style.display = 'none';
+            } else {
+                /* hidden message not found */
+            }
+        }
+    }
+}
+
+function updateVisibleChecks (/* show all flags */ checkbox) {
+    const checkboxes = ['Failed Checkbox', 'Passed Checkbox', 'Warning Checkbox', 'Not Run Checkbox', 'Justified Checkbox', 'Information Checkbox', 'Incomplete Checkbox'];
+    const nodeTypes = ['Failed Check', 'Passed Check', 'Warning Check', 'Not Run Check', 'Justified Check', 'Information Check', 'Incomplete Check'];
+    const textInput = document.getElementById('TxtFilterInput');
+    let i, j, nodes;
+
+    if (checkbox && textInput && textInput.color === 'gray') {
+        const checkType = checkbox.id;
+        const ind = checkboxes.indexOf(checkType);
+        nodes = document.getElementsByName(nodeTypes[ind]);
+        for (i = 0; i < nodes.length; i++) {
+            nodes[i].style.display = checkbox.checked ? '' : 'none';
+        }
+    } else { /* Update all checks if called from init or if a previous text filter was applied */
+        for (i = 0; i < checkboxes.length; i++) {
+            const show = document.getElementById(checkboxes[i]).checked ? '' : 'none';
+            nodes = document.getElementsByName(nodeTypes[i]);
+            for (j = 0; j < nodes.length; j++) {
+                nodes[j].style.display = show;
+            }
+        }
+    }
+
+    /* clear text search */
+    if (textInput && checkbox) {
+        textInput.value = 'Search by check name';
+        textInput.style.color = 'gray';
+        textInput.blur();
+    }
+
+    markEmptyFolders();
+}
+
+function filterByText (ev) {
+    // get all the nodes
+    const allNodeTypes = ['Failed Check', 'Passed Check', 'Warning Check', 'Not Run Check'];
+    const checkboxes = ['Failed Checkbox', 'Passed Checkbox', 'Warning Checkbox', 'Not Run Checkbox'];
+    const nodeTypes = [];
+
+    // get nodes depending on filter selections
+    for (let n = 0; n < checkboxes.length; n++) {
+        const checkbox = document.getElementById(checkboxes[n]);
+        if (checkbox && checkbox.checked) {
+            nodeTypes.push(allNodeTypes[n]);
+        }
+    }
+
+    const searchNodes = ['.CheckHeading'];
+    if (!ev) return;
+    const target = ev.target ? ev.target : window.event.srcElement;
+    const searchString = target.value;
+
+    if (!searchString) {
+        updateVisibleChecks(); // clear all and display by other filters
+    } else {
+        for (let i = 0; i < nodeTypes.length; i++) {
+            const nodes = document.getElementsByName(nodeTypes[i]);
+            for (let j = 0; j < nodes.length; j++) {
+                // get text from check heading
+                const checkContent = nodes[j].querySelector(searchNodes).innerHTML;
+                // creaet a regular expression to ignore case
+                const ss = new RegExp(searchString.trim(), 'i');
+                if (ss.exec(checkContent)) {
+                    nodes[j].style.display = '';
+                } else {
+                    nodes[j].style.display = 'none';
+                }
+            }
+        }
+        markEmptyFolders();
+    }
+}
+
+function MATableShrink (o, tagNameStr) {
+    const temp = document.getElementsByName(tagNameStr);
+    const classUsed = document.getElementsByName('EmbedImages');
+    const embeddedMode = !(classUsed.length === 0);
+    const img = o.querySelector('img');
+
+    if (temp[0].style.display === '') {
+        temp[0].style.display = 'none';
+        if (embeddedMode) {
+            img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAAkUlEQVR42mL8//8/AyUAIICYGCgEAAFEsQEAAUSxAQABxIIu0NTURDBQ6urqGGFsgABiwaagpqYOp+aWliYUPkAAEfQCCwt+JQABRHEYAAQQCzE2w9h//vzDUAcQQDgNgCkGacamEQYAAohiLwAEEEED8NkOAgABxEJMVOEDAAHESGlmAgggisMAIIAoNgAgwAC+/BqtC+40NQAAAABJRU5ErkJggg==';
+        } else {
+            img.src = 'plus.png';
+        }
+    } else {
+        temp[0].style.display = '';
+        if (embeddedMode) {
+            img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAAhklEQVR42mL8//8/AyUAIICYGCgEAAFEsQEAAUSxAQABxIIu0NTURDBQ6urqGGFsgABiwaagpqYOp+aWliYUPkAAUewFgACi2ACAAGLBKcGCafafP/8wxAACCKcB2BRjAwABRLEXAAKIYgMAAoiFmKjCBwACiJHSzAQQQBR7ASCAKDYAIMAAUtQUow+YsTsAAAAASUVORK5CYII=';
+        } else {
+            img.src = 'minus.png';
+        }
+    }
+}
+
+// rtwreport needs it
+function updateHyperlink () {
+    const docObj = window.document;
+    const loc = document.location;
+    let aHash = '';
+    let externalweb = 'false';
+    if (loc.search || loc.hash) {
+        if (loc.search) { aHash = loc.search.substring(1); } else { aHash = loc.hash.substring(1); }
+    }
+    let args = [];
+    args = aHash.split('&');
+    for (let i = 0; i < args.length; ++i) {
+        const arg = args[i];
+        const sep = arg.indexOf('=');
+        if (sep !== -1) {
+            const cmd = arg.substring(0, sep);
+            const opt = arg.substring(sep + 1);
+            switch (cmd.toLowerCase()) {
+                case 'externalweb':
+                    externalweb = opt;
+                    break;
+            }
+        }
+    }
+    if (externalweb === 'true') {
+        const objs = docObj.getElementsByTagName('a');
+        if (objs.length > 0 && objs[0].removeAttribute) {
+            for (let i = 0; i < objs.length; ++i) {
+                if (objs[i].href.indexOf('matlab') > -1) { objs[i].removeAttribute('href'); }
+            }
+        }
+    }
+    init();
+}
+
+function findParentNode (e) {
+    const parent = e.parentElement;
+    if (parent) {
+        if (parent.id === '') {
+            return findParentNode(parent);
+        } else {
+            return parent;
+        }
+    } else {
+        return null;
+    }
+}
+
+function expandParentNode (e) {
+    let parent = findParentNode(e);
+    while (parent) {
+        const prefix = 'FolderControl_';
+        const folderControl = document.getElementById(prefix.concat(parent.id));
+        if (parent.style.display === 'none') {
+            MATableShrink(folderControl, parent.id);
+        }
+        parent = findParentNode(parent);
+    }
+}
+
+function isHidden (e) {
+    return (e.offsetParent === null);
+}
+
+function navigateToElement (eleID) {
+    const e = document.getElementById(eleID);
+    if (isHidden(e)) {
+        expandParentNode(e);
+    }
+    if (!!e && e.scrollIntoView) {
+        e.scrollIntoView();
+    }
+}
+
+function setTextContent (element, value) {
+    const content = element.textContent;
+    if (value === undefined) return;
+
+    if (content !== undefined) element.textContent = value;
+    else element.innerText = value;
+}
+
+function hideControlPanel (control) {
+    const panelComponents = ['ControlsCheckFiltering', 'ControlsView', 'ControlsTOC', 'TextFilter'];
+    const reportContent = document.querySelector('.ReportContent');
+    const controlPanel = document.getElementById('ControlPanel');
+    let innerDiv;
+
+    if (reportContent && control && controlPanel) {
+        for (let n = 0; n < panelComponents.length; n++) {
+            const component = document.getElementById(panelComponents[n]);
+
+            if (component && component.style.display === '') {
+                component.style.display = 'none';
+            } else if (component && component.style.display === 'none') {
+                component.style.display = '';
+            }
+        }
+
+        if (controlPanel.style.width !== '6px') {
+            reportContent.style.marginLeft = '25px';
+            controlPanel.style.width = '6px';
+            control.style.left = '0px';
+            innerDiv = control.querySelector('#HidePanelControlInner');
+            setTextContent(innerDiv, '\u25BA');
+        } else {
+            reportContent.style.marginLeft = '225px';
+            controlPanel.style.width = '210px';
+            control.style.left = '204px';
+            innerDiv = control.querySelector('#HidePanelControlInner');
+            setTextContent(innerDiv, '\u25C0');
+        }
+    }
+}
+/* Copyright 2013-2025 The MathWorks, Inc. */
+'use strict';
+//COLLAPSIBLE FEATURE
+
+// global variables
+let GlobalCollapseState = 'off';
+
+function collapseSDHelper (o, CollElementParent, disp, mode) {
+    let CollElement = CollElementParent; /* ul/ol with lists, tbody with table */
+    let CollName;
+
+    if (CollElement.nodeName === 'UL' || CollElement.nodeName === 'OL') {
+        CollName = 'LI';
+    } else if (CollElement.nodeName === 'TABLE') {
+        if (CollElement.querySelector('tbody')) {
+            /* tr modes are child nodes of tbody node */
+            CollElement = CollElement.querySelector('tbody');
+        }
+        CollName = 'TR';
+    }
+
+    // get children (li for list and tr for table)
+    const children = CollElement.childNodes;
+
+    let nElements = 0;
+    for (let i = 0; i < children.length; i++) {
+        if (children[i].nodeName === CollName) {
+            nElements = nElements + 1;
+            if (nElements > 5) {
+                children[i].style.display = disp;
+            }
+        }
+    }
+    let text;
+    let textNode;
+    if (disp === 'none') {
+        if (CollName === 'LI') {
+            text = ' items)';
+        } else {
+            text = ' rows)';
+        }
+
+        textNode = document.createTextNode(('\u2228 More (' + (nElements - 5) + text));
+        o.replaceChild(textNode, o.firstChild);
+
+        CollElementParent.setAttribute('dataCollapse', 'on');
+
+        /* scroll to element if it is not visible */
+        if (mode === 'single' && CollElement.offsetTop < document.documentElement.scrollTop) {
+            CollElement.scrollIntoView();
+        }
+    } else {
+        textNode = document.createTextNode(('\u2227 ' + 'Less'));
+        o.replaceChild(textNode, o.firstChild);
+
+        CollElementParent.setAttribute('dataCollapse', 'off');
+    }
+}
+
+function collapseSD (o, ID) {
+    const CollElement = document.getElementById(ID);
+    if (CollElement !== null) {
+        let disp;
+        if (CollElement.getAttribute('dataCollapse') === 'off') {
+            disp = 'none';
+        } else {
+            disp = '';
+        }
+        collapseSDHelper(o, CollElement, disp, 'single');
+    }
+}
+
+function collapseAllHelper (o, CollElement, CollInfo, disp) {
+    if (CollElement !== null) {
+        const img = o.querySelector('img');
+        if (disp === 'none') {
+            CollElement.style.display = disp;
+            img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAAkUlEQVR42mL8//8/AyUAIICYGCgEAAFEsQEAAUSxAQABxIIu0NTURDBQ6urqGGFsgABiwaagpqYOp+aWliYUPkAAEfQCCwt+JQABRHEYAAQQCzE2w9h//vzDUAcQQDgNgCkGacamEQYAAohiLwAEEEED8NkOAgABxEJMVOEDAAHESGlmAgggisMAIIAoNgAgwAC+/BqtC+40NQAAAABJRU5ErkJggg==';
+        } else {
+            CollElement.style.display = disp;
+            img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAAhklEQVR42mL8//8/AyUAIICYGCgEAAFEsQEAAUSxAQABxIIu0NTURDBQ6urqGGFsgABiwaagpqYOp+aWliYUPkAAUewFgACi2ACAAGLBKcGCafafP/8wxAACCKcB2BRjAwABRLEXAAKIYgMAAoiFmKjCBwACiJHSzAQQQBR7ASCAKDYAIMAAUtQUow+YsTsAAAAASUVORK5CYII=';
+        }
+
+        if (CollInfo !== null) {
+            if (disp === 'none') {
+                CollInfo.style.display = '';
+            } else {
+                CollInfo.style.display = 'none';
+            }
+        }
+    }
+}
+
+function collapseAll (o, ID, ID2) {
+    const CollElement = document.getElementById(ID);
+    const CollInfo = document.getElementById(ID2);
+    let disp;
+
+    if (CollElement.style.display === '') {
+        disp = 'none';
+    } else {
+        disp = '';
+    }
+
+    collapseAllHelper(o, CollElement, CollInfo, disp);
+}
+
+function expandCollapseAll (o) {
+    /* IE has no method for getting elements by class name. Use querySelectorAll instead
+       Note: requires IE not to be in IE7 compatability mode */
+    const SDCollapse = document.querySelectorAll('.SystemdefinedCollapse');
+    let Button = null;
+    let disp;
+    let textNode;
+
+    if (GlobalCollapseState === 'off') {
+        disp = 'none';
+        GlobalCollapseState = 'on';
+
+        if (o && o.firstChild.nodeType === 3) {
+            textNode = o.firstChild;
+            textNode.nodeValue = ' Show check details';
+        }
+    } else {
+        disp = '';
+        GlobalCollapseState = 'off';
+
+        if (o && o.firstChild.nodeType === 3) {
+            textNode = o.firstChild;
+            textNode.nodeValue = ' Hide check details';
+        }
+    }
+
+    for (let i = 0; i < SDCollapse.length; i++) {
+        Button = SDCollapse[i].nextSibling;
+        while (Button.nodeType !== 1) {
+            Button = Button.nextSibling;
+        }
+        // Button = SDCollapse[i].parentNode.querySelector("span.SDCollapseControl");
+        collapseSDHelper(Button, SDCollapse[i], disp, 'all');
+    }
+
+    const AllCollapse = document.querySelectorAll('.AllCollapse');
+
+    for (let j = 0; j < AllCollapse.length; j++) {
+        // get children of top level collapsible div
+        const children = AllCollapse[j].parentNode.children;
+
+        // collapsible button is first child
+        Button = children[0];
+
+        // get content to display in collapsed state
+        // this is optional and last child of collapsible div
+        if (Button) {
+            if (children.length > 2) {
+                collapseAllHelper(Button, AllCollapse[j], children[2], disp);
+            } else {
+                collapseAllHelper(Button, AllCollapse[j], null, disp);
+            }
+        }
+    }
+}
+
+function expandCollapseAllOnLoad () {
+    GlobalCollapseState = 'on';
+    const Switch = document.getElementById('ExpandCollapseAll');
+    expandCollapseAll(Switch);
+}
+//END COLLAPSIBLE
+ --></script></head>  
+<body onload="updateHyperlink(); expandCollapseAllOnLoad();">  
+<span id="top">
+
+</span>
+<!-- mdladv_ignore_start --><div id="Container"><!-- mdladv_ignore_finish -->
+<!-- mdladv_ignore_start --><div class="ReportContent" id="pmsm"><!-- mdladv_ignore_finish --><table class="AdvTableNoBorder" width="100%" border="0">
+<tr>
+<td colspan="2" align="center">
+<b>
+Simulink Performance Advisor Report - <font color="#800000">pmsm.slx</font>
+</b>
+
+</td>
+
+</tr>
+<tr>
+<td align="left" valign="top">
+<b>
+Simulink version: <font color="#800000">26.2</font>
+</b>
+
+</td>
+<td align="right" valign="top">
+<b>
+Model version: <font color="#800000">1.34</font>
+</b>
+
+</td>
+
+</tr>
+<tr>
+<td align="left" valign="top">
+<b>
+System: <font color="#800000">pmsm</font>
+</b>
+
+</td>
+<td align="right" valign="top">
+<b>
+Current run: <font color="#800000">24-Oct-2026 19:23:45</font>
+</b>
+
+</td>
+
+</tr>
+
+</table>
+<!-- Compile Status Flag --><!-- Service Status Flag -->
+<!-- mdladv_ignore_start --><div name = "Warning Check" id = "Warning Check" class="WarningCheck" style="margin-left: 0pt;"> <!-- mdladv_ignore_finish -->
+<p><hr /></p>  <a name="CheckRecord_100"></a><div class="CheckHeader" id="Header_com.mathworks.Simulink.PerformanceAdvisor.FinalValidation">
+<!-- mdladv_ignore_start --><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAD3SURBVHgBzZI7EsFQFIb/I4oQRTSUsgOlNlqPGTtgB+yAHRg9Ywka/c0WFGp0aCgYxuvIZcwk8phkRuGr7uPc///P3AP8NVY9vbBqmgirSQRdiIrWApNhL01RTXUQB9FQDel+Wi/5tFmynWInTF2PnIDuSlu6q/kC1FxBHunIXDqRBKQ7GJ5iArX9UngTXJUe/NFJu/ZDBaQ7EZoIgtAStYwZKEA3ZeLcnzcrnLerLw3uuvcfd/vbKIExIsCgcnl6sFwJSHErS0rDOUqjuUeAiMeuFhxDEw2G8RmuVwtyaGIJvNmb02M2+RJ80MDuvxjnNT8wwy94AjZHSy+aGaDFAAAAAElFTkSuQmCC" />&#160;<!-- mdladv_ignore_finish --><span class="CheckHeading" id="Heading_com.mathworks.Simulink.PerformanceAdvisor.FinalValidation">
+Final validation</span>
+<!-- mdladv_ignore_start --><!-- mdladv_ignore_finish --><!-- mdladv_ignore_start --><!-- mdladv_ignore_finish --></div>
+<!-- mdladv_ignore_start --><div class="subsection"><!-- mdladv_ignore_finish --><p /><p>
+No baseline is created and thus final validation is not done. Run Create baseline check, or enable validations of the checks that already been run.
+</p>
+<!-- mdladv_ignore_start --><!-- inputparam_section_start --><H5><b>
+Input Parameters Selection
+</b>
+</H5><table class="AdvTable" border="1">
+<tr>
+<th align="left" valign="top">
+<b>
+Name
+</b>
+
+</th>
+<th align="left" valign="top">
+<b>
+Value
+</b>
+
+</th>
+
+</tr>
+<tr>
+<td align="left" valign="top">
+Take action based on advice
+</td>
+<td align="left" valign="top">
+automatically
+</td>
+
+</tr>
+<tr>
+<td align="left" valign="top">
+Validate and revert changes if time of simulation increases
+</td>
+<td align="left" valign="top">
+true
+</td>
+
+</tr>
+<tr>
+<td align="left" valign="top">
+Validate and revert changes if degree of accuracy is greater than tolerance
+</td>
+<td align="left" valign="top">
+true
+</td>
+
+</tr>
+
+</table>
+<!-- inputparam_section_finish --><!-- mdladv_ignore_finish --><!-- mdladv_ignore_start --></div><!-- mdladv_ignore_finish --><!-- mdladv_ignore_start --></div><!-- mdladv_ignore_finish -->
+<span name = "EmbedImages" id="EmbedImages"></span><!-- mdladv_ignore_start -->
+</div><!-- mdladv_ignore_finish --><!-- mdladv_ignore_start -->
+</div><!-- mdladv_ignore_finish -->
+</body>  
+</html>  

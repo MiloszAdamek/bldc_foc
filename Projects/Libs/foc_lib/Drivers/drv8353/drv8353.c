@@ -107,7 +107,7 @@ DRV8353_Status_t DRV8353_Init(DRV8353_HandleTypeDef *drv, SPI_HandleTypeDef *hsp
             .drive_time = DRV8353_DRIVETIME_4000ns,
             .dead_time  = DRV8353_DEADTIME_200ns,
             
-            .ocp_level  = DRV8353_VDS_OCP_200mV,
+            .ocp_level  = DRV8353_VDS_OCP_300mV,
             .ocp_mode   = DRV8353_OCP_MODE_LATCHED,
             .ocp_deg    = DRV8353_OCP_DEG_8us
         };
