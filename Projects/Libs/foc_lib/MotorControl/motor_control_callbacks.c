@@ -50,6 +50,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 	}
 
+	else if (htim->Instance == board.htim_brake_chopper->Instance)
+	{
+		MotorControl_OnBrakeChopperISR();
+	}
+
 	/* Position 200 Hz - priority 3 */
 	else if (htim->Instance == board.htim_pos->Instance)
 	{

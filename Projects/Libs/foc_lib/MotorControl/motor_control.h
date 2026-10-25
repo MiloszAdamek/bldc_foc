@@ -47,6 +47,7 @@ void MotorControl_OnPositionISR(void);
 void MotorControl_OnCommandISR(void);
 void MotorControl_SlowLoopMeasurementsISR(void);
 void MotorControl_OnCANISR(void);
+void MotorControl_OnBrakeChopperISR(void);
 void MotorControl_WatchdogCAN(void);
 void MotorControl_SetWatchdog(uint16_t timeout_ms);
 

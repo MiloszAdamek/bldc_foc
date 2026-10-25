@@ -85,6 +85,8 @@ void Error_Handler(void);
 #define IN_H_B_GPIO_Port GPIOA
 #define IN_H_C_Pin GPIO_PIN_10
 #define IN_H_C_GPIO_Port GPIOA
+#define BREAK_CHOPPER_PWM_Pin GPIO_PIN_15
+#define BREAK_CHOPPER_PWM_GPIO_Port GPIOA
 #define SPI3_CS_Pin GPIO_PIN_2
 #define SPI3_CS_GPIO_Port GPIOD
 #define DRV8353_ENABLE_Pin GPIO_PIN_4

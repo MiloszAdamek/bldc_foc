@@ -93,7 +93,10 @@ void Board_Init(BoardHandleTypeDef *board)
     // Encoder initialization and calibration
     Encoder_Init();
 
-    // BrakeChopper_Init();
+    #ifdef ENABLE_BRAKE_CHOPPER
+        BrakeChopper_Init();
+    #endif
+
 }
 
 void Board_StartMotor(BoardHandleTypeDef *board)

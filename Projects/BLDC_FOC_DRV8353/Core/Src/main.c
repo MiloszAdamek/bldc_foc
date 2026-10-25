@@ -104,7 +104,7 @@ BoardHandleTypeDef board = {
   .hspi_drv             = &hspi2, 
   .hspi_enc             = &hspi3,
   .huart_com            = &huart3,
-  .htim_brake_chopper   = NULL, // &htim8,
+  .htim_brake_chopper   = &htim8,
   .encoder_type         = ENCODER_INCREMENTAL,
 };
 
@@ -217,6 +217,7 @@ int main(void)
   MX_TIM5_Init();
   MX_ADC2_Init();
   MX_FDCAN1_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
   
   // Controller initialization BEGIN
