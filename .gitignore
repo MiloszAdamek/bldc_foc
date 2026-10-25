@@ -12,3 +12,5 @@ Debug/
 .metadata/
 
 datasheets/
+
+.cache/

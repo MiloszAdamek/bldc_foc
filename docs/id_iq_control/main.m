@@ -1,0 +1,133 @@
+%% ================================================
+%   1. KONFIGURACJA STYLU (Publikacja techniczna)
+% ================================================
+% set(0,'defaultAxesFontName','Times New Roman');
+% set(0,'defaultTextFontName','Times New Roman');
+% set(0,'defaultAxesFontSize',12);
+% set(0,'defaultLineLineWidth',1.2);
+% set(0,'defaultFigureColor','w');
+clear; close all;
+%% GLOBAL FIGURE STYLE – do pracy inżynierskiej
+set(0,'defaultFigureColor','w');
+set(0,'defaultAxesLineWidth',1.1);
+set(0,'defaultLineLineWidth',1.2);
+set(0,'defaultAxesFontSize',12);
+set(0,'defaultAxesFontName','Times New Roman');
+set(0,'defaultTextFontName','Times New Roman');
+
+% domyślna wielkość wykresu – format jednej kolumny pracy
+set(0,'defaultFigurePosition',[200 200 850 600]); 
+
+%% ================================================
+%   2. WCZYTANIE DANYCH
+% ================================================
+root = "data/6";
+
+currFiles  = dir(fullfile(root, "phase_currents*.csv"));
+speedFiles = dir(fullfile(root, "speed*.csv"));
+idiqFiles  = dir(fullfile(root, "id_iq*.csv"));
+
+[~, idx1] = max([currFiles.datenum]);
+[~, idx2] = max([speedFiles.datenum]);
+[~, idx3] = max([idiqFiles.datenum]);
+
+curr  = readtable(fullfile(currFiles(idx1).folder,  currFiles(idx1).name));
+speed = readtable(fullfile(speedFiles(idx2).folder, speedFiles(idx2).name));
+idiq  = readtable(fullfile(idiqFiles(idx3).folder,  idiqFiles(idx3).name));
+
+% Usunięcie NaN
+curr  = rmmissing(curr);
+speed = rmmissing(speed);
+idiq  = rmmissing(idiq);
+
+%% Normalizacja czasu
+t0 = min([min(curr.timestamp), min(speed.timestamp), min(idiq.timestamp)]);
+
+curr.t  = (curr.timestamp  - t0) / 1000.0;
+speed.t = (speed.timestamp - t0) / 1000.0;
+idiq.t  = (idiq.timestamp  - t0) / 1000.0;
+
+%% Filtrowanie sygnałów
+speed_actual = speed(strcmp(speed.variable, "monitor_data.speed"), :);
+speed_ref    = speed(strcmp(speed.variable, "monitor_data.speed_ref"), :);
+
+id_actual = idiq(strcmp(idiq.variable, "monitor_data.id"), :);
+id_ref    = idiq(strcmp(idiq.variable, "monitor_data.id_ref"), :);
+
+iq_actual = idiq(strcmp(idiq.variable, "monitor_data.iq"), :);
+iq_ref    = idiq(strcmp(idiq.variable, "monitor_data.iq_ref"), :);
+
+t_min = 0;
+t_max = 20;
+
+speed_actual = speed_actual(speed_actual.t >= t_min & speed_actual.t <= t_max, :);
+speed_ref    = speed_ref(speed_ref.t >= t_min & speed_ref.t <= t_max, :);
+
+id_actual = id_actual(id_actual.t >= t_min & id_actual.t <= t_max, :);
+id_ref    = id_ref(id_ref.t >= t_min & id_ref.t <= t_max, :);
+
+iq_actual = iq_actual(iq_actual.t >= t_min & iq_actual.t <= t_max, :);
+iq_ref    = iq_ref(iq_ref.t >= t_min & iq_ref.t <= t_max, :);
+
+curr = curr(curr.t >= t_min & curr.t <= t_max, :);
+%% ================================================
+%   3. RYSUNEK: PRĘDKOŚĆ + ID/IQ
+% ================================================
+figure('Position', [100 100 800 700]);
+
+tiledlayout(2,1);
+
+%% --- GÓRNY: prędkość ---
+nexttile;
+hold on; grid on;
+
+plot(speed_actual.t, speed_actual.value, 'k', 'DisplayName', '\omega (pomiar)');
+% plot(speed_ref.t, speed_ref.value, 'r--', 'DisplayName', '\omega_{ref} (zadana)');
+
+ylabel('Prędkość n [obr/min]');
+legend('Location', 'southoutside','Orientation','horizontal');
+
+%% --- DOLNY: Id / Iq ---
+nexttile;
+hold on; grid on;
+
+plot(id_actual.t, id_actual.value, 'Color', [0 0.45 0.74], 'DisplayName', 'i_d');
+plot(iq_actual.t, iq_actual.value, 'Color', [0.85 0.33 0.1], 'DisplayName', 'i_q');
+
+plot(id_ref.t, id_ref.value, '--', 'Color', [0 0.45 0.74]*0.6);
+plot(iq_ref.t, iq_ref.value, '--', 'Color', [0.85 0.33 0.1]*0.6);
+
+xlabel('Czas t [s]');
+ylabel('Prąd i_{dq} [A]');
+
+legend({'i_d','i_q','Wartość zadana'}, 'Location', 'southoutside','Orientation','horizontal');
+% legend({'i_d','i_q'}, 'Location','northwest');
+
+%% ZAPIS
+exportgraphics(gcf, "fig_regulacja_foc.png", 'Resolution', 300);
+
+
+%% ================================================
+%   4. RYSUNEK: PRĄDY FAZOWE
+% ================================================
+figure('Position', [100 100 800 400]);
+hold on; grid on;
+
+% vars = ["monitor_data.current_a","monitor_data.current_b","monitor_data.current_c"];
+vars = ["currents.a","currents.b","currents.c"];
+colors = [0 0 0;
+          0.9 0.45 0; 
+          0.3 0.6 1];
+
+labels = ["i_a","i_b","i_c"];
+
+for i = 1:3
+    df = curr(strcmp(curr.variable, vars(i)), :);
+    plot(df.t, df.value, 'Color', colors(i,:), 'DisplayName', labels(i));
+end
+
+xlabel('Czas t [s]');
+ylabel('Prąd fazowy [A]');
+legend('Location','northeast');
+
+exportgraphics(gcf, "fig_prady_fazowe.png", 'Resolution', 300);
